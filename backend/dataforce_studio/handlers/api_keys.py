@@ -65,3 +65,7 @@ class APIKeyHandler:
             raise APIKeyNotFoundError()
 
         await self.__api_key_repository.delete_api_key_by_user_id(user_id)
+
+    async def regenerate_user_api_key(self, user_id: int) -> APIKeyCreateOut:
+        await self.delete_user_api_key(user_id)
+        return await self.create_user_api_key(user_id)

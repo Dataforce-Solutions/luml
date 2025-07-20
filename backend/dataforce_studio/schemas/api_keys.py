@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from pydantic import BaseModel
 
 from dataforce_studio.schemas.base import BaseOrmConfig
@@ -10,13 +12,16 @@ class APIKeyCreate(BaseModel):
 
 
 class APIKeyOut(BaseModel, BaseOrmConfig):
-    id: int
     user_id: int
+    created_at: datetime
+    updated_at: datetime | None = None
 
 
 class APIKeyCreateOut(APIKeyOut):
-    key: str
+    key: str | None = None
 
 
 class APIKeyAuthOut(APIKeyOut):
     user: UserOut
+    created_at: datetime
+    updated_at: datetime | None = None

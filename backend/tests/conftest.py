@@ -23,8 +23,6 @@ from dataforce_studio.schemas.organization import (
     OrganizationMember,
     OrganizationMemberCreate,
     OrgRole,
-    OrganizationMemberCreate,
-    OrganizationCreateIn,
 )
 from dataforce_studio.schemas.user import AuthProvider, CreateUser
 from dataforce_studio.settings import config

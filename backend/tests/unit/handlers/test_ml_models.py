@@ -5,7 +5,7 @@ from unittest.mock import AsyncMock, patch
 import pytest
 
 from dataforce_studio.handlers.ml_models import MLModelHandler
-from dataforce_studio.infra.exceptions import NotFoundError, ApplicationError
+from dataforce_studio.infra.exceptions import ApplicationError, NotFoundError
 from dataforce_studio.schemas.ml_models import (
     Manifest,
     MLModel,

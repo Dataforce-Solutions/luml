@@ -26,3 +26,8 @@ async def get_user_api_key(request: Request) -> APIKeyOut | None:
 @api_keys_router.delete("", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_user_api_key(request: Request) -> None:
     return await api_keys_handler.delete_user_api_key(request.user.id)
+
+
+@api_keys_router.post("/regenerate", response_model=APIKeyCreateOut)
+async def regenerate_user_api_key(request: Request) -> APIKeyCreateOut:
+    return await api_keys_handler.create_user_api_key(request.user.id)
