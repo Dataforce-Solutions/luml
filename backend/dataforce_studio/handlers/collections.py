@@ -1,5 +1,3 @@
-from fastapi import status
-
 from dataforce_studio.handlers.permissions import PermissionsHandler
 from dataforce_studio.infra.db import engine
 from dataforce_studio.infra.exceptions import CollectionDeleteError, NotFoundError
@@ -118,7 +116,5 @@ class CollectionHandler:
             collection_id
         )
         if models_count:
-            raise CollectionDeleteError(
-                "Collection has models and cant be deleted"
-            )
+            raise CollectionDeleteError("Collection has models and cant be deleted")
         await self.__repository.delete_collection(collection_id)

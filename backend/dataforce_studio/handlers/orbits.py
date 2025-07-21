@@ -4,10 +4,15 @@ from dataforce_studio.handlers.emails import EmailHandler
 from dataforce_studio.handlers.permissions import PermissionsHandler
 from dataforce_studio.infra.db import engine
 from dataforce_studio.infra.exceptions import (
-    ApplicationError,
+    DatabaseConstraintError,
     NotFoundError,
-    OrganizationLimitReachedError, DatabaseConstraintError, OrbitError, OrbitMemberAlreadyExistsError,
-    OrbitMemberNotAllowedError, OrbitAccessDeniedError, OrbitMemberNotFoundError, OrbitNotFoundError,
+    OrbitAccessDeniedError,
+    OrbitError,
+    OrbitMemberAlreadyExistsError,
+    OrbitMemberNotAllowedError,
+    OrbitMemberNotFoundError,
+    OrbitNotFoundError,
+    OrganizationLimitReachedError,
 )
 from dataforce_studio.repositories.bucket_secrets import BucketSecretRepository
 from dataforce_studio.repositories.orbits import OrbitRepository
@@ -86,7 +91,9 @@ class OrbitHandler:
         user_ids = [m.user_id for m in members]
 
         if len(user_ids) != len(set(user_ids)):
-            raise OrbitMemberNotAllowedError("Orbit members should contain only unique values.")
+            raise OrbitMemberNotAllowedError(
+                "Orbit members should contain only unique values."
+            )
 
         if user_id in user_ids:
             raise OrbitMemberNotAllowedError("You can not add yourself to orbit.")
@@ -126,8 +133,8 @@ class OrbitHandler:
             organization_id, orbit
         )
 
-        # if not created_orbit:
-        #     raise ApplicationError("Some errors occurred when creating the orbit.")
+        if not created_orbit:
+            raise OrbitError("Some errors occurred when creating the orbit.")
 
         created_orbit.permissions = (
             self.__permissions_handler.get_orbit_permissions_by_role(org_role, None)

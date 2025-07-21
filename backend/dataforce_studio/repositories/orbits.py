@@ -1,4 +1,5 @@
 from sqlalchemy import case, select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import selectinload
 
 from dataforce_studio.infra.exceptions import DatabaseConstraintError
@@ -16,7 +17,6 @@ from dataforce_studio.schemas.orbit import (
     UpdateOrbitMember,
 )
 from dataforce_studio.utils.organizations import convert_orbit_simple_members
-from sqlalchemy.exc import IntegrityError
 
 
 class OrbitRepository(RepositoryBase, CrudMixin):

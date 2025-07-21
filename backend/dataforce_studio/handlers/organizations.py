@@ -191,7 +191,9 @@ class OrganizationHandler:
         )
 
         if member:
-            raise OrganizationMemberAlreadyExistsError("Already a member of the organization")
+            raise OrganizationMemberAlreadyExistsError(
+                "Already a member of the organization"
+            )
 
         existing_invite = (
             await self.__invites_repository.get_organization_invite_by_email(
@@ -314,7 +316,9 @@ class OrganizationHandler:
             raise InsufficientPermissionsError("You can not update your own data.")
 
         if user_role != OrgRole.OWNER and member.role == OrgRole.ADMIN:
-            raise InsufficientPermissionsError("Only Organization Owner can assign new admins.")
+            raise InsufficientPermissionsError(
+                "Only Organization Owner can assign new admins."
+            )
 
         return await self.__user_repository.update_organization_member(
             member_id, member
@@ -338,7 +342,9 @@ class OrganizationHandler:
             raise OrganizationMemberNotFoundError()
 
         if user_id == member_to_delete.user.id:
-            raise InsufficientPermissionsError("You can not remove yourself from organization.")
+            raise InsufficientPermissionsError(
+                "You can not remove yourself from organization."
+            )
 
         if member_to_delete and member_to_delete.role == OrgRole.OWNER:
             raise InsufficientPermissionsError("Organization Owner can not be removed.")
@@ -356,7 +362,9 @@ class OrganizationHandler:
         )
 
         if user_role != OrgRole.OWNER and member.role == OrgRole.ADMIN:
-            raise InsufficientPermissionsError("Only Organization Owner can add new admins.")
+            raise InsufficientPermissionsError(
+                "Only Organization Owner can add new admins."
+            )
         try:
             created_member = await self.__user_repository.create_organization_member(
                 member

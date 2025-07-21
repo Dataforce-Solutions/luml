@@ -9,9 +9,6 @@ from dataforce_studio.schemas.bucket_secrets import (
     BucketSecretUpdate,
 )
 
-
-
-
 bucket_secrets_router = APIRouter(
     prefix="/{organization_id}/bucket-secrets",
     dependencies=[Depends(UserAuthentication(["jwt", "api_key"]))],

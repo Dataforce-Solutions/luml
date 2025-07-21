@@ -1,4 +1,5 @@
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 
 from dataforce_studio.infra.encryption import encrypt
 from dataforce_studio.infra.exceptions import DatabaseConstraintError
@@ -9,8 +10,6 @@ from dataforce_studio.schemas.bucket_secrets import (
     BucketSecretCreate,
     BucketSecretUpdate,
 )
-from sqlalchemy.exc import IntegrityError
-
 
 
 class BucketSecretRepository(RepositoryBase, CrudMixin):

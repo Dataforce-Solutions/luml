@@ -18,7 +18,6 @@ from dataforce_studio.schemas.user import (
 )
 from dataforce_studio.settings import config
 
-
 is_user_authenticated = UserAuthentication(["jwt"])
 
 auth_router = APIRouter(prefix="/auth", tags=["auth"])

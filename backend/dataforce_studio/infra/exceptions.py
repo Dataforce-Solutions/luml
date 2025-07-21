@@ -98,7 +98,9 @@ class APIKeyNotFoundError(ApplicationError):
 
 
 class OrbitError(ApplicationError):
-    def __init__(self, message: str = "Orbit Error", status_code: int = status.HTTP_409_CONFLICT) -> None:
+    def __init__(
+        self, message: str = "Orbit Error", status_code: int = status.HTTP_409_CONFLICT
+    ) -> None:
         super().__init__(message, status_code)
 
 
@@ -108,7 +110,9 @@ class OrbitMemberNotAllowedError(ApplicationError):
 
 
 class OrbitMemberAlreadyExistsError(ApplicationError):
-    def __init__(self, message: str = "Member for this this user already exist.") -> None:
+    def __init__(
+        self, message: str = "Member for this this user already exist."
+    ) -> None:
         super().__init__(message, status.HTTP_409_CONFLICT)
 
 
@@ -134,9 +138,9 @@ class InvalidStatusTransitionError(ApplicationError):
 
 class RepositoryError(Exception):
     def __init__(
-        self, 
-        message: str = "Repository error", 
-        status_code: int = status.HTTP_400_BAD_REQUEST
+        self,
+        message: str = "Repository error",
+        status_code: int = status.HTTP_400_BAD_REQUEST,
     ) -> None:
         self.message = message
         self.status_code = status_code
@@ -144,7 +148,11 @@ class RepositoryError(Exception):
 
 
 class DatabaseConstraintError(RepositoryError):
-    def __init__(self, message: str = "Database Constraint Error.", status_code: int = status.HTTP_409_CONFLICT) -> None:
+    def __init__(
+        self,
+        message: str = "Database Constraint Error.",
+        status_code: int = status.HTTP_409_CONFLICT,
+    ) -> None:
         super().__init__(message, status_code)
 
 

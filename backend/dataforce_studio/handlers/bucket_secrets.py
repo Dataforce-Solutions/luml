@@ -1,6 +1,10 @@
 from dataforce_studio.handlers.permissions import PermissionsHandler
 from dataforce_studio.infra.db import engine
-from dataforce_studio.infra.exceptions import BucketSecretInUseError, NotFoundError, DatabaseConstraintError
+from dataforce_studio.infra.exceptions import (
+    BucketSecretInUseError,
+    DatabaseConstraintError,
+    NotFoundError,
+)
 from dataforce_studio.repositories.bucket_secrets import BucketSecretRepository
 from dataforce_studio.schemas.bucket_secrets import (
     BucketSecretCreate,

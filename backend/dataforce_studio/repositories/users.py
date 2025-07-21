@@ -1,5 +1,6 @@
 from pydantic import EmailStr
 from sqlalchemy import case, func, select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import joinedload, selectinload
 
 from dataforce_studio.infra.exceptions import DatabaseConstraintError
@@ -34,7 +35,6 @@ from dataforce_studio.utils.organizations import (
     generate_organization_name,
     get_members_roles_count,
 )
-from sqlalchemy.exc import IntegrityError
 
 
 class UserRepository(RepositoryBase, CrudMixin):
@@ -162,7 +162,9 @@ class UserRepository(RepositoryBase, CrudMixin):
     ) -> OrganizationMember:
         async with self._get_session() as session:
             try:
-                db_member = await self.create_model(session, OrganizationMemberOrm, member)
+                db_member = await self.create_model(
+                    session, OrganizationMemberOrm, member
+                )
             except IntegrityError as error:
                 raise DatabaseConstraintError() from error
             return db_member.to_organization_member()
