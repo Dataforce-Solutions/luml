@@ -1,6 +1,6 @@
 import random
 from datetime import datetime
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, patch, ANY
 
 import pytest
 
@@ -74,12 +74,17 @@ manifest_example_obj = Manifest(
     new_callable=AsyncMock,
 )
 @patch(
+    "dataforce_studio.handlers.ml_models.MLModelHandler._get_secret_or_raise",
+    new_callable=AsyncMock,
+)
+@patch(
     "dataforce_studio.handlers.ml_models.S3Service.get_presigned_url",
     new_callable=AsyncMock,
 )
 @pytest.mark.asyncio
 async def test_create_ml_model_with_tags(
     mock_get_presigned: AsyncMock,
+    mock_get_secret_or_raise: AsyncMock,
     mock_create_model: AsyncMock,
     mock_get_collection: AsyncMock,
     mock_get_orbit_simple: AsyncMock,
@@ -105,10 +110,12 @@ async def test_create_ml_model_with_tags(
         unique_identifier="uid",
         tags=["tag"],
         status=MLModelStatus.PENDING_UPLOAD,
-        created_at=datetime.utcnow(),
+        created_at=datetime.now(),
         updated_at=None,
     )
 
+    mock_secret = type("obj", (), {"id": 1, "name": "test_secret"})
+    
     mock_create_model.return_value = model
     mock_get_orbit_simple.return_value = type(
         "obj",
@@ -116,6 +123,7 @@ async def test_create_ml_model_with_tags(
         {"bucket_secret_id": 1, "organization_id": organization_id},
     )
     mock_get_collection.return_value = type("obj", (), {"orbit_id": orbit_id})
+    mock_get_secret_or_raise.return_value = mock_secret
     mock_get_presigned.return_value = "url"
     mock_get_org_role.return_value = OrgRole.OWNER
     mock_get_orbit_role.return_value = OrbitRole.MEMBER
@@ -140,7 +148,8 @@ async def test_create_ml_model_with_tags(
     assert result_model == model
     assert url == "url"
     mock_create_model.assert_awaited_once()
-    mock_get_presigned.assert_awaited_once()
+    mock_get_secret_or_raise.assert_awaited_once_with(1)
+    mock_get_presigned.assert_awaited_once_with(mock_secret, ANY)
 
 
 @patch(
@@ -164,12 +173,17 @@ async def test_create_ml_model_with_tags(
     new_callable=AsyncMock,
 )
 @patch(
+    "dataforce_studio.handlers.ml_models.MLModelHandler._get_secret_or_raise",
+    new_callable=AsyncMock,
+)
+@patch(
     "dataforce_studio.handlers.ml_models.S3Service.get_download_url",
     new_callable=AsyncMock,
 )
 @pytest.mark.asyncio
 async def test_get_ml_model(
     mock_get_download_url: AsyncMock,
+    mock_get_secret_or_raise: AsyncMock,
     mock_get_model: AsyncMock,
     mock_get_collection: AsyncMock,
     mock_get_orbit_simple: AsyncMock,
@@ -195,10 +209,12 @@ async def test_get_ml_model(
         size=1,
         unique_identifier="uid",
         status=MLModelStatus.UPLOADED,
-        created_at=datetime.utcnow(),
+        created_at=datetime.now(),
         updated_at=None,
     )
 
+    mock_secret = type("obj", (), {"id": 1, "name": "test_secret"})
+    
     mock_get_model.return_value = model
     mock_get_orbit_simple.return_value = type("obj", (), {"bucket_secret_id": 1})
     mock_get_orbit_simple.return_value = type(
@@ -207,6 +223,7 @@ async def test_get_ml_model(
         {"bucket_secret_id": 1, "organization_id": organization_id},
     )
     mock_get_collection.return_value = type("obj", (), {"orbit_id": orbit_id})
+    mock_get_secret_or_raise.return_value = mock_secret
     mock_get_download_url.return_value = "url"
     mock_get_org_role.return_value = OrgRole.OWNER
     mock_get_orbit_role.return_value = OrbitRole.MEMBER
@@ -219,7 +236,8 @@ async def test_get_ml_model(
     assert url == "url"
     mock_get_model.assert_awaited_once_with(model_id, collection_id)
     mock_get_orbit_simple.assert_awaited_once_with(orbit_id, organization_id)
-    mock_get_download_url.assert_awaited_once_with(1, model.bucket_location)
+    mock_get_secret_or_raise.assert_awaited_once_with(1)
+    mock_get_download_url.assert_awaited_once_with(mock_secret, model.bucket_location)
 
 
 @patch(
@@ -303,12 +321,17 @@ async def test_get_ml_model_not_found(
     new_callable=AsyncMock,
 )
 @patch(
+    "dataforce_studio.handlers.ml_models.MLModelHandler._get_secret_or_raise",
+    new_callable=AsyncMock,
+)
+@patch(
     "dataforce_studio.handlers.ml_models.S3Service.get_download_url",
     new_callable=AsyncMock,
 )
 @pytest.mark.asyncio
 async def test_request_download_url(
     mock_get_download_url: AsyncMock,
+    mock_get_secret_or_raise: AsyncMock,
     mock_get_model: AsyncMock,
     mock_get_orbit_simple: AsyncMock,
     mock_get_orbit_role: AsyncMock,
@@ -334,10 +357,12 @@ async def test_request_download_url(
         size=1,
         unique_identifier="uid",
         status=MLModelStatus.UPLOADED,
-        created_at=datetime.utcnow(),
+        created_at=datetime.now(),
         updated_at=None,
     )
 
+    mock_secret = type("obj", (), {"id": 1, "name": "test_secret"})
+    
     mock_get_model.return_value = model
     mock_get_orbit_simple.return_value = type(
         "obj",
@@ -349,6 +374,7 @@ async def test_request_download_url(
         (),
         {"id": collection_id, "orbit_id": orbit_id},
     )
+    mock_get_secret_or_raise.return_value = mock_secret
     mock_get_download_url.return_value = "url"
     mock_get_org_role.return_value = OrgRole.OWNER
     mock_get_orbit_role.return_value = OrbitRole.MEMBER
@@ -358,7 +384,8 @@ async def test_request_download_url(
     )
 
     assert url == "url"
-    mock_get_download_url.assert_awaited_once_with(1, model.bucket_location)
+    mock_get_secret_or_raise.assert_awaited_once_with(1)
+    mock_get_download_url.assert_awaited_once_with(mock_secret, model.bucket_location)
 
 
 @patch(
@@ -386,12 +413,17 @@ async def test_request_download_url(
     new_callable=AsyncMock,
 )
 @patch(
+    "dataforce_studio.handlers.ml_models.MLModelHandler._get_secret_or_raise",
+    new_callable=AsyncMock,
+)
+@patch(
     "dataforce_studio.handlers.ml_models.S3Service.get_delete_url",
     new_callable=AsyncMock,
 )
 @pytest.mark.asyncio
 async def test_request_delete_url(
     mock_get_delete_url: AsyncMock,
+    mock_get_secret_or_raise: AsyncMock,
     mock_update_status: AsyncMock,
     mock_get_model: AsyncMock,
     mock_get_orbit_simple: AsyncMock,
@@ -418,10 +450,12 @@ async def test_request_delete_url(
         size=1,
         unique_identifier="uid",
         status=MLModelStatus.UPLOADED,
-        created_at=datetime.utcnow(),
+        created_at=datetime.now(),
         updated_at=None,
     )
 
+    mock_secret = type("obj", (), {"id": 1, "name": "test_secret"})
+    
     mock_get_model.return_value = model
     mock_get_orbit_simple.return_value = type(
         "obj",
@@ -433,6 +467,7 @@ async def test_request_delete_url(
         (),
         {"id": collection_id, "orbit_id": orbit_id},
     )
+    mock_get_secret_or_raise.return_value = mock_secret
     mock_get_delete_url.return_value = "url"
     mock_get_org_role.return_value = OrgRole.OWNER
     mock_get_orbit_role.return_value = OrbitRole.MEMBER
@@ -445,7 +480,8 @@ async def test_request_delete_url(
     mock_update_status.assert_awaited_once_with(
         model_id, MLModelStatus.PENDING_DELETION
     )
-    mock_get_delete_url.assert_awaited_once_with(1, model.bucket_location)
+    mock_get_secret_or_raise.assert_awaited_once_with(1)
+    mock_get_delete_url.assert_awaited_once_with(mock_secret, model.bucket_location)
 
 
 @patch(
@@ -500,7 +536,7 @@ async def test_confirm_deletion_pending(
         size=1,
         unique_identifier="uid",
         status=MLModelStatus.PENDING_DELETION,
-        created_at=datetime.utcnow(),
+        created_at=datetime.now(),
         updated_at=None,
     )
 
@@ -578,7 +614,7 @@ async def test_confirm_deletion_not_pending(
         size=1,
         unique_identifier="uid",
         status=MLModelStatus.UPLOADED,
-        created_at=datetime.utcnow(),
+        created_at=datetime.now(),
         updated_at=None,
     )
 
@@ -660,7 +696,7 @@ async def test_update_model(
         size=1,
         unique_identifier="uid",
         status=MLModelStatus.UPLOADED,
-        created_at=datetime.utcnow(),
+        created_at=datetime.now(),
         updated_at=None,
     )
 
@@ -681,7 +717,7 @@ async def test_update_model(
         unique_identifier="uid",
         tags=tags,
         status=MLModelStatus.UPLOADED,
-        created_at=datetime.utcnow(),
+        created_at=datetime.now(),
         updated_at=None,
     )
 

@@ -7,6 +7,7 @@ from dataforce_studio.infra.exceptions import (
 )
 from dataforce_studio.repositories.bucket_secrets import BucketSecretRepository
 from dataforce_studio.schemas.bucket_secrets import (
+    BucketSecret,
     BucketSecretCreate,
     BucketSecretCreateIn,
     BucketSecretOut,
@@ -21,6 +22,24 @@ class BucketSecretHandler:
     __secret_repository = BucketSecretRepository(engine)
     __permissions_handler = PermissionsHandler()
     __s3_service = S3Service()
+
+    async def _get_secret_or_raise(self, secret_id: int) -> BucketSecret:
+        secret = await self.__secret_repository.get_bucket_secret(secret_id)
+        if not secret:
+            raise NotFoundError("Bucket secret not found")
+        return secret
+
+    async def _get_presigned_url(self, secret_id: int, object_name: str) -> str:
+        secret = await self._get_secret_or_raise(secret_id)
+        return await self.__s3_service.get_presigned_url(secret, object_name)
+
+    async def _get_download_url(self, secret_id: int, object_name: str) -> str:
+        secret = await self._get_secret_or_raise(secret_id)
+        return await self.__s3_service.get_download_url(secret, object_name)
+
+    async def _get_delete_url(self, secret_id: int, object_name: str) -> str:
+        secret = await self._get_secret_or_raise(secret_id)
+        return await self.__s3_service.get_delete_url(secret, object_name)
 
     async def create_bucket_secret(
         self, user_id: int, organization_id: int, secret: BucketSecretCreateIn
@@ -93,11 +112,7 @@ class BucketSecretHandler:
         object_name = "test_file"
 
         return BucketSecretUrls(
-            presigned_url=await self.__s3_service.get_presigned_url(
-                secret_id, object_name
-            ),
-            download_url=await self.__s3_service.get_download_url(
-                secret_id, object_name
-            ),
-            delete_url=await self.__s3_service.get_delete_url(secret_id, object_name),
+            presigned_url=await self._get_presigned_url(secret_id, object_name),
+            download_url=await self._get_download_url(secret_id, object_name),
+            delete_url=await self._get_delete_url(secret_id, object_name),
         )
