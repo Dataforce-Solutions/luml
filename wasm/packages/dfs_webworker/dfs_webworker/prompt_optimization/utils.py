@@ -35,13 +35,16 @@ def convert_js_field(js_field: JSField) -> NativeField:
 
 def init_llm(provider: Provider) -> LLM:
     if provider.provider_id == "openAi":
+        if not provider.provider_settings.api_key:
+            raise ValueError("API key is required for OpenAI provider")
         return OpenAIProvider(
             api_key=provider.provider_settings.api_key,
             model=provider.model_id,
         )
     if provider.provider_id == "ollama":
+        base_url = provider.provider_settings.api_base or 'http://localhost:11434'
         return OllamaProvider(
-            base_url=getattr(provider.provider_settings, 'base_url', 'http://localhost:11434'),
+            base_url=base_url,
             model=provider.model_id,
         )
 
