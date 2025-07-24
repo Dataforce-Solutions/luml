@@ -6,12 +6,13 @@ import pytest
 
 from dataforce_studio.handlers.orbits import OrbitHandler
 from dataforce_studio.infra.exceptions import (
-    NotFoundError, OrbitMemberNotFoundError, OrbitNotFoundError,
+    NotFoundError,
+    OrbitMemberNotFoundError,
+    OrbitNotFoundError,
 )
 from dataforce_studio.models import OrganizationMemberOrm
 from dataforce_studio.schemas.orbit import (
     Orbit,
-    OrbitCreate,
     OrbitCreateIn,
     OrbitDetails,
     OrbitMember,
@@ -580,7 +581,9 @@ async def test_update_orbit_member_not_found(
     mock_get_organization_member_role.return_value = OrgRole.OWNER
     mock_get_orbit_member_role.return_value = OrgRole.ADMIN
 
-    with pytest.raises(OrbitMemberNotFoundError, match="Orbit member not found") as error:
+    with pytest.raises(
+        OrbitMemberNotFoundError, match="Orbit member not found"
+    ) as error:
         await handler.update_orbit_member(
             user_id, organization_id, orbit_id, update_member
         )

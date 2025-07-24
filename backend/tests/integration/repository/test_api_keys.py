@@ -1,17 +1,13 @@
+import uuid
+
 import pytest
 from sqlalchemy.ext.asyncio import create_async_engine
 
-from dataforce_studio.repositories.api_keys import APIKeyRepository
 from dataforce_studio.repositories.users import UserRepository
-from dataforce_studio.schemas.api_keys import (
-    APIKeyAuthOut,
-    APIKeyCreate,
-    APIKeyCreateOut,
-    APIKeyOut,
-)
 from dataforce_studio.schemas.user import (
     AuthProvider,
     CreateUser,
+    UpdateUserAPIKey,
 )
 
 
@@ -21,10 +17,9 @@ async def test_create_user_api_key(
 ) -> None:
     engine = create_async_engine(create_database_and_apply_migrations)
     user_repo = UserRepository(engine)
-    api_keys_repo = APIKeyRepository(engine)
 
     user = CreateUser(
-        email="test_create_user_api_key@email.com",
+        email=f"test_create_user_api_key_{uuid.uuid4()}@email.com",
         full_name="Test User",
         disabled=False,
         email_verified=True,
@@ -35,25 +30,22 @@ async def test_create_user_api_key(
 
     created_user = await user_repo.create_user(user)
 
-    api_key = APIKeyCreate(user_id=created_user.id, hash="api_key_hash")
-    created_api_key = await api_keys_repo.create_api_key(api_key)
+    api_key_update = UpdateUserAPIKey(id=created_user.id, hashed_api_key="api_key_hash")
+    result = await user_repo.create_user_api_key(api_key_update)
 
     assert created_user
-    assert created_api_key
-    assert isinstance(created_api_key, APIKeyCreateOut)
-    assert created_api_key.user_id == api_key.user_id
+    assert result is True
 
 
 @pytest.mark.asyncio
-async def test_get_api_key_by_user_id(
+async def test_get_user_by_api_key_hash(
     create_database_and_apply_migrations: str,
 ) -> None:
     engine = create_async_engine(create_database_and_apply_migrations)
     user_repo = UserRepository(engine)
-    api_keys_repo = APIKeyRepository(engine)
 
     user = CreateUser(
-        email="test_get_api_key_by_user_id@email.com",
+        email=f"test_get_user_{uuid.uuid4()}@email.com",
         full_name="Test User",
         disabled=False,
         email_verified=True,
@@ -64,46 +56,15 @@ async def test_get_api_key_by_user_id(
 
     created_user = await user_repo.create_user(user)
 
-    api_key = APIKeyCreate(user_id=created_user.id, hash="api_key_hash")
+    api_key_hash = f"test_api_key_hash_{uuid.uuid4()}"
+    api_key_update = UpdateUserAPIKey(id=created_user.id, hashed_api_key=api_key_hash)
+    await user_repo.create_user_api_key(api_key_update)
 
-    await api_keys_repo.create_api_key(api_key)
-    fetched_api_key = await api_keys_repo.get_api_key_by_user_id(created_user.id)
+    fetched_user = await user_repo.get_user_by_api_key_hash(api_key_hash)
 
-    assert fetched_api_key
-    assert isinstance(fetched_api_key, APIKeyOut)
-    assert fetched_api_key.user_id == created_user.id
-
-
-@pytest.mark.asyncio
-async def test_get_api_key_by_hash(
-    create_database_and_apply_migrations: str,
-) -> None:
-    engine = create_async_engine(create_database_and_apply_migrations)
-    user_repo = UserRepository(engine)
-    api_keys_repo = APIKeyRepository(engine)
-
-    user = CreateUser(
-        email="get_api_key_by_hash@email.com",
-        full_name="Test User",
-        disabled=False,
-        email_verified=True,
-        auth_method=AuthProvider.EMAIL,
-        photo=None,
-        hashed_password="hashed_password",
-    )
-
-    created_user = await user_repo.create_user(user)
-
-    api_key = APIKeyCreate(
-        user_id=created_user.id, hash="api_key_hash_test_get_api_key_by_hash"
-    )
-
-    await api_keys_repo.create_api_key(api_key)
-    fetched_api_key = await api_keys_repo.get_api_key_by_hash(api_key.hash)
-
-    assert fetched_api_key
-    assert isinstance(fetched_api_key, APIKeyAuthOut)
-    assert fetched_api_key.user
+    assert fetched_user
+    assert fetched_user.id == created_user.id
+    assert fetched_user.has_api_key is True
 
 
 @pytest.mark.asyncio
@@ -112,10 +73,9 @@ async def test_delete_api_key_by_user_id(
 ) -> None:
     engine = create_async_engine(create_database_and_apply_migrations)
     user_repo = UserRepository(engine)
-    api_keys_repo = APIKeyRepository(engine)
 
     user = CreateUser(
-        email="test_delete_api_key_by_user_id@email.com",
+        email=f"test_delete_api_key{uuid.uuid4()}@email.com",
         full_name="Test User",
         disabled=False,
         email_verified=True,
@@ -125,14 +85,18 @@ async def test_delete_api_key_by_user_id(
     )
 
     created_user = await user_repo.create_user(user)
+    key_hash = f"api_key_hash_{uuid.uuid4()}"
 
-    api_key = APIKeyCreate(user_id=created_user.id, hash="api_key_hash")
+    api_key_update = UpdateUserAPIKey(id=created_user.id, hashed_api_key=key_hash)
+    await user_repo.create_user_api_key(api_key_update)
 
-    created_api_key = await api_keys_repo.create_api_key(api_key)
+    user_with_key = await user_repo.get_public_user_by_id(created_user.id)
+    assert user_with_key.has_api_key is True
 
-    await api_keys_repo.delete_api_key_by_user_id(created_user.id)
-    fetched_api_key = await api_keys_repo.get_api_key_by_user_id(
-        created_api_key.user_id
-    )
+    await user_repo.delete_api_key_by_user_id(created_user.id)
 
-    assert fetched_api_key is None
+    user_without_key = await user_repo.get_public_user_by_id(created_user.id)
+    assert user_without_key.has_api_key is False
+
+    fetched_user = await user_repo.get_user_by_api_key_hash(key_hash)
+    assert fetched_user is None

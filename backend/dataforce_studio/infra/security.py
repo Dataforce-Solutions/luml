@@ -55,10 +55,6 @@ class JWTAuthenticationBackend(AuthenticationBackend):
         conn: HTTPConnection,
     ) -> tuple[AuthCredentials, AuthUser] | None:
         authorization: str | None = conn.headers.get("Authorization")
-        api_key: str | None = conn.headers.get("X-API-Key")
-
-        if not authorization and not api_key:
-            return None
 
         if authorization:
             try:
@@ -72,8 +68,5 @@ class JWTAuthenticationBackend(AuthenticationBackend):
 
             except ValueError:
                 return None
-
-        if api_key and api_key.startswith("dfs_"):
-            return await self._authenticate_with_api_key(api_key)
 
         return None

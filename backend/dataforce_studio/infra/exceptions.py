@@ -88,7 +88,7 @@ class BucketSecretInUseError(ApplicationError):
 
 
 class UserAPIKeyCreateError(ApplicationError):
-    def __init__(self, message: str = "User can have only one api key") -> None:
+    def __init__(self, message: str = "Error creating api key for user") -> None:
         super().__init__(message, status.HTTP_409_CONFLICT)
 
 

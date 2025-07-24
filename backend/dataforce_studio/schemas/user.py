@@ -35,6 +35,7 @@ class UserOut(BaseModel, BaseOrmConfig):
     full_name: str | None = None
     disabled: bool | None = None
     photo: str | None = None
+    has_api_key: bool = False
 
 
 class CreateUserIn(BaseModel):
@@ -111,3 +112,12 @@ class UpdateUser(UpdateUserIn):
     email: EmailStr
     email_verified: bool | None = None
     hashed_password: str | None = None
+
+
+class UpdateUserAPIKey(BaseModel):
+    id: int
+    hashed_api_key: str | None = None
+
+
+class APIKeyCreateOut(BaseModel, BaseOrmConfig):
+    key: str | None = None
