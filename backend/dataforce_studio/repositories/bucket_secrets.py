@@ -1,6 +1,8 @@
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 
 from dataforce_studio.infra.encryption import encrypt
+from dataforce_studio.infra.exceptions import DatabaseConstraintError
 from dataforce_studio.models import BucketSecretOrm
 from dataforce_studio.repositories.base import CrudMixin, RepositoryBase
 from dataforce_studio.schemas.bucket_secrets import (
@@ -60,4 +62,7 @@ class BucketSecretRepository(RepositoryBase, CrudMixin):
 
     async def delete_bucket_secret(self, secret_id: int) -> None:
         async with self._get_session() as session:
-            return await self.delete_model(session, BucketSecretOrm, secret_id)
+            try:
+                return await self.delete_model(session, BucketSecretOrm, secret_id)
+            except IntegrityError as e:
+                raise DatabaseConstraintError() from e

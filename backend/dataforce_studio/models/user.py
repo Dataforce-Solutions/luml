@@ -1,6 +1,6 @@
 from pydantic import EmailStr, HttpUrl
-from sqlalchemy import Boolean, Integer, String
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy import Boolean, Integer, String, case
+from sqlalchemy.orm import Mapped, column_property, mapped_column, relationship
 
 from dataforce_studio.models.base import Base, TimestampMixin
 from dataforce_studio.schemas.user import CreateUser, User, UserOut
@@ -17,6 +17,7 @@ class UserOrm(TimestampMixin, Base):
     auth_method: Mapped[str] = mapped_column(String, nullable=False)
     photo: Mapped[HttpUrl | None] = mapped_column(String, nullable=True)
     hashed_password: Mapped[str | None] = mapped_column(String, nullable=True)
+    hashed_api_key: Mapped[str] = mapped_column(String, nullable=True)
 
     memberships: Mapped[list["OrganizationMemberOrm"]] = relationship(  # type: ignore[name-defined]  # noqa: F821
         "OrganizationMemberOrm",
@@ -30,6 +31,10 @@ class UserOrm(TimestampMixin, Base):
         back_populates="user",
         lazy="selectin",
         cascade="all, delete-orphan",
+    )
+
+    has_api_key = column_property(
+        case((hashed_api_key.is_not(None), True), else_=False)
     )
 
     def __repr__(self) -> str:

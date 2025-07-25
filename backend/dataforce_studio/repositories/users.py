@@ -1,7 +1,9 @@
 from pydantic import EmailStr
 from sqlalchemy import case, func, select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import joinedload, selectinload
 
+from dataforce_studio.infra.exceptions import DatabaseConstraintError
 from dataforce_studio.models.organization import (
     OrganizationMemberOrm,
     OrganizationOrm,
@@ -26,6 +28,7 @@ from dataforce_studio.schemas.stats import StatsEmailSendCreate, StatsEmailSendO
 from dataforce_studio.schemas.user import (
     CreateUser,
     UpdateUser,
+    UpdateUserAPIKey,
     User,
     UserOut,
 )
@@ -159,7 +162,12 @@ class UserRepository(RepositoryBase, CrudMixin):
         self, member: OrganizationMemberCreate
     ) -> OrganizationMember:
         async with self._get_session() as session:
-            db_member = await self.create_model(session, OrganizationMemberOrm, member)
+            try:
+                db_member = await self.create_model(
+                    session, OrganizationMemberOrm, member
+                )
+            except IntegrityError as error:
+                raise DatabaseConstraintError() from error
             return db_member.to_organization_member()
 
     async def create_owner(
@@ -361,3 +369,21 @@ class UserRepository(RepositoryBase, CrudMixin):
         async with self._get_session() as session:
             db_email_send = await self.create_model(session, StatsEmailSendOrm, stat)
             return db_email_send.to_email_send()
+
+    async def create_user_api_key(self, user: UpdateUserAPIKey) -> bool:
+        async with self._get_session() as session:
+            db_user = await self.update_model(session, UserOrm, user)
+            return bool(db_user and db_user.hashed_api_key)
+
+    async def get_user_by_api_key_hash(self, key_hash: str) -> UserOut | None:
+        async with self._get_session() as session:
+            db_user = await self.get_model_where(
+                session, UserOrm, UserOrm.hashed_api_key == key_hash
+            )
+            return db_user.to_public_user() if db_user else None
+
+    async def delete_api_key_by_user_id(self, user_id: int) -> None:
+        async with self._get_session() as session:
+            await self.update_model(
+                session, UserOrm, UpdateUserAPIKey(id=user_id, hashed_api_key=None)
+            )

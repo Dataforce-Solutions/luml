@@ -1,6 +1,8 @@
 from sqlalchemy import case, select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import selectinload
 
+from dataforce_studio.infra.exceptions import DatabaseConstraintError
 from dataforce_studio.models import OrbitMembersOrm, OrbitOrm
 from dataforce_studio.repositories.base import CrudMixin, RepositoryBase
 from dataforce_studio.schemas.orbit import (
@@ -155,7 +157,10 @@ class OrbitRepository(RepositoryBase, CrudMixin):
 
     async def create_orbit_member(self, member: OrbitMemberCreate) -> OrbitMember:
         async with self._get_session() as session:
-            db_member = await self.create_model(session, OrbitMembersOrm, member)
+            try:
+                db_member = await self.create_model(session, OrbitMembersOrm, member)
+            except IntegrityError as error:
+                raise DatabaseConstraintError() from error
             return db_member.to_orbit_member()
 
     async def create_orbit_members(

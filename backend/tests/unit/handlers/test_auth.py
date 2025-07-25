@@ -14,12 +14,12 @@ from dataforce_studio.schemas.user import (
     AuthProvider,
     CreateUser,
     CreateUserIn,
+    SignInResponse,
+    SignInUser,
     UpdateUser,
     UpdateUserIn,
     User,
     UserOut,
-    SignInUser,
-    SignInResponse,
 )
 
 secret_key = "test"
