@@ -1,18 +1,23 @@
 import builtins
+from typing import TYPE_CHECKING
 
-from .._resource import AsyncAPIResource, SyncAPIResource
 from .._types import Collection, CollectionType
 
+if TYPE_CHECKING:
+    from .._client import AsyncDataForceClient, DataForceClient
 
-class CollectionResource(SyncAPIResource):
+class CollectionResource:
+    def __init__(self, client: "DataForceClient") -> None:
+        self._client = client
+
     def list(self, organization_id: int, orbit_id: int) -> list[Collection]:
-        response = self._get(
+        response = self._client.get(
             f"/organizations/{organization_id}/orbits/{orbit_id}/collections"
         )
         if response is None:
             return []
 
-        return [Collection(**collection) for collection in response]
+        return [Collection.model_validate(collection) for collection in response]
 
     def create(
         self,
@@ -23,7 +28,7 @@ class CollectionResource(SyncAPIResource):
         collection_type: CollectionType,
         tags: builtins.list[str] | None = None,
     ) -> Collection:
-        response = self._post(
+        response = self._client.post(
             f"/organizations/{organization_id}/orbits/{orbit_id}/collections",
             json={
                 "description": description,
@@ -32,7 +37,7 @@ class CollectionResource(SyncAPIResource):
                 "tags": tags,
             },
         )
-        return Collection(**response)
+        return Collection.model_validate(response)
 
     def update(
         self,
@@ -43,9 +48,9 @@ class CollectionResource(SyncAPIResource):
         name: str | None = None,
         tags: builtins.list[str] | None = None,
     ) -> Collection:
-        response = self._patch(
+        response = self._client.patch(
             f"/organizations/{organization_id}/orbits/{orbit_id}/collections/{collection_id}",
-            json=self._filter_none(
+            json=self._client.filter_none(
                 {
                     "description": description,
                     "name": name,
@@ -53,23 +58,26 @@ class CollectionResource(SyncAPIResource):
                 }
             ),
         )
-        return Collection(**response)
+        return Collection.model_validate(response)
 
     def delete(self, organization_id: int, orbit_id: int, collection_id: int) -> None:
-        return self._delete(
+        return self._client.delete(
             f"/organizations/{organization_id}/orbits/{orbit_id}/collections/{collection_id}"
         )
 
 
-class AsyncCollectionResource(AsyncAPIResource):
+class AsyncCollectionResource:
+    def __init__(self, client: "AsyncDataForceClient") -> None:
+        self._client = client
+
     async def list(self, organization_id: int, orbit_id: int) -> list[Collection]:
-        response = await self._get(
+        response = await self._client.get(
             f"/organizations/{organization_id}/orbits/{orbit_id}/collections"
         )
         if response is None:
             return []
 
-        return [Collection(**collection) for collection in response]
+        return [Collection.model_validate(collection) for collection in response]
 
     async def create(
         self,
@@ -80,7 +88,7 @@ class AsyncCollectionResource(AsyncAPIResource):
         collection_type: CollectionType,
         tags: builtins.list[str] | None = None,
     ) -> Collection:
-        response = await self._post(
+        response = await self._client.post(
             f"/organizations/{organization_id}/orbits/{orbit_id}/collections",
             json={
                 "description": description,
@@ -89,7 +97,7 @@ class AsyncCollectionResource(AsyncAPIResource):
                 "tags": tags,
             },
         )
-        return Collection(**response)
+        return Collection.model_validate(response)
 
     async def update(
         self,
@@ -100,9 +108,9 @@ class AsyncCollectionResource(AsyncAPIResource):
         name: str | None = None,
         tags: builtins.list[str] | None = None,
     ) -> Collection:
-        response = await self._patch(
+        response = await self._client.patch(
             f"/organizations/{organization_id}/orbits/{orbit_id}/collections/{collection_id}",
-            json=self._filter_none(
+            json=self._client.filter_none(
                 {
                     "description": description,
                     "name": name,
@@ -110,11 +118,11 @@ class AsyncCollectionResource(AsyncAPIResource):
                 }
             ),
         )
-        return Collection(**response)
+        return Collection.model_validate(response)
 
     async def delete(
         self, organization_id: int, orbit_id: int, collection_id: int
     ) -> None:
-        return await self._delete(
+        return await self._client.delete(
             f"/organizations/{organization_id}/orbits/{orbit_id}/collections/{collection_id}"
         )

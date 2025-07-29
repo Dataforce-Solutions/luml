@@ -1,26 +1,26 @@
 from enum import StrEnum
-from typing import Optional
+
 from pydantic import BaseModel, HttpUrl
 
 
 class Organization(BaseModel):
     id: int
     name: str
-    logo: Optional[HttpUrl] = None
+    logo: HttpUrl | None = None
     created_at: str
-    updated_at: Optional[str] = None
+    updated_at: str | None = None
 
 
 class BucketSecret(BaseModel):
     id: int
     endpoint: str
     bucket_name: str
-    secure: Optional[bool] = None
-    region: Optional[str] = None
-    cert_check: Optional[bool] = None
+    secure: bool | None = None
+    region: str | None = None
+    cert_check: bool | None = None
     organization_id: int
     created_at: str
-    updated_at: Optional[str] = None
+    updated_at: str | None = None
 
 
 class Orbit(BaseModel):
@@ -28,10 +28,10 @@ class Orbit(BaseModel):
     name: str
     organization_id: int
     bucket_secret_id: int
-    total_members: Optional[int] = None
-    total_collections: Optional[int] = None
+    total_members: int | None = None
+    total_collections: int | None = None
     created_at: str
-    updated_at: Optional[str] = None
+    updated_at: str | None = None
 
 
 class CollectionType(StrEnum):
@@ -45,18 +45,18 @@ class Collection(BaseModel):
     description: str
     name: str
     collection_type: str
-    tags: Optional[list[str]] = None
+    tags: list[str] | None = None
     total_models: int
     created_at: str
-    updated_at: Optional[str] = None
+    updated_at: str | None = None
 
 
 class MLModel(BaseModel):
     id: int
     collection_id: int
     file_name: str
-    model_name: Optional[str] = None
-    description: Optional[str] = None
+    model_name: str | None = None
+    description: str | None = None
     metrics: dict
     manifest: dict
     file_hash: str
@@ -64,7 +64,7 @@ class MLModel(BaseModel):
     bucket_location: str
     size: int
     unique_identifier: str
-    tags: Optional[list[str]] = None
+    tags: list[str] | None = None
     status: str
     created_at: str
-    updated_at: Optional[str] = None
+    updated_at: str | None = None

@@ -1,13 +1,19 @@
-from .._resource import AsyncAPIResource, SyncAPIResource
+from typing import TYPE_CHECKING
+
 from .._types import BucketSecret
 
+if TYPE_CHECKING:
+    from .._client import AsyncDataForceClient, DataForceClient
 
-class BucketSecretResource(SyncAPIResource):
+class BucketSecretResource:
+    def __init__(self, client: "DataForceClient") -> None:
+        self._client = client
+
     def list(self, organization_id: int) -> list[BucketSecret]:
-        response = self._get(f"/organizations/{organization_id}/bucket-secrets")
+        response = self._client.get(f"/organizations/{organization_id}/bucket-secrets")
         if response is None:
             return []
-        return [BucketSecret(**secret) for secret in response]
+        return [BucketSecret.model_validate(secret) for secret in response]
 
     def create(
         self,
@@ -21,7 +27,7 @@ class BucketSecretResource(SyncAPIResource):
         region: str | None = None,
         cert_check: bool | None = None,
     ) -> BucketSecret:
-        response = self._post(
+        response = self._client.post(
             f"/organizations/{organization_id}/bucket-secrets",
             json={
                 "endpoint": endpoint,
@@ -34,13 +40,13 @@ class BucketSecretResource(SyncAPIResource):
                 "cert_check": cert_check,
             },
         )
-        return BucketSecret(**response)
+        return BucketSecret.model_validate(response)
 
     def get(self, organization_id: int, secret_id: int) -> BucketSecret:
-        response = self._get(
+        response = self._client.get(
             f"/organizations/{organization_id}/bucket-secrets/{secret_id}"
         )
-        return BucketSecret(**response)
+        return BucketSecret.model_validate(response)
 
     def update(
         self,
@@ -55,9 +61,9 @@ class BucketSecretResource(SyncAPIResource):
         region: str | None = None,
         cert_check: bool | None = None,
     ) -> BucketSecret:
-        response = self._patch(
+        response = self._client.patch(
             f"/organizations/{organization_id}/bucket-secrets/{secret_id}",
-            json=self._filter_none(
+            json=self._client.filter_none(
                 {
                     "endpoint": endpoint,
                     "bucket_name": bucket_name,
@@ -70,20 +76,25 @@ class BucketSecretResource(SyncAPIResource):
                 }
             ),
         )
-        return BucketSecret(**response)
+        return BucketSecret.model_validate(response)
 
     def delete(self, organization_id: int, secret_id: int) -> None:
-        return self._delete(
+        return self._client.delete(
             f"/organizations/{organization_id}/bucket-secrets/{secret_id}"
         )
 
 
-class AsyncBucketSecretResource(AsyncAPIResource):
+class AsyncBucketSecretResource:
+    def __init__(self, client: "AsyncDataForceClient") -> None:
+        self._client = client
+
     async def list(self, organization_id: int) -> list[BucketSecret]:
-        response = await self._get(f"/organizations/{organization_id}/bucket-secrets")
+        response = await self._client.get(
+            f"/organizations/{organization_id}/bucket-secrets"
+        )
         if response is None:
             return []
-        return [BucketSecret(**secret) for secret in response]
+        return [BucketSecret.model_validate(secret) for secret in response]
 
     async def create(
         self,
@@ -97,7 +108,7 @@ class AsyncBucketSecretResource(AsyncAPIResource):
         region: str | None = None,
         cert_check: bool | None = None,
     ) -> BucketSecret:
-        response = await self._post(
+        response = await self._client.post(
             f"/organizations/{organization_id}/bucket-secrets",
             json={
                 "endpoint": endpoint,
@@ -110,13 +121,13 @@ class AsyncBucketSecretResource(AsyncAPIResource):
                 "cert_check": cert_check,
             },
         )
-        return BucketSecret(**response)
+        return BucketSecret.model_validate(response)
 
     async def get(self, organization_id: int, secret_id: int) -> BucketSecret:
-        response = await self._get(
+        response = await self._client.get(
             f"/organizations/{organization_id}/bucket-secrets/{secret_id}"
         )
-        return BucketSecret(**response)
+        return BucketSecret.model_validate(response)
 
     async def update(
         self,
@@ -131,9 +142,9 @@ class AsyncBucketSecretResource(AsyncAPIResource):
         region: str | None = None,
         cert_check: bool | None = None,
     ) -> BucketSecret:
-        response = await self._patch(
+        response = await self._client.patch(
             f"/organizations/{organization_id}/bucket-secrets/{secret_id}",
-            json=self._filter_none(
+            json=self._client.filter_none(
                 {
                     "endpoint": endpoint,
                     "bucket_name": bucket_name,
@@ -146,9 +157,9 @@ class AsyncBucketSecretResource(AsyncAPIResource):
                 }
             ),
         )
-        return BucketSecret(**response)
+        return BucketSecret.model_validate(response)
 
     async def delete(self, organization_id: int, secret_id: int) -> None:
-        return await self._delete(
+        return await self._client.delete(
             f"/organizations/{organization_id}/bucket-secrets/{secret_id}"
         )
