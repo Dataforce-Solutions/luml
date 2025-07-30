@@ -3,7 +3,13 @@
     <div>
       <div style="margin-bottom: 8px">
         <OrganizationManagePopover v-if="authStore.isAuth"></OrganizationManagePopover>
-        <d-button v-else disabled variant="text" class="menu-link disabled" v-tooltip.right="'Log in to unlock this feature.'">
+        <d-button
+          v-else
+          disabled
+          variant="text"
+          class="menu-link disabled"
+          v-tooltip.right="'Log in to unlock this feature.'"
+        >
           <Users :size="14" class="icon"></Users>
           <span class="label">My Org...</span>
           <ChevronDown :size="20" class="icon" />
@@ -33,7 +39,13 @@
 
             <router-link
               v-else
-              :to="{ name: item.route, params: item.route === 'orbits' ? { organizationId: organizationsStore.currentOrganization?.id || 0 } : {} }"
+              :to="{
+                name: item.route,
+                params:
+                  item.route === 'orbits'
+                    ? { organizationId: organizationsStore.currentOrganization?.id || 0 }
+                    : {},
+              }"
               class="menu-link"
               @click="sendAnalytics(item.analyticsOption)"
             >
@@ -51,6 +63,16 @@
             <a v-if="item.link" :href="item.link" target="_blank" class="menu-link">
               <component :is="item.icon" :size="14" class="icon"></component>
               <span>{{ item.label }}</span>
+            </a>
+          </li>
+          <li class="item">
+            <a href="https://github.com/Dataforce-Solutions/dataforce.studio" target="_blank" class="menu-link menu-link--github">
+              <Github :size="14" class="icon"></Github>
+              <span class="menu-link__text">GitHub</span>
+              <div v-if="getFormattedGithubStars !== null" class="menu-link__info">
+                <Star :size="10" />
+                <span>{{ getFormattedGithubStars }}</span>
+              </div>
             </a>
           </li>
         </ul>
@@ -72,20 +94,28 @@
 </template>
 
 <script setup lang="ts">
-import { ArrowLeftToLine, ChevronDown, Users } from 'lucide-vue-next'
-import { onMounted, ref, watch } from 'vue'
+import { ArrowLeftToLine, ChevronDown, Users, Github, Star } from 'lucide-vue-next'
+import { computed, onBeforeMount, onMounted, ref, watch } from 'vue'
 import { SIDEBAR_MENU, SIDEBAR_MENU_BOTTOM } from '@/constants/constants'
 import { AnalyticsService, AnalyticsTrackKeysEnum } from '@/lib/analytics/AnalyticsService'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import OrganizationManagePopover from '../organizations/OrganizationManagePopover.vue'
 import { useAuthStore } from '@/stores/auth'
 import { useOrganizationStore } from '@/stores/organization'
+import { GitHubService } from '@/lib/github/GitHubService'
 
 const { width } = useWindowSize()
 const authStore = useAuthStore()
 const organizationsStore = useOrganizationStore()
 
 const isSidebarOpened = ref(true)
+const githubStarsCount = ref(null)
+
+const getFormattedGithubStars = computed(() => {
+  if (githubStarsCount.value === null) return null
+  else if (githubStarsCount.value < 1000) return githubStarsCount.value
+  else return (githubStarsCount.value / 1000).toFixed() + 'K'
+})
 
 const toggleSidebar = () => {
   isSidebarOpened.value = !isSidebarOpened.value
@@ -98,9 +128,20 @@ function windowResizeHandler() {
 function sendAnalytics(option: string) {
   AnalyticsService.track(AnalyticsTrackKeysEnum.side_menu_select, { option })
 }
+async function getGithubStarsCount() {
+  try {
+    githubStarsCount.value = await GitHubService.getStarsCount()
+  } catch (e) {
+    console.error(e)
+  }
+}
 
 watch(width, () => {
   windowResizeHandler()
+})
+
+onBeforeMount(() => {
+  getGithubStarsCount()
 })
 
 onMounted(() => {
@@ -172,6 +213,25 @@ onMounted(() => {
   background-color: var(--p-surface-0);
   color: var(--p-menu-item-focus-color);
   box-shadow: var(--card-shadow);
+}
+
+.menu-link--github {
+  border-radius: 8px;
+  border: 1px solid var(--p-content-border-color);
+  background-color: var(--p-card-background);
+  box-shadow: 0 1px 2px 0 rgba(18, 18, 23, 0.05);
+}
+
+.menu-link__text {
+  flex: 1 1 auto;
+}
+
+.menu-link__info {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  color: var(--p-text-muted-color);
+  font-size: 10px;
 }
 
 .icon {
