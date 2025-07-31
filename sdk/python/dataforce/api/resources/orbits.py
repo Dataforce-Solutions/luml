@@ -5,6 +5,7 @@ from .._types import Orbit
 if TYPE_CHECKING:
     from .._client import AsyncDataForceClient, DataForceClient
 
+
 class OrbitResource:
     def __init__(self, client: "DataForceClient") -> None:
         self._client = client

@@ -51,7 +51,7 @@ class Collection(BaseModel):
     updated_at: str | None = None
 
 
-class MLModel(BaseModel):
+class ModelArtifact(BaseModel):
     id: int
     collection_id: int
     file_name: str

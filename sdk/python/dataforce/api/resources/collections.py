@@ -6,6 +6,7 @@ from .._types import Collection, CollectionType
 if TYPE_CHECKING:
     from .._client import AsyncDataForceClient, DataForceClient
 
+
 class CollectionResource:
     def __init__(self, client: "DataForceClient") -> None:
         self._client = client

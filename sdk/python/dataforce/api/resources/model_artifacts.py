@@ -1,26 +1,25 @@
 import builtins
 from typing import TYPE_CHECKING
 
-from .._types import MLModel
+from .._types import ModelArtifact
 
 if TYPE_CHECKING:
     from .._client import AsyncDataForceClient, DataForceClient
 
 
-
-class MLModelResource:
+class ModelArtifactResource:
     def __init__(self, client: "DataForceClient") -> None:
         self._client = client
 
     def list(
         self, organization_id: int, orbit_id: int, collection_id: int
-    ) -> list[MLModel]:
+    ) -> list[ModelArtifact]:
         response = self._client.get(
             f"/organizations/{organization_id}/orbits/{orbit_id}/collections/{collection_id}/ml-models"
         )
         if response is None:
             return []
-        return [MLModel.model_validate(model) for model in response]
+        return [ModelArtifact.model_validate(model) for model in response]
 
     def download_url(
         self, organization_id: int, orbit_id: int, collection_id: int, model_id: int
@@ -50,7 +49,7 @@ class MLModelResource:
         model_name: str | None = None,
         description: str | None = None,
         tags: builtins.list[str] | None = None,
-    ) -> MLModel:
+    ) -> ModelArtifact:
         return self._client.post(
             f"/organizations/{organization_id}/orbits/{orbit_id}/collections/{collection_id}/ml-models",
             json={
@@ -77,7 +76,7 @@ class MLModelResource:
         description: str | None = None,
         tags: builtins.list[str] | None = None,
         status: str | None = None,
-    ) -> MLModel:
+    ) -> ModelArtifact:
         return self._client.patch(
             f"/organizations/{organization_id}/orbits/{orbit_id}/collections/{collection_id}/ml-models/{model_id}",
             json=self._client.filter_none(
@@ -99,19 +98,19 @@ class MLModelResource:
         )
 
 
-class AsyncMLModelResource:
+class AsyncModelArtifactResource:
     def __init__(self, client: "AsyncDataForceClient") -> None:
         self._client = client
 
     async def list(
         self, organization_id: int, orbit_id: int, collection_id: int
-    ) -> list[MLModel]:
+    ) -> list[ModelArtifact]:
         response = await self._client.get(
             f"/organizations/{organization_id}/orbits/{orbit_id}/collections/{collection_id}/ml-models"
         )
         if response is None:
             return []
-        return [MLModel.model_validate(model) for model in response]
+        return [ModelArtifact.model_validate(model) for model in response]
 
     async def download_url(
         self, organization_id: int, orbit_id: int, collection_id: int, model_id: int
@@ -141,7 +140,7 @@ class AsyncMLModelResource:
         model_name: str | None = None,
         description: str | None = None,
         tags: builtins.list[str] | None = None,
-    ) -> MLModel:
+    ) -> ModelArtifact:
         return await self._client.post(
             f"/organizations/{organization_id}/orbits/{orbit_id}/collections/{collection_id}/ml-models",
             json={
@@ -168,7 +167,7 @@ class AsyncMLModelResource:
         description: str | None = None,
         tags: builtins.list[str] | None = None,
         status: str | None = None,
-    ) -> MLModel:
+    ) -> ModelArtifact:
         return await self._client.patch(
             f"/organizations/{organization_id}/orbits/{orbit_id}/collections/{collection_id}/ml-models/{model_id}",
             json=self._client.filter_none(

@@ -1,7 +1,8 @@
 import os
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING
 from functools import cached_property
+from typing import TYPE_CHECKING
+
 from ._base_client import AsyncBaseClient, SyncBaseClient
 from ._exceptions import DataForceAPIError
 
@@ -11,7 +12,7 @@ if TYPE_CHECKING:
         BucketSecretResource,
     )
     from .resources.collections import AsyncCollectionResource, CollectionResource
-    from .resources.ml_models import AsyncMLModelResource, MLModelResource
+    from .resources.model_artifacts import AsyncModelArtifactResource, ModelArtifactResource
     from .resources.orbits import AsyncOrbitResource, OrbitResource
     from .resources.organizations import AsyncOrganizationResource, OrganizationResource
 
@@ -61,7 +62,7 @@ class DataForceClientBase(ABC):
 
     @cached_property
     @abstractmethod
-    def ml_model(self) -> "MLModelResource | AsyncMLModelResource":
+    def model_artifact(self) -> "MLModelResource | AsyncMLModelResource":
         raise NotImplementedError()
 
 
@@ -91,10 +92,10 @@ class AsyncDataForceClient(DataForceClientBase, AsyncBaseClient):
         return AsyncCollectionResource(self)
 
     @cached_property
-    def ml_model(self) -> "AsyncMLModelResource":
-        from .resources.ml_models import AsyncMLModelResource
+    def model_artifact(self) -> "AsyncModelArtifactResource":
+        from .resources.model_artifacts import AsyncModelArtifactResource
 
-        return AsyncMLModelResource(self)
+        return AsyncModelArtifactResource(self)
 
 
 class DataForceClient(DataForceClientBase, SyncBaseClient):
@@ -123,7 +124,7 @@ class DataForceClient(DataForceClientBase, SyncBaseClient):
         return CollectionResource(self)
 
     @cached_property
-    def ml_model(self) -> "MLModelResource":
-        from .resources.ml_models import MLModelResource
+    def model_artifact(self) -> "ModelArtifactResource":
+        from .resources.model_artifacts import ModelArtifactResource
 
-        return MLModelResource(self)
+        return ModelArtifactResource(self)

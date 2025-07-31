@@ -5,6 +5,7 @@ from .._types import BucketSecret
 if TYPE_CHECKING:
     from .._client import AsyncDataForceClient, DataForceClient
 
+
 class BucketSecretResource:
     def __init__(self, client: "DataForceClient") -> None:
         self._client = client
