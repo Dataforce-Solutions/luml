@@ -123,11 +123,38 @@ const router = createRouter({
     },
     {
       path: '/organization/:organizationId/orbit/:id/collection/:collectionId',
-      name: 'collection',
       component: () => import('../pages/collection/CollectionPage.vue'),
       meta: {
         requireAuth: true,
       },
+      children: [
+        {
+          path: '',
+          name: 'collection',
+          component: () => import('../pages/collection/ModelsListView.vue'),
+        },
+        {
+          path: 'models/:modelId',
+          component: () => import('../pages/collection/model/index.vue'),
+          children: [
+            {
+              path: '',
+              name: 'model',
+              component: () => import('../pages/collection/model/DashboardView.vue'),
+            },
+            {
+              path: 'card',
+              name: 'model-card',
+              component: () => import('../pages/collection/model/CardView.vue'),
+            },
+            {
+              path: 'experiment-snapshot',
+              name: 'model-snapshot',
+              component: () => import('../pages/collection/model/SpanshotView.vue'),
+            },
+          ],
+        },
+      ],
     },
     {
       path: '/notebooks',

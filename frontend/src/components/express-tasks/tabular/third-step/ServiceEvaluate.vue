@@ -4,8 +4,13 @@
       v-model:visible="isPredictVisible"
       modal
       header="Predict"
-      :style="{ width: '31.25rem' }">
-      <predict-content :manual-fields="predictionFields" :model-id="trainingModelId" :task="predictTask" />
+      :style="{ width: '31.25rem' }"
+    >
+      <predict-content
+        :manual-fields="predictionFields"
+        :model-id="trainingModelId"
+        :task="predictTask"
+      />
     </d-dialog>
     <header class="header">
       <h1 class="title">Model Evaluation Dashboard</h1>
@@ -14,35 +19,24 @@
           <span>predict</span>
           <wand-sparkles width="14" height="14" />
         </d-button>
-        <SplitButton label="export" severity="secondary" @click="onDownloadClick" :model="EXPORT_ITEMS" />
+        <SplitButton
+          label="export"
+          severity="secondary"
+          @click="onDownloadClick"
+          :model="EXPORT_ITEMS"
+        />
         <d-button label="finish" @click="finishConfirm" />
       </div>
     </header>
     <div class="body">
-      <div class="performance card">
-        <header class="card-header">
-          <h3 class="card-title">Model performance</h3>
-          <info
-            width="20"
-            height="20"
-            class="info-icon"
-            v-tooltip.bottom="`Model total score is a custom metric that provides a general estimate of overall model performance. A score around 50% typically indicates random performance, while higher values reflect better predictive ability.`"/>
-        </header>
-        <div class="radialbar-wrapper">
-          <apexchart
-            type="radialBar"
-            :series="[totalScore]"
-            :options="totalScoreOptions"
-            :style="{ pointerEvents: 'none', marginTop: '-30px', height: '135px' }"/>
-        </div>
-        <div class="metric-cards">
-          <metric-card
-            v-for="card in metricCardsData"
-            :key="card.title"
-            :title="card.title"
-            :items="card.items"/>
-        </div>
-      </div>
+      <ModelPerformance
+        v-if="currentTask"
+        :total-score="totalScore"
+        :test-metrics="testMetrics"
+        :training-metrics="trainingMetrics"
+        :task="currentTask"
+        class="performance"
+      ></ModelPerformance>
       <div class="features card">
         <header class="card-header">
           <h3 class="card-title">Top {{ features.length }} features</h3>
@@ -50,7 +44,10 @@
             width="20"
             height="20"
             class="info-icon"
-            v-tooltip.bottom="`Understand which features play the biggest role in your model's outcomes to guide further data analysis`"/>
+            v-tooltip.bottom="
+              `Understand which features play the biggest role in your model's outcomes to guide further data analysis`
+            "
+          />
         </header>
         <div :style="{ maxWidth: '725px' }">
           <apexchart
@@ -59,7 +56,8 @@
             :series="featuresData"
             :height="barChartHeight"
             width="100%"
-            :style="{ pointerEvents: 'none', margin: '-30px 0' }"/>
+            :style="{ pointerEvents: 'none', margin: '-30px 0' }"
+          />
         </div>
       </div>
       <div class="detailed card">
@@ -67,26 +65,30 @@
       </div>
     </div>
   </div>
-  <ModelUpload v-if="modelBlob && currentTask && !!organizationStore.currentOrganization" :model-blob="modelBlob" :current-task="currentTask" v-model:visible="modelUploadVisible"></ModelUpload>
+  <ModelUpload
+    v-if="modelBlob && currentTask && !!organizationStore.currentOrganization"
+    :model-blob="modelBlob"
+    :current-task="currentTask"
+    v-model:visible="modelUploadVisible"
+  ></ModelUpload>
 </template>
 
 <script setup lang="ts">
 import { Tasks, type TrainingImportance } from '@/lib/data-processing/interfaces'
 import { computed, onBeforeMount, ref } from 'vue'
-import { WandSparkles, CloudDownload, Info } from 'lucide-vue-next'
-import { getBarOptions, getRadialBarOptions } from '@/lib/apex-charts/apex-charts'
-import { getMetricsCards } from '@/helpers/helpers'
+import { WandSparkles, Info } from 'lucide-vue-next'
+import { getBarOptions } from '@/lib/apex-charts/apex-charts'
 import { table } from 'arquero'
 import { useConfirm } from 'primevue/useconfirm'
 import { dashboardFinishConfirmOptions } from '@/lib/primevue/data/confirm'
 import { useRouter } from 'vue-router'
-import MetricCard from '../../../ui/MetricCard.vue'
 import DetailedTable from './DetailedTable.vue'
 import PredictContent from '@/components/predict/index.vue'
 import { AnalyticsService, AnalyticsTrackKeysEnum } from '@/lib/analytics/AnalyticsService'
 import { SplitButton } from 'primevue'
 import ModelUpload from '@/components/model-upload/ModelUpload.vue'
 import { useOrganizationStore } from '@/stores/organization'
+import ModelPerformance from '@/components/model/ModelPerformance.vue'
 
 type Props = {
   predictionFields: string[]
@@ -116,7 +118,7 @@ const EXPORT_ITEMS = [
     command: () => {
       modelUploadVisible.value = true
     },
-    disabled: () => !organizationStore.currentOrganization
+    disabled: () => !organizationStore.currentOrganization,
   },
   {
     label: 'Download model',
@@ -128,7 +130,8 @@ const EXPORT_ITEMS = [
 
 const finishConfirm = () => {
   if (props.currentTask) {
-    const task = props.currentTask === Tasks.TABULAR_CLASSIFICATION ? 'classification' : 'regression';
+    const task =
+      props.currentTask === Tasks.TABULAR_CLASSIFICATION ? 'classification' : 'regression'
     AnalyticsService.track(AnalyticsTrackKeysEnum.finish, { task })
   }
   const accept = async () => {
@@ -137,11 +140,9 @@ const finishConfirm = () => {
   confirm.require(dashboardFinishConfirmOptions(accept))
 }
 
-const totalScoreOptions = ref(getRadialBarOptions())
 const isPredictVisible = ref(false)
 const detailedView = ref<any>([])
 
-const metricCardsData = computed(() => props.currentTask ? getMetricsCards(props.testMetrics, props.trainingMetrics, props.currentTask) : [])
 const featuresData = computed(() => {
   const data = props.features.map((feature) => (feature.scaled_importance * 100).toFixed())
   return [{ data }]
@@ -149,22 +150,27 @@ const featuresData = computed(() => {
 const featuresOptions = computed(() =>
   getBarOptions(
     props.features.map((feature) => {
-      const name = feature.feature_name.length > 12 ? feature.feature_name.slice(0, 10) + '...' : feature.feature_name;
+      const name =
+        feature.feature_name.length > 12
+          ? feature.feature_name.slice(0, 10) + '...'
+          : feature.feature_name
       return `${name} (${(feature.scaled_importance * 100).toFixed()}%)`
-    }
-    ),
+    }),
   ),
 )
 const barChartHeight = computed(() => {
   const featuresCount = props.features.length
   return 45 * featuresCount + 60 + 'px'
 })
-const predictTask = computed(() => props.currentTask === Tasks.TABULAR_CLASSIFICATION ? 'classification' : 'regression')
+const predictTask = computed(() =>
+  props.currentTask === Tasks.TABULAR_CLASSIFICATION ? 'classification' : 'regression',
+)
 
 function onDownloadClick() {
   props.downloadModelCallback()
   if (props.currentTask) {
-    const task = props.currentTask === Tasks.TABULAR_CLASSIFICATION ? 'classification' : 'regression';
+    const task =
+      props.currentTask === Tasks.TABULAR_CLASSIFICATION ? 'classification' : 'regression'
     AnalyticsService.track(AnalyticsTrackKeysEnum.download, { task })
   }
 }
@@ -207,13 +213,6 @@ onBeforeMount(() => {
   box-shadow: var(--card-shadow);
 }
 
-.performance {
-  grid-row: span 2;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
 .card-header {
   display: flex;
   justify-content: space-between;
@@ -225,20 +224,12 @@ onBeforeMount(() => {
   font-size: 20px;
 }
 
-.metric-cards {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
+.info-icon {
+  color: var(--p-icon-muted-color);
 }
 
-.radialbar-wrapper {
-  max-width: 325px;
-  margin: 0 auto;
-  margin-bottom: 2rem;
-}
-
-.radialbar-wrapper .vue-apexcharts {
-  min-height: 0 !important;
+.performance {
+  grid-row: span 2;
 }
 
 @media (max-width: 1200px) {
@@ -256,11 +247,7 @@ onBeforeMount(() => {
   }
 }
 
-.info-icon {
-  color: var(--p-icon-muted-color);
-}
-
-@media (max-width:768px){
+@media (max-width: 768px) {
   .header {
     padding-top: 8px;
   }
