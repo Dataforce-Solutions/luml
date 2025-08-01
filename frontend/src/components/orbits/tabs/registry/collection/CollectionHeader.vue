@@ -1,10 +1,13 @@
 <template>
   <header class="header">
     <h3 class="title">{{ title }}</h3>
-    <Button @click="$emit('add')">
-      <Plus :size="14" />
-      <span>Add model</span>
-    </Button>
+    <div class="buttons">
+      <Button disabled severity="secondary">Compare models</Button>
+      <Button @click="$emit('add')">
+        <Plus :size="14" />
+        <span>Add model</span>
+      </Button>
+    </div>
   </header>
 </template>
 
@@ -30,6 +33,11 @@ defineEmits<Emits>()
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 32px 0;
+  margin-bottom: 20px;
+}
+
+.buttons {
+  display: flex;
+  gap: 8px;
 }
 </style>

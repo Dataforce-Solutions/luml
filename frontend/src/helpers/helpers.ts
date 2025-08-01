@@ -1,8 +1,16 @@
-import { Tasks, type ClassificationMetrics, type RegressionMetrics, type TrainingData } from '@/lib/data-processing/interfaces'
+import {
+  Tasks,
+  type ClassificationMetrics,
+  type RegressionMetrics,
+  type TrainingData,
+} from '@/lib/data-processing/interfaces'
 import type { ProviderSetting } from '@/lib/promt-fusion/prompt-fusion.interfaces'
 
 export const getMetrics = (
-  data: TrainingData<ClassificationMetrics | RegressionMetrics>,
+  data: Pick<
+    TrainingData<ClassificationMetrics | RegressionMetrics>,
+    'test_metrics' | 'train_metrics'
+  >,
   task: Tasks,
   metricsType: 'test_metrics' | 'train_metrics',
 ) => {
@@ -56,9 +64,12 @@ export const convertObjectToCsvBlob = (data: object) => {
     const row = headers.map((header) => data[header as keyof typeof data][i] ?? '')
     rows.push(row)
   }
-  const csvContent = [headers.join(','), ...rows.map((row) => {
-    return row.map(item => typeof item === 'object' ? JSON.stringify(item) : item)
-  })].join('\n')
+  const csvContent = [
+    headers.join(','),
+    ...rows.map((row) => {
+      return row.map((item) => (typeof item === 'object' ? JSON.stringify(item) : item))
+    }),
+  ].join('\n')
   return new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
 }
 
@@ -76,7 +87,10 @@ export const cutStringOnMiddle = (string: string, length = 20) => {
   return `${startSubstring}...${endSubstring}`
 }
 
-export const prepareRuntimeMetrics = (metrics: ClassificationMetrics | RegressionMetrics, task: Tasks) => {
+export const prepareRuntimeMetrics = (
+  metrics: ClassificationMetrics | RegressionMetrics,
+  task: Tasks,
+) => {
   if (task === Tasks.TABULAR_CLASSIFICATION) {
     const currentMetrics = metrics as ClassificationMetrics
     return [
@@ -100,23 +114,21 @@ export const prepareRuntimeMetrics = (metrics: ClassificationMetrics | Regressio
 
 export const parseProviderSettingsToObject = (settings: ProviderSetting[] | null) => {
   if (!settings) return {}
-  return settings.reduce((acc: Record<string, string>, setting) => {
-    acc[setting.id] = setting.value
-    return acc
-  }, {}) || {}
+  return (
+    settings.reduce((acc: Record<string, string>, setting) => {
+      acc[setting.id] = setting.value
+      return acc
+    }, {}) || {}
+  )
 }
 
 export const getSha256 = async (buffer: ArrayBuffer): Promise<string> => {
-  const hashBuffer = await crypto.subtle.digest('SHA-256', buffer);
-  return [...new Uint8Array(hashBuffer)]
-    .map(b => b.toString(16).padStart(2, '0'))
-    .join('');
+  const hashBuffer = await crypto.subtle.digest('SHA-256', buffer)
+  return [...new Uint8Array(hashBuffer)].map((b) => b.toString(16).padStart(2, '0')).join('')
 }
 
 export const getSizeText = (size: number) => {
-  return size < 1000 ? size + ' B'
-    : size < 10000000 ? size / 1000 + ' KB'
-    : size / 10000000 + ' MB'
+  return size < 1000 ? size + ' B' : size < 10000000 ? size / 1000 + ' KB' : size / 10000000 + ' MB'
 }
 
 export const downloadFileFromBlob = (blob: Blob, fileName: string) => {

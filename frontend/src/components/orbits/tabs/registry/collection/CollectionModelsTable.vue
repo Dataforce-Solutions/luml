@@ -15,12 +15,24 @@
             <Trash2 :size="14" />
           </template>
         </Button>
-        <Button variant="text" severity="secondary" rounded :disabled="selectedModels.length !== 1" @click="downloadClick">
+        <Button
+          variant="text"
+          severity="secondary"
+          rounded
+          :disabled="selectedModels.length !== 1"
+          @click="downloadClick"
+        >
           <template #icon>
             <Download :size="14" />
           </template>
         </Button>
-        <Button variant="text" severity="secondary" rounded v-tooltip="'Deploy'" @click="$router.push({ name: 'orbit-deployments' })">
+        <Button
+          variant="text"
+          severity="secondary"
+          rounded
+          v-tooltip="'Deploy'"
+          @click="$router.push({ name: 'orbit-deployments' })"
+        >
           <template #icon>
             <Rocket :size="14" />
           </template>
@@ -35,9 +47,13 @@
               style: 'padding: 25px 16px;',
             },
           }"
+          selectionMode="single"
           dataKey="id"
           style="font-size: 14px"
-          :loading="modelsLoading"
+          class="table-white"
+          @row-click="
+            (row: any) => $router.push({ name: 'model', params: { modelId: row.data.id } })
+          "
         >
           <template #empty>
             <div class="placeholder">No models to show. Add model to the table.</div>
@@ -67,11 +83,36 @@
           <Column field="status" header="Status">
             <template #body="{ data }">
               <div style="width: 150px">
-                <Tag v-if="data.status === MlModelStatusEnum.deletion_failed" severity="danger" class="tag">Deletion failed</Tag>
-                <Tag v-if="data.status === MlModelStatusEnum.pending_deletion" severity="warn" class="tag">Pending deletions</Tag>
-                <Tag v-if="data.status === MlModelStatusEnum.pending_upload" severity="warn" class="tag">Pending upload</Tag>
-                <Tag v-if="data.status === MlModelStatusEnum.upload_failed" severity="danger" class="tag">Upload failed</Tag>
-                <Tag v-if="data.status === MlModelStatusEnum.uploaded" severity="success" class="tag">Uploaded</Tag>
+                <Tag
+                  v-if="data.status === MlModelStatusEnum.deletion_failed"
+                  severity="danger"
+                  class="tag"
+                  >Deletion failed</Tag
+                >
+                <Tag
+                  v-if="data.status === MlModelStatusEnum.pending_deletion"
+                  severity="warn"
+                  class="tag"
+                  >Pending deletions</Tag
+                >
+                <Tag
+                  v-if="data.status === MlModelStatusEnum.pending_upload"
+                  severity="warn"
+                  class="tag"
+                  >Pending upload</Tag
+                >
+                <Tag
+                  v-if="data.status === MlModelStatusEnum.upload_failed"
+                  severity="danger"
+                  class="tag"
+                  >Upload failed</Tag
+                >
+                <Tag
+                  v-if="data.status === MlModelStatusEnum.uploaded"
+                  severity="success"
+                  class="tag"
+                  >Uploaded</Tag
+                >
               </div>
             </template>
           </Column>
@@ -132,9 +173,8 @@ const toast = useToast()
 const confirm = useConfirm()
 const orbitsStore = useOrbitsStore()
 
-const selectedModels = ref<{ id: number, modelName: string, fileName: string }[]>([])
+const selectedModels = ref<{ id: number; modelName: string; fileName: string }[]>([])
 const loading = ref(false)
-const modelsLoading = ref(false)
 
 const tableData = computed(() =>
   modelsStore.modelsList.map((item) => {
@@ -191,7 +231,7 @@ async function onDeleteClick() {
 
 async function downloadClick() {
   if (!selectedModels.value[0]?.id || loading.value) return
-  loading.value = true;
+  loading.value = true
   try {
     const model = selectedModels.value[0]
     await modelsStore.downloadModel(model.id, model.fileName)
@@ -205,17 +245,10 @@ async function downloadClick() {
 
 onBeforeMount(async () => {
   try {
-    modelsLoading.value = true
     await modelsStore.loadModelsList()
   } catch {
     toast.add(simpleErrorToast('Failed to load models'))
-  } finally {
-    modelsLoading.value = false
   }
-})
-
-onUnmounted(() => {
-  modelsStore.resetList()
 })
 </script>
 

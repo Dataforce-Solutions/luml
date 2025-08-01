@@ -1,4 +1,4 @@
-import type { Manifest } from "@fnnx/common/dist/interfaces"
+import type { Manifest } from '@fnnx/common/dist/interfaces'
 
 export enum MlModelStatusEnum {
   pending_upload = 'pending_upload',
@@ -26,8 +26,8 @@ export interface MlModel {
   file_name: string
   model_name: string
   description: string
-  metrics: Record<string, object>
-  manifest: Record<string, object>
+  metrics: Record<string, number | string>
+  manifest: Manifest
   file_hash: string
   file_index: Record<string, [number, number]>
   bucket_location: string
