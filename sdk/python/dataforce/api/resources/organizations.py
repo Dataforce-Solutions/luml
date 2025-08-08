@@ -12,9 +12,7 @@ class OrganizationResource:
         self._client = client
 
     def get(self, organization_value: str) -> Organization | None:
-        if isinstance(organization_value, str):
-            return self.get_by_name(organization_value)
-        return None
+        return self._get_by_name(organization_value)
 
     def list(self) -> list[Organization]:
         response = self._client.get("/users/me/organizations")
@@ -22,7 +20,7 @@ class OrganizationResource:
             return []
         return [Organization.model_validate(org) for org in response]
 
-    def get_by_name(self, name: str) -> Organization | None:
+    def _get_by_name(self, name: str) -> Organization | None:
         return find_by_name(self.list(), name)
 
 
@@ -31,9 +29,7 @@ class AsyncOrganizationResource:
         self._client = client
 
     async def get(self, organization_value: str) -> Organization | None:
-        if isinstance(organization_value, str):
-            return await self.get_by_name(organization_value)
-        return None
+        return await self._get_by_name(organization_value)
 
     async def list(self) -> list[Organization]:
         response = await self._client.get("/users/me/organizations")
@@ -41,7 +37,7 @@ class AsyncOrganizationResource:
             return []
         return [Organization.model_validate(org) for org in response]
 
-    async def get_by_name(self, name: str) -> Organization | None:
+    async def _get_by_name(self, name: str) -> Organization | None:
         return find_by_name(await self.list(), name)
 
     # async def create(self, name: str, logo: str | None = None) -> Organization:

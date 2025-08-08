@@ -17,10 +17,12 @@ class ModelArtifactResource:
     def get(
         self, collection_id: int | None, model_value: str | int
     ) -> ModelArtifact | None:
-        return self._get_by_name(collection_id, model_value)
+        return self._get_by_name(name=model_value)
 
     @validate_collection
-    def _get_by_name(self, collection_id: int | None, name: str) -> ModelArtifact | None:
+    def _get_by_name(
+        self, collection_id: int | None, name: str
+    ) -> ModelArtifact | None:
         return find_by_name(
             self.list(collection_id),
             name,
@@ -117,7 +119,7 @@ class AsyncModelArtifactResource:
         self, collection_id: int | None, model_value: str | int
     ) -> ModelArtifact | None:
         if isinstance(model_value, str):
-            return await self.get_by_name(collection_id, model_value)
+            return await self.get_by_name(name=model_value)
         return None
 
     @validate_collection
