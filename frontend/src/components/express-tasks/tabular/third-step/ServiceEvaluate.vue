@@ -29,14 +29,14 @@
       </div>
     </header>
     <div class="body">
-      <ModelPerformance
+      <ModelTabularPerformance
         v-if="currentTask"
         :total-score="totalScore"
         :test-metrics="testMetrics"
         :training-metrics="trainingMetrics"
         :tag="producedTag"
         class="performance"
-      ></ModelPerformance>
+      ></ModelTabularPerformance>
       <div class="features card">
         <header class="card-header">
           <h3 class="card-title">Top {{ features.length }} features</h3>
@@ -88,7 +88,7 @@ import { AnalyticsService, AnalyticsTrackKeysEnum } from '@/lib/analytics/Analyt
 import { SplitButton } from 'primevue'
 import ModelUpload from '@/components/model-upload/ModelUpload.vue'
 import { useOrganizationStore } from '@/stores/organization'
-import ModelPerformance from '@/components/model/ModelPerformance.vue'
+import ModelTabularPerformance from '@/components/model/ModelTabularPerformance.vue'
 import { FNNX_PRODUCER_TAGS_MANIFEST_ENUM } from '@/lib/fnnx/FnnxService'
 
 type Props = {

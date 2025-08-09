@@ -1,6 +1,6 @@
 import type { FNNX_PRODUCER_TAGS_MANIFEST_ENUM } from '@/lib/fnnx/FnnxService'
 import type {
-  OptimizationModelMetadataPayload,
+  PromptOptimizationModelMetadataPayload,
   TabularModelMetadataPayload,
 } from '@/lib/data-processing/interfaces'
 import type {
@@ -21,16 +21,16 @@ export const useModelsStore = defineStore('models', () => {
   const modelsList = ref<MlModel[]>([])
   const currentModelTag = ref<FNNX_PRODUCER_TAGS_MANIFEST_ENUM | null>(null)
   const currentModelMetadata = ref<
-    TabularModelMetadataPayload | OptimizationModelMetadataPayload | null
+    TabularModelMetadataPayload | PromptOptimizationModelMetadataPayload | null
   >(null)
   const currentModelHtmlBlobUrl = ref<string | null>(null)
 
   const requestInfo = computed(() => {
     if (typeof route.params.organizationId !== 'string')
       throw new Error('Current organization not found')
-    if (typeof route.params.id !== 'string') throw new Error('Current orbit not found')
+    if (typeof route.params.id !== 'string') throw new Error('Orbit was not found')
     if (typeof route.params.collectionId !== 'string')
-      throw new Error('Current collection not found')
+      throw new Error('Collection was not found')
 
     return {
       organizationId: +route.params.organizationId,
@@ -147,7 +147,7 @@ export const useModelsStore = defineStore('models', () => {
   }
 
   function setCurrentModelMetadata(
-    metadata: TabularModelMetadataPayload | OptimizationModelMetadataPayload,
+    metadata: TabularModelMetadataPayload | PromptOptimizationModelMetadataPayload,
   ) {
     currentModelMetadata.value = metadata
   }

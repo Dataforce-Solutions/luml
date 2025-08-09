@@ -13,7 +13,7 @@
 </template>
 
 <script setup lang="ts">
-import type { OptimizationModelMetadataPayload } from '@/lib/data-processing/interfaces'
+import type { PromptOptimizationModelMetadataPayload } from '@/lib/data-processing/interfaces'
 import { computed, watch } from 'vue'
 import { promptFusionService } from '@/lib/promt-fusion/PromptFusionService'
 import { useVueFlow, VueFlow } from '@vue-flow/core'
@@ -22,7 +22,7 @@ import CustomNode from '@/components/express-tasks/prompt-fusion/step-main/nodes
 import CustomEdge from '@/components/ui/vue-flow/CustomEdge.vue'
 
 type Props = {
-  data: OptimizationModelMetadataPayload
+  data: PromptOptimizationModelMetadataPayload
 }
 
 const props = defineProps<Props>()

@@ -1,5 +1,5 @@
 import axios from 'axios'
-import type { MlModel } from '../api/orbit-ml-models/interfaces'
+import type { FileIndex } from '../api/orbit-ml-models/interfaces'
 
 export class ModelDownloader {
   url: string
@@ -8,8 +8,8 @@ export class ModelDownloader {
     this.url = url
   }
 
-  async getFileFromBucket(model: MlModel, fileName: string, buffer?: boolean, outerOffset = 0) {
-    const range = this.getRangeHeader(model, fileName, outerOffset)
+  async getFileFromBucket(fileIndex: FileIndex, fileName: string, buffer?: boolean, outerOffset = 0) {
+    const range = this.getRangeHeader(fileIndex, fileName, outerOffset)
     const file = await axios.get(this.url, {
       headers: { Range: range },
       responseType: buffer ? 'arraybuffer' : 'json',
@@ -17,8 +17,8 @@ export class ModelDownloader {
     return file.data
   }
 
-  getRangeHeader(model: MlModel, fileName: string, outerOffset = 0) {
-    const range = model.file_index[fileName]
+  getRangeHeader(fileIndex: FileIndex, fileName: string, outerOffset = 0) {
+    const range = fileIndex[fileName]
     if (!range) throw new Error('Model not include this file')
     const start = range[0] + outerOffset
     const end = start + range[1] - 1

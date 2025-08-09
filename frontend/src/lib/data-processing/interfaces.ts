@@ -74,8 +74,8 @@ export interface PredictRequestData {
 
 export interface TabularMetrics {
   performance: {
-    eval_cv?: ClassificationMetrics
-    eval_holdout?: RegressionMetrics
+    eval_cv?: ClassificationMetrics | RegressionMetrics
+    eval_holdout?: ClassificationMetrics | RegressionMetrics 
     train: ClassificationMetrics | RegressionMetrics
   }
   permutation_feature_importance_train: {
@@ -91,4 +91,4 @@ export interface TabularModelMetadataPayload {
   metrics: TabularMetrics
 }
 
-export interface OptimizationModelMetadataPayload extends PayloadData {}
+export interface PromptOptimizationModelMetadataPayload extends PayloadData {}

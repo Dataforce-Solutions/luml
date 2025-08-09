@@ -1,12 +1,12 @@
 <template>
   <div class="model-info">
-    <ModelPerformance
+    <ModelTabularPerformance
       :total-score="totalScore"
       :test-metrics="testMetrics"
       :training-metrics="trainMetrics"
       :tag="tag"
       grid-metrics
-    ></ModelPerformance>
+    ></ModelTabularPerformance>
     <div class="features card">
       <header class="card-header">
         <h3 class="card-title">Top {{ features.length + 1 }} features</h3>
@@ -28,7 +28,7 @@
 import type { TabularMetrics } from '@/lib/data-processing/interfaces'
 import { FnnxService, type FNNX_PRODUCER_TAGS_MANIFEST_ENUM } from '@/lib/fnnx/FnnxService'
 import { computed } from 'vue'
-import ModelPerformance from '@/components/model/ModelPerformance.vue'
+import ModelTabularPerformance from '@/components/model/ModelTabularPerformance.vue'
 
 type Props = {
   tag: FNNX_PRODUCER_TAGS_MANIFEST_ENUM

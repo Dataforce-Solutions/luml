@@ -6,6 +6,7 @@ import {
 } from '../data-processing/interfaces'
 import type { Manifest, MetaEntry } from '@fnnx/common/dist/interfaces'
 import { fixNumber, getFormattedMetric, toPercent } from '@/helpers/helpers'
+import type { FileIndex } from '../api/orbit-ml-models/interfaces'
 
 export enum FNNX_PRODUCER_TAGS_METADATA_ENUM {
   contains_classification_metrics_v1 = 'falcon.beastbyte.ai::tabular_classification_metrics:v1',
@@ -146,8 +147,17 @@ class FnnxServiceClass {
     ].includes(tag)
   }
 
-  isOptimizationTag(tag: FNNX_PRODUCER_TAGS_MANIFEST_ENUM) {
+  isPromptOptimizationTag(tag: FNNX_PRODUCER_TAGS_MANIFEST_ENUM) {
     return [FNNX_PRODUCER_TAGS_MANIFEST_ENUM.prompt_optimization_v1].includes(tag)
+  }
+
+  findHtmlCard(fileIndex: FileIndex) {
+    return Object.keys(fileIndex).find((file) => file.endsWith('.html.zip'))
+  }
+
+  getModelMetadataFileName(fileIndex: FileIndex) {
+    if (fileIndex['meta.json']) return 'meta.json'
+    return null
   }
 }
 

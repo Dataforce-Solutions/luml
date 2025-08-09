@@ -45,6 +45,7 @@ type Props = {
   trainingMetrics: string[]
   tag: FNNX_PRODUCER_TAGS_MANIFEST_ENUM
   gridMetrics?: boolean
+  tooltip?: string
 }
 
 const props = defineProps<Props>()
