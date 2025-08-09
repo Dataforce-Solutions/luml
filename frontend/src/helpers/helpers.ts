@@ -31,7 +31,11 @@ export const getFormattedMetric = (num: number | null | undefined) => {
   return num.toFixed(2)
 }
 
-export const getMetricsCards = (testValues: string[], trainingValues: string[], tag: FNNX_PRODUCER_TAGS_MANIFEST_ENUM) => {
+export const getMetricsCards = (
+  testValues: string[],
+  trainingValues: string[],
+  tag: FNNX_PRODUCER_TAGS_MANIFEST_ENUM,
+) => {
   let titles: string[] = []
   if (tag === FNNX_PRODUCER_TAGS_MANIFEST_ENUM.tabular_classification_v1) {
     titles = ['Balanced accuracy', 'Precision', 'Recall', 'F1 score']
@@ -96,7 +100,9 @@ export const getSha256 = async (buffer: ArrayBuffer): Promise<string> => {
 }
 
 export const getSizeText = (size: number) => {
-  return size < 1000 ? size + ' B' : size < 10000000 ? size / 1000 + ' KB' : size / 10000000 + ' MB'
+  const value = size < 1000 ? size : size < 1000000 ? size / 1000 : size / 1000000
+  const symbol = size < 1000 ? 'B' : size < 1000000 ? 'KB' : 'MB'
+  return value.toFixed(2) + ' ' + symbol
 }
 
 export const downloadFileFromBlob = (blob: Blob, fileName: string) => {
