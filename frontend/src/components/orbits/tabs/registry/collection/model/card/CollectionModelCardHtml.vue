@@ -1,5 +1,5 @@
 <template>
-  <iframe :src="url" class="iframe"></iframe>
+  <iframe :src="url" sandbox="allow-scripts" class="iframe"></iframe>
 </template>
 
 <script setup lang="ts">

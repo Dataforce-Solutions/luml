@@ -9,7 +9,7 @@
       :tag="modelsStore.currentModelTag"
     ></CollectionModelCardTabular>
     <CollectionModelCardPromptOptimization
-      v-else-if="isOptimization && 'edges' in modelsStore.currentModelMetadata"
+      v-else-if="isPromptOptimization && 'edges' in modelsStore.currentModelMetadata"
       :data="modelsStore.currentModelMetadata"
     ></CollectionModelCardPromptOptimization>
     <div v-else class="card">
@@ -51,7 +51,7 @@ const currentModel = computed(() => {
 const isTabular = computed(
   () => modelsStore.currentModelTag && FnnxService.isTabularTag(modelsStore.currentModelTag),
 )
-const isOptimization = computed(
+const isPromptOptimization = computed(
   () =>
     modelsStore.currentModelTag && FnnxService.isPromptOptimizationTag(modelsStore.currentModelTag),
 )
@@ -61,7 +61,7 @@ function setTabularMetadata(file: any) {
   modelsStore.setCurrentModelMetadata({ metrics })
 }
 
-function setOptimizationMetadata(file: any) {
+function setPromptOptimizationMetadata(file: any) {
   const data = FnnxService.getPromptOptimizationData(file)
   modelsStore.setCurrentModelMetadata(data)
 }
@@ -94,7 +94,7 @@ async function setDataforceMetadata(tag: FNNX_PRODUCER_TAGS_MANIFEST_ENUM, model
   if (FnnxService.isTabularTag(tag)) {
     setTabularMetadata(file)
   } else if (FnnxService.isPromptOptimizationTag(tag)) {
-    setOptimizationMetadata(file)
+    setPromptOptimizationMetadata(file)
   }
 }
 

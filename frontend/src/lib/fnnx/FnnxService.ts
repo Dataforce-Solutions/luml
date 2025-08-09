@@ -152,7 +152,8 @@ class FnnxServiceClass {
   }
 
   findHtmlCard(fileIndex: FileIndex) {
-    return Object.keys(fileIndex).find((file) => file.endsWith('.html.zip'))
+    const regex = /meta_artifacts\/dataforce\.studio~c~~c~[^/]+~c~v1~~et~~.+?\/model_card\.zip$/
+    return Object.keys(fileIndex).find((file) => regex.test(file))
   }
 
   getModelMetadataFileName(fileIndex: FileIndex) {

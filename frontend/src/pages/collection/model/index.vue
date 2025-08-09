@@ -26,7 +26,8 @@ const currentModel = computed(() => {
 const isModelCardAvailable = computed(() => {
   if (!currentModel.value) return false
   const fileIndex = currentModel.value.file_index
-  return !!(FnnxService.getModelMetadataFileName(fileIndex) || FnnxService.findHtmlCard(fileIndex))
+  const includeDataforceTag = FnnxService.getTypeTag(currentModel.value.manifest)
+  return !!(includeDataforceTag || FnnxService.findHtmlCard(fileIndex))
 })
 
 onUnmounted(() => {
