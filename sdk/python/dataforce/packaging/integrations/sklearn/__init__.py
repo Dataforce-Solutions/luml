@@ -1,3 +1,5 @@
+from typing import Any
+
 try:
     from sklearn.base import BaseEstimator
 except ImportError:
@@ -26,23 +28,22 @@ from dataforce.packaging.integrations.sklearn.template import SKlearnPyFunc
 from dataforce.packaging.utils import get_version
 
 
-def _resolve_dtype(dtype) -> str:
+def _resolve_dtype(dtype: np.dtype) -> str:
     if np.issubdtype(dtype, np.floating):
         return "float"
-    elif np.issubdtype(dtype, np.integer):
+    if np.issubdtype(dtype, np.integer):
         return "int"
-    else:
-        return "str"
+    return "str"
 
 
 def save(
-    estimator,
-    inputs,
+    estimator: Any,  # noqa: ANN401
+    inputs: np.typing.ArrayLike | pd.DataFrame | None,
     path: str = "model.dfs",
     model_name: str | None = None,
     model_version: str | None = None,
     model_description: str | None = None,
-):
+) -> None:
     if not cloudpickle:
         raise RuntimeError("cloudpickle is not installed")
     if not BaseEstimator:
@@ -65,14 +66,14 @@ def save(
             builder.add_input(
                 NDJSON(name=col, dtype=f"Array[{dtype}]", shape=["batch"])
             )
-        X = inputs
+        x = inputs
     else:
         example = np.asarray(inputs)
         if example.ndim < 2:
             raise ValueError(
                 "Input example must be at least 2D for batch dimension inference."
             )
-        elif example.ndim == 2:
+        if example.ndim == 2:
             input_order = [f"x{i}" for i in range(example.shape[1])]
             for i, name in enumerate(input_order):
                 col_dtype = _resolve_dtype(example[:, i].dtype)
@@ -86,11 +87,11 @@ def save(
                 NDJSON(name="input", dtype=f"Array[{dtype}]", shape=shape)
             )
             input_order = ["input"]
-        X = example
+        x = example
 
     builder.set_extra_values({"input_order": input_order})
 
-    y_pred = estimator.predict(X)
+    y_pred = estimator.predict(x)
     y_array = np.asarray(y_pred)
     y_shape = ["batch"] + list(y_array.shape[1:])
     y_dtype = _resolve_dtype(y_array.dtype)

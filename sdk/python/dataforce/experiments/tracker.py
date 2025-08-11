@@ -46,7 +46,10 @@ class ExperimentTracker:
             self.current_experiment_id = None
 
     def log_static(
-        self, key: str, value: Any, experiment_id: str | None = None
+        self,
+        key: str,
+        value: Any,  # noqa: ANN401
+        experiment_id: str | None = None,
     ) -> None:
         exp_id = experiment_id or self.current_experiment_id
         if exp_id is None:
@@ -76,9 +79,9 @@ class ExperimentTracker:
         kind: int = 0,
         status_code: int = 0,
         status_message: str | None = None,
-        attributes: dict[str, Any] | None = None,
-        events: list[dict[str, Any]] | None = None,
-        links: list[dict[str, Any]] | None = None,
+        attributes: dict[str, Any] | None = None,  # noqa: ANN401
+        events: list[dict[str, Any]] | None = None,  # noqa: ANN401
+        links: list[dict[str, Any]] | None = None,  # noqa: ANN401
         trace_flags: int = 0,
         experiment_id: str | None = None,
     ) -> None:
@@ -106,11 +109,11 @@ class ExperimentTracker:
         self,
         eval_id: str,
         dataset_id: str,
-        inputs: dict[str, Any],
-        outputs: dict[str, Any] | None = None,
-        references: dict[str, Any] | None = None,
-        scores: dict[str, Any] | None = None,
-        metadata: dict[str, Any] | None = None,
+        inputs: dict[str, Any],  # noqa: ANN401
+        outputs: dict[str, Any] | None = None,  # noqa: ANN401
+        references: dict[str, Any] | None = None,  # noqa: ANN401
+        scores: dict[str, Any] | None = None,  # noqa: ANN401
+        metadata: dict[str, Any] | None = None,  # noqa: ANN401
         experiment_id: str | None = None,
     ) -> None:
         exp_id = experiment_id or self.current_experiment_id
@@ -144,7 +147,7 @@ class ExperimentTracker:
     def log_attachment(
         self,
         name: str,
-        data: Any,
+        data: Any,  # noqa: ANN401
         binary: bool = False,
         experiment_id: str | None = None,
     ) -> None:
@@ -153,16 +156,16 @@ class ExperimentTracker:
             raise ValueError("No active experiment. Call start_experiment() first.")
         self.backend.log_attachment(exp_id, name, data)
 
-    def get_experiment(self, experiment_id: str) -> dict[str, Any]:
+    def get_experiment(self, experiment_id: str) -> dict[str, Any]:  # noqa: ANN401
         return self.backend.get_experiment_data(experiment_id)
 
-    def get_attachment(self, name: str, experiment_id: str | None = None) -> Any:
+    def get_attachment(self, name: str, experiment_id: str | None = None) -> Any:  # noqa: ANN401
         exp_id = experiment_id or self.current_experiment_id
         if exp_id is None:
             raise ValueError("No active experiment. Call start_experiment() first.")
         return self.backend.get_attachment(exp_id, name)
 
-    def list_experiments(self) -> list[dict[str, Any]]:
+    def list_experiments(self) -> list[dict[str, Any]]:  # noqa: ANN401
         return self.backend.list_experiments()
 
     def delete_experiment(self, experiment_id: str) -> None:
@@ -171,7 +174,7 @@ class ExperimentTracker:
     def create_group(self, name: str, description: str | None = None) -> None:
         self.backend.create_group(name, description)
 
-    def list_groups(self) -> list[dict[str, Any]]:
+    def list_groups(self) -> list[dict[str, Any]]:  # noqa: ANN401
         return self.backend.list_groups()
 
     def link_to_model(

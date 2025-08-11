@@ -1,8 +1,9 @@
-from typing import Any, Callable, Sequence
+from collections.abc import Callable, Sequence
+from typing import Any
 
-from opentelemetry.sdk.trace import ReadableSpan
+from opentelemetry.sdk.trace import Event, ReadableSpan
 from opentelemetry.sdk.trace.export import SpanExporter, SpanExportResult
-from opentelemetry.trace import Status, StatusCode
+from opentelemetry.trace import Link, SpanKind, Status, StatusCode
 from opentelemetry.util.types import Attributes
 
 
@@ -28,12 +29,12 @@ class DataforceSpanExporter(SpanExporter):
                 try:
                     self._export_single_span(span)
                 except Exception as e:
-                    print(f"Failed to export span {span.name}: {e}")
+                    print(f"Failed to export span {span.name}: {e}")  # noqa: T201
                     continue
 
             return SpanExportResult.SUCCESS
 
-        except Exception as e:
+        except Exception:
             return SpanExportResult.FAILURE
 
     def _export_single_span(self, span: ReadableSpan) -> None:
@@ -53,7 +54,7 @@ class DataforceSpanExporter(SpanExporter):
         links = self._convert_links(span.links)
 
         trace_flags = span.context.trace_flags  # type: ignore
-        print(f"Exporting span: {span.name} (trace_id={trace_id}, span_id={span_id})")
+        print(f"Exporting span: {span.name} (trace_id={trace_id}, span_id={span_id})")  # noqa: T201
 
         self.log_fn(
             trace_id=trace_id,
@@ -71,7 +72,7 @@ class DataforceSpanExporter(SpanExporter):
             trace_flags=trace_flags,
         )
 
-    def _convert_span_kind(self, kind) -> int:
+    def _convert_span_kind(self, kind: SpanKind) -> int:
         kind_map = {
             "UNSPECIFIED": 0,
             "INTERNAL": 1,
@@ -105,16 +106,16 @@ class DataforceSpanExporter(SpanExporter):
 
         result = {}
         for key, value in attributes.items():
-            if isinstance(value, (str, int, float, bool)):
+            if isinstance(value, str | int | float | bool):
                 result[key] = value
-            elif isinstance(value, (list, tuple)):
+            elif isinstance(value, list | tuple):
                 result[key] = list(value)
             else:
                 result[key] = str(value)
 
         return result
 
-    def _convert_events(self, events) -> list[dict[str, Any]] | None:
+    def _convert_events(self, events: list[Event]) -> list[dict[str, Any]] | None:
         if not events:
             return None
 
@@ -132,7 +133,7 @@ class DataforceSpanExporter(SpanExporter):
 
         return result
 
-    def _convert_links(self, links) -> list[dict[str, Any]] | None:
+    def _convert_links(self, links: list[Link]) -> list[dict[str, Any]] | None:
         if not links:
             return None
 
@@ -157,5 +158,5 @@ class DataforceSpanExporter(SpanExporter):
     def force_flush(self, timeout_millis: int = 30000) -> bool:
         try:
             return True
-        except Exception as e:
+        except Exception:
             return False

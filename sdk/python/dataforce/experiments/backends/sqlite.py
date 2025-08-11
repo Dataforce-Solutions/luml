@@ -92,8 +92,8 @@ _DDL_EXPERIMENT_CREATE_EVALS = """
         inputs TEXT NOT NULL, -- JSON
         outputs TEXT, -- JSON
         refs TEXT, -- JSON
-        scores TEXT, -- JSON 
-        metadata TEXT, -- JSON 
+        scores TEXT, -- JSON
+        metadata TEXT, -- JSON
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         PRIMARY KEY (dataset_id, id)
@@ -119,16 +119,16 @@ _DDL_EXPERIMENT_CREATE_ADDITIONAL_INDEXES = [
     # evals
     "CREATE INDEX IF NOT EXISTS idx_evals_dataset_id ON evals (dataset_id);",
     "CREATE INDEX IF NOT EXISTS idx_evals_id ON evals (id);",
-    "CREATE INDEX IF NOT EXISTS idx_evals_dataset_created ON evals (dataset_id, created_at);",
-    "CREATE INDEX IF NOT EXISTS idx_eval_traces_eval ON eval_traces_bridge (eval_dataset_id, eval_id);",
-    "CREATE INDEX IF NOT EXISTS idx_eval_traces_trace_id ON eval_traces_bridge (trace_id);",
-    "CREATE INDEX IF NOT EXISTS idx_eval_traces_dataset_id ON eval_traces_bridge (eval_dataset_id);",
+    "CREATE INDEX IF NOT EXISTS idx_evals_dataset_created ON evals (dataset_id, created_at);",  # noqa: E501
+    "CREATE INDEX IF NOT EXISTS idx_eval_traces_eval ON eval_traces_bridge (eval_dataset_id, eval_id);",  # noqa: E501
+    "CREATE INDEX IF NOT EXISTS idx_eval_traces_trace_id ON eval_traces_bridge (trace_id);",  # noqa: E501
+    "CREATE INDEX IF NOT EXISTS idx_eval_traces_dataset_id ON eval_traces_bridge (eval_dataset_id);",  # noqa: E501
     # dynamic metrics
     "CREATE INDEX IF NOT EXISTS idx_dynamic_metrics_key ON dynamic_metrics (key);",
     "CREATE INDEX IF NOT EXISTS idx_dynamic_metrics_step ON dynamic_metrics (step);",
-    "CREATE INDEX IF NOT EXISTS idx_dynamic_metrics_key_step ON dynamic_metrics (key, step);",
-    "CREATE INDEX IF NOT EXISTS idx_dynamic_metrics_logged_at ON dynamic_metrics (logged_at);",
-    "CREATE INDEX IF NOT EXISTS idx_dynamic_metrics_key_logged_at ON dynamic_metrics (key, logged_at);",
+    "CREATE INDEX IF NOT EXISTS idx_dynamic_metrics_key_step ON dynamic_metrics (key, step);",  # noqa: E501
+    "CREATE INDEX IF NOT EXISTS idx_dynamic_metrics_logged_at ON dynamic_metrics (logged_at);",  # noqa: E501
+    "CREATE INDEX IF NOT EXISTS idx_dynamic_metrics_key_logged_at ON dynamic_metrics (key, logged_at);",  # noqa: E501
 ]
 
 
@@ -204,7 +204,7 @@ class ConnectionPool:
             for db_path in list(self._connections.keys()):
                 self._close_connection_unsafe(db_path)
 
-    def get_stats(self) -> dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:  # noqa: ANN401
         with self._lock:
             return {
                 "total_connections": len(self._connections),
@@ -308,7 +308,7 @@ class SQLiteBackend(Backend):
         self._initialize_experiment_db(experiment_id)
         self.pool.mark_experiment_active(experiment_id)
 
-    def log_static(self, experiment_id: str, key: str, value: Any) -> None:
+    def log_static(self, experiment_id: str, key: str, value: Any) -> None:  # noqa: ANN401
         self._ensure_experiment_initialized(experiment_id)
 
         conn = self._get_experiment_connection(experiment_id)
@@ -397,9 +397,9 @@ class SQLiteBackend(Backend):
         kind: int = 0,
         status_code: int = 0,
         status_message: str | None = None,
-        attributes: dict[str, Any] | None = None,
-        events: list[dict[str, Any]] | None = None,
-        links: list[dict[str, Any]] | None = None,
+        attributes: dict[str, Any] | None = None,  # noqa: ANN401
+        events: list[dict[str, Any]] | None = None,  # noqa: ANN401
+        links: list[dict[str, Any]] | None = None,  # noqa: ANN401
         trace_flags: int = 0,
     ) -> None:
         db_path = self._get_experiment_db_path(experiment_id)
@@ -446,11 +446,11 @@ class SQLiteBackend(Backend):
         experiment_id: str,
         eval_id: str,
         dataset_id: str,
-        inputs: dict[str, Any],
-        outputs: dict[str, Any] | None = None,
-        references: dict[str, Any] | None = None,
-        scores: dict[str, Any] | None = None,
-        metadata: dict[str, Any] | None = None,
+        inputs: dict[str, Any],  # noqa: ANN401
+        outputs: dict[str, Any] | None = None,  # noqa: ANN401
+        references: dict[str, Any] | None = None,  # noqa: ANN401
+        scores: dict[str, Any] | None = None,  # noqa: ANN401
+        metadata: dict[str, Any] | None = None,  # noqa: ANN401
     ) -> None:
         db_path = self._get_experiment_db_path(experiment_id)
         if not db_path.exists():
@@ -522,7 +522,7 @@ class SQLiteBackend(Backend):
 
         conn.commit()
 
-    def get_experiment_data(self, experiment_id: str) -> dict[str, Any]:
+    def get_experiment_data(self, experiment_id: str) -> dict[str, Any]:  # noqa: ANN401, C901
         db_path = self._get_experiment_db_path(experiment_id)
         if not db_path.exists():
             raise ValueError(f"Experiment {experiment_id} not found")
@@ -564,7 +564,7 @@ class SQLiteBackend(Backend):
         meta_conn = self._get_meta_connection()
         meta_cursor = meta_conn.cursor()
         meta_cursor.execute(
-            "SELECT name, created_at, status, group_name, tags FROM experiments WHERE id = ?",
+            "SELECT name, created_at, status, group_name, tags FROM experiments WHERE id = ?",  # noqa: E501
             (experiment_id,),
         )
         meta_row = meta_cursor.fetchone()
@@ -587,7 +587,7 @@ class SQLiteBackend(Backend):
             "attachments": attachments,
         }
 
-    def get_attachment(self, experiment_id: str, name: str) -> Any:
+    def get_attachment(self, experiment_id: str, name: str) -> Any:  # noqa: ANN401
         self._ensure_experiment_initialized(experiment_id)
 
         attachments_dir = self._get_attachments_dir(experiment_id)
@@ -601,7 +601,7 @@ class SQLiteBackend(Backend):
         with file_path.open("rb") as f:
             return f.read()
 
-    def list_experiments(self) -> list[dict[str, Any]]:
+    def list_experiments(self) -> list[dict[str, Any]]:  # noqa: ANN401
         conn = self._get_meta_connection()
         cursor = conn.cursor()
         cursor.execute(
@@ -647,7 +647,7 @@ class SQLiteBackend(Backend):
         )
         conn.commit()
 
-    def list_groups(self) -> list[dict[str, Any]]:
+    def list_groups(self) -> list[dict[str, Any]]:  # noqa: ANN401
         conn = self._get_meta_connection()
         cursor = conn.cursor()
         cursor.execute("SELECT name, description, created_at FROM experiment_groups")

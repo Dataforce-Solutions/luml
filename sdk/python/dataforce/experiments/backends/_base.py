@@ -20,7 +20,7 @@ class Backend(ABC):
         pass
 
     @abstractmethod
-    def log_static(self, experiment_id: str, key: str, value: Any) -> None:
+    def log_static(self, experiment_id: str, key: str, value: Any) -> None:  # noqa: ANN401
         pass
 
     @abstractmethod
@@ -31,7 +31,11 @@ class Backend(ABC):
 
     @abstractmethod
     def log_attachment(
-        self, experiment_id: str, name: str, data: Any, binary: bool = False
+        self,
+        experiment_id: str,
+        name: str,
+        data: Any,  # noqa: ANN401
+        binary: bool = False,  # noqa: ANN401
     ) -> None:
         pass
 
@@ -48,9 +52,9 @@ class Backend(ABC):
         kind: int = 0,
         status_code: int = 0,
         status_message: str | None = None,
-        attributes: dict[str, Any] | None = None,
-        events: list[dict[str, Any]] | None = None,
-        links: list[dict[str, Any]] | None = None,
+        attributes: dict[str, Any] | None = None,  # noqa: ANN401
+        events: list[dict[str, Any]] | None = None,  # noqa: ANN401
+        links: list[dict[str, Any]] | None = None,  # noqa: ANN401
         trace_flags: int = 0,
     ) -> None:
         pass
@@ -61,11 +65,11 @@ class Backend(ABC):
         experiment_id: str,
         eval_id: str,
         dataset_id: str,
-        inputs: dict[str, Any],
-        outputs: dict[str, Any] | None = None,
-        references: dict[str, Any] | None = None,
-        scores: dict[str, Any] | None = None,
-        metadata: dict[str, Any] | None = None,
+        inputs: dict[str, Any],  # noqa: ANN401
+        outputs: dict[str, Any] | None = None,  # noqa: ANN401
+        references: dict[str, Any] | None = None,  # noqa: ANN401
+        scores: dict[str, Any] | None = None,  # noqa: ANN401
+        metadata: dict[str, Any] | None = None,  # noqa: ANN401
     ) -> None:
         pass
 
@@ -80,15 +84,15 @@ class Backend(ABC):
         pass
 
     @abstractmethod
-    def get_experiment_data(self, experiment_id: str) -> dict[str, Any]:
+    def get_experiment_data(self, experiment_id: str) -> dict[str, Any]:  # noqa: ANN401
         pass
 
     @abstractmethod
-    def get_attachment(self, experiment_id: str, name: str) -> Any:
+    def get_attachment(self, experiment_id: str, name: str) -> Any:  # noqa: ANN401
         pass
 
     @abstractmethod
-    def list_experiments(self) -> list[dict[str, Any]]:
+    def list_experiments(self) -> list[dict[str, Any]]:  # noqa: ANN401
         pass
 
     @abstractmethod
@@ -100,7 +104,7 @@ class Backend(ABC):
         pass
 
     @abstractmethod
-    def list_groups(self) -> list[dict[str, Any]]:
+    def list_groups(self) -> list[dict[str, Any]]:  # noqa: ANN401
         pass
 
     @abstractmethod

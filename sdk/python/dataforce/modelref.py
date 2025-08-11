@@ -56,14 +56,14 @@ class ModelReference:
             self.read()
             return True
         except Exception as e:
-            print(f"Validation failed: {e}")
+            print(f"Validation failed: {e}")  # noqa: T201
             return False
 
     def _append_metadata(
         self,
         idx: str | None,
         tags: list[str],
-        payload: dict[str, Any],
+        payload: dict[str, Any],  # noqa: ANN401
         data: list[ArtifactMap],
         prefix: str | None = None,
     ) -> None:
@@ -86,7 +86,7 @@ class ModelReference:
             info = tarfile.TarInfo(name=f"meta-{uid}.json")
             info.size = len(body_str)
             tar.addfile(info, fileobj=io.BytesIO(body_str))
-            for i, item in enumerate(data):
+            for _, item in enumerate(data):
                 file_content = item.artifact.get_artifact()
                 file_info = tarfile.TarInfo(
                     name=f"{artifact_path_prefix}{item.remote_path}"
