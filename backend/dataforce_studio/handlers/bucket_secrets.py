@@ -7,7 +7,6 @@ from dataforce_studio.infra.exceptions import (
 )
 from dataforce_studio.repositories.bucket_secrets import BucketSecretRepository
 from dataforce_studio.schemas.bucket_secrets import (
-    BucketSecret,
     BucketSecretCreate,
     BucketSecretCreateIn,
     BucketSecretOut,
@@ -21,12 +20,6 @@ from dataforce_studio.services.s3_service import S3Service
 class BucketSecretHandler:
     __secret_repository = BucketSecretRepository(engine)
     __permissions_handler = PermissionsHandler()
-
-    async def _get_secret_or_raise(self, secret_id: int) -> BucketSecret:
-        secret = await self.__secret_repository.get_bucket_secret(secret_id)
-        if not secret:
-            raise NotFoundError("Bucket secret not found")
-        return secret
 
     async def create_bucket_secret(
         self, user_id: int, organization_id: int, secret: BucketSecretCreateIn
@@ -89,15 +82,8 @@ class BucketSecretHandler:
         except DatabaseConstraintError as e:
             raise BucketSecretInUseError() from e
 
-    async def get_bucket_urls(
-        self, organization_id: int, user_id: int, secret_id: int
-    ) -> BucketSecretUrls:
-        await self.__permissions_handler.check_organization_permission(
-            organization_id, user_id, Resource.BUCKET_SECRET, Action.READ
-        )
+    async def get_bucket_urls(self, secret: BucketSecretCreateIn) -> BucketSecretUrls:
         object_name = "test_file"
-
-        secret = await self._get_secret_or_raise(secret_id)
 
         s3_service = S3Service(secret)
 
