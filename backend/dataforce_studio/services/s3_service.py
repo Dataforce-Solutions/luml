@@ -3,15 +3,17 @@ from datetime import timedelta
 from minio import Minio
 
 from dataforce_studio.infra.exceptions import BucketConnectionError
-from dataforce_studio.schemas.bucket_secrets import BucketSecret
+from dataforce_studio.schemas.bucket_secrets import BucketSecret, BucketSecretCreateIn
 
 
 class S3Service:
-    def __init__(self, secret: BucketSecret) -> None:
+    def __init__(self, secret: BucketSecret | BucketSecretCreateIn) -> None:
         self._bucket_name = secret.bucket_name
         self._client = self._create_minio_client(secret)
 
-    def _create_minio_client(self, secret: BucketSecret) -> Minio:
+    def _create_minio_client(
+        self, secret: BucketSecret | BucketSecretCreateIn
+    ) -> Minio:
         return Minio(
             secret.endpoint,
             access_key=secret.access_key,
