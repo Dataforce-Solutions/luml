@@ -36,6 +36,15 @@ class ModelArtifactRepository(RepositoryBase, CrudMixin):
         async with self._get_session() as session:
             await self.delete_model(session, ModelArtifactOrm, model_artifact_id)
 
+    async def get_model_artifact_by_id(
+        self, model_artifact_id: int
+    ) -> ModelArtifact | None:
+        async with self._get_session() as session:
+            db_model = await self.get_model(
+                session, ModelArtifactOrm, model_artifact_id
+            )
+            return db_model.to_model_artifact() if db_model else None
+
     async def get_collection_model_artifact(
         self, collection_id: int
     ) -> list[ModelArtifact]:
