@@ -200,8 +200,11 @@ class ModelArtifactResource(ModelArtifactResourceBase):
                 if response.status_code == 200
                 else ModelArtifactStatus.UPLOAD_FAILED
             )
-        except FileUploadError:
-            status = ModelArtifactStatus.UPLOAD_FAILED
+        except FileUploadError as error:
+            self.update(
+                created_model["model"].id, status=ModelArtifactStatus.UPLOAD_FAILED, collection_id=collection_id
+            )
+            raise error
 
         return self.update(
             created_model["model"].id, status=status, collection_id=collection_id
@@ -419,10 +422,13 @@ class AsyncModelArtifactResource(ModelArtifactResourceBase):
                 if response.status_code == 200
                 else ModelArtifactStatus.UPLOAD_FAILED
             )
-        except FileUploadError:
-            status = ModelArtifactStatus.UPLOAD_FAILED
+        except FileUploadError as error:
+            self.update(
+                created_model["model"].id, status=ModelArtifactStatus.UPLOAD_FAILED, collection_id=collection_id
+            )
+            raise error
 
-        return await self.update(
+        return self.update(
             created_model["model"].id, status=status, collection_id=collection_id
         )
 

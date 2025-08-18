@@ -20,35 +20,6 @@ class ModelFileHandler:
         self._file_path = file_path
         self._metadata: list[dict] | None = None
         self._manifest: dict | None = None
-        self._file_data: bytes | None = None
-
-    def _load_file_data(self) -> bytes:
-        if self._file_data is None:
-            with open(self._file_path, "rb") as f:
-                self._file_data = f.read()
-        return self._file_data
-
-    @staticmethod
-    def _align_512(size: int) -> int:
-        remainder = size % 512
-        return size + (512 - remainder) if remainder else size
-
-    def _parse_tar_header(self, data: bytes, offset: int) -> tuple[str, int, int]:
-        if all(data[offset + i] == 0 for i in range(512)):
-            return "", 0, -1
-
-        name_bytes = data[offset : offset + 100]
-        null_index = name_bytes.find(b"\0")
-        name_length = null_index if null_index != -1 else 100
-        filename = (
-            name_bytes[:name_length].decode("ascii", errors="ignore").rstrip("\0")
-        )
-
-        size_bytes = data[offset + 124 : offset + 136]
-        size_str = size_bytes.decode("ascii", errors="ignore").strip().rstrip("\0")
-        file_size = int(size_str, 8) if size_str else 0
-
-        return filename, file_size, offset + 512 + self._align_512(file_size)
 
     def _get_type_tag(self, producer_tags: list[str]) -> str | None:
         for tag in producer_tags:
@@ -78,26 +49,25 @@ class ModelFileHandler:
         return os.path.getsize(self._file_path)
 
     def get_file_hash(self) -> str:
-        data = self._load_file_data()
-        return hashlib.sha256(data).hexdigest()
+        hash_sha256 = hashlib.sha256()
+        with open(self._file_path, "rb") as f:
+            for chunk in iter(lambda: f.read(8 * 1024 * 1024), b""):
+                hash_sha256.update(chunk)
+        return hash_sha256.hexdigest()
 
     def get_metadata(self) -> list[dict]:
         if self._metadata is None:
             try:
                 with tarfile.open(self._file_path, "r") as tar:
                     meta_file = tar.extractfile(tar.getmember("meta.json"))
-                    self._metadata = (
-                        json.loads(meta_file.read().decode("utf-8"))
-                        if meta_file
-                        else []
-                    )
+                    self._metadata = json.loads(meta_file.read().decode("utf-8")) if meta_file else []
             except (Exception, KeyError):
                 self._metadata = []
         return self._metadata
 
     def get_metrics(self) -> dict:
         manifest = self.get_manifest()
-        type_tag = self._get_type_tag(manifest["producer_tags"])
+        type_tag = self._get_type_tag(manifest.get("producer_tags", []))
 
         if type_tag:
             tabular_metrics = self._get_tabular_metadata()
@@ -129,22 +99,11 @@ class ModelFileHandler:
         return self._manifest
 
     def get_file_index(self) -> dict[str, tuple[int, int]]:
-        data = self._load_file_data()
         file_index = {}
-        scan_offset = 0
-
-        while scan_offset < len(data):
-            filename, file_size, next_offset = self._parse_tar_header(data, scan_offset)
-
-            if next_offset == -1:
-                break
-
-            if filename:
-                data_offset = scan_offset + 512
-                file_index[filename] = (data_offset, file_size)
-
-            scan_offset = next_offset
-
+        with tarfile.open(self._file_path, 'r') as tar:
+            for member in tar.getmembers():
+                if member.isfile():
+                    file_index[member.name] = (member.offset_data, member.size)
         return file_index
 
     def model_details(self) -> ModelDetails:

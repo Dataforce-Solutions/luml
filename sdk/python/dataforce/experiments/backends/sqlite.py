@@ -558,12 +558,12 @@ class SQLiteBackend(Backend):
                 dynamic_metrics[key] = []
             dynamic_metrics[key].append({"value": value, "step": step})
 
-        cursor.execute("SELECT name, file_path, logged_at FROM attachments")
+        cursor.execute("SELECT name, file_path, created_at FROM attachments")
         attachments = {}
-        for name, file_path, logged_at in cursor.fetchall():
+        for name, file_path, created_at in cursor.fetchall():
             attachments[name] = {
                 "file_path": file_path,
-                "logged_at": logged_at,
+                "created_at": created_at,
             }
 
         meta_conn = self._get_meta_connection()

@@ -9,20 +9,21 @@ class FileHandler:
     @staticmethod
     def _calculate_optimal_chunk_size(file_size: int) -> int:
         mb = 1024 * 1024
+        gb = 1024 * mb
 
         if file_size < 10 * mb:
             return 1 * mb
         if file_size < 50 * mb:
-            return 2 * mb
-        if file_size < 100 * mb:
             return 4 * mb
-        if file_size < 500 * mb:
-            return 8 * mb
-        if file_size < 1024 * mb:
+        if file_size < 100 * mb:
             return 16 * mb
-        if file_size < 5 * 1024 * mb:
-            return 32 * mb
-        return 64 * mb
+        if file_size < 500 * mb:
+            return 64 * mb
+        if file_size < gb:
+            return 128 * mb
+        if file_size < 5 * gb:
+            return 256 * mb
+        return 256 * mb
 
     @staticmethod
     def create_progress_bar(
@@ -100,7 +101,7 @@ class FileHandler:
             return response
         except Exception as error:
             self.finish_progress()
-            raise FileUploadError(f" Error: {error}") from error
+            raise FileUploadError(f"Upload failed: {error}") from error
 
     def download_file_with_progress(
         self, url: str, file_path: str, description: str = ""
