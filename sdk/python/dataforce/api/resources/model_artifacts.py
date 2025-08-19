@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 from collections.abc import Coroutine
 from typing import TYPE_CHECKING, Any
 
-from .._exceptions import FileUploadError
+from .._exceptions import FileError, FileUploadError
 from .._types import ModelArtifact, ModelArtifactStatus
 from .._utils import find_by_name
 from ..utils.file_handler import FileHandler
@@ -176,6 +176,14 @@ class ModelArtifactResource(ModelArtifactResourceBase):
         collection_id: int | None = None,
     ) -> ModelArtifact:
         model_details = ModelFileHandler(file_path).model_details()
+
+        if model_details.size > 5368709120:
+            raise FileError("Maximum allowed model size - 5GB")
+
+        file_format = model_details.file_name.split(".")[1]
+        if file_format not in ["fnnx", "pyfnx", "dfs"]:
+            raise FileError("File format error")
+
         created_model = self.create(
             file_name=model_details.file_name,
             metrics=model_details.metrics,
@@ -400,6 +408,14 @@ class AsyncModelArtifactResource(ModelArtifactResourceBase):
         collection_id: int | None = None,
     ) -> ModelArtifact:
         model_details = ModelFileHandler(file_path).model_details()
+
+        if model_details.size > 5368709120:
+            raise FileError("Maximum allowed model size - 5GB")
+
+        file_format = model_details.file_name.split(".")[1]
+        if file_format not in ["fnnx", "pyfnx", "dfs"]:
+            raise FileError("File format error")
+
         created_model = await self.create(
             file_name=model_details.file_name,
             metrics=model_details.metrics,
