@@ -122,10 +122,10 @@ class AuthHandler:
                 user.email, confirmation_link, user.full_name
             )
         except Exception as error:
+            await self.__user_repository.delete_user(user.email)
             raise EmailDeliveryError(
-                "Error sending confirmation email.", 201
+                "Error sending confirmation email. User is not created."
             ) from error
-
         return {"detail": "Please confirm your email address"}
 
     def _get_email_confirmation_link(self, token: str) -> str:
