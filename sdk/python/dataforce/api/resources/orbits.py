@@ -439,7 +439,7 @@ class AsyncOrbitResource(OrbitResourceBase):
             >>> async def main():
             ...     orbit = await dfs.orbits.update(name="New Orbit Name")
             ...
-            ...     orbit = dfs.orbits.update(
+            ...     orbit = await dfs.orbits.update(
             ...         name="New Orbit Name",
             ...         bucket_secret_id=456
             ...     )

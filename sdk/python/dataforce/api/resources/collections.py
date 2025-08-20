@@ -16,7 +16,7 @@ class CollectionResourceBase(ABC):
 
     @abstractmethod
     def get(
-        self, collection_value: str
+        self, collection_value: str | int | None
     ) -> Collection | None | Coroutine[Any, Any, Collection | None]:
         """Abstract Method to get collection by name."""
         raise NotImplementedError()
@@ -73,7 +73,8 @@ class CollectionResource(CollectionResourceBase):
     def __init__(self, client: "DataForceClient") -> None:
         self._client = client
 
-    def get(self, collection_value: str | int) -> Collection | None:
+    @validate_collection
+    def get(self, collection_value: str | int | None = None) -> Collection | None:
         """
         Get collection by id or name.
 
@@ -120,9 +121,11 @@ class CollectionResource(CollectionResourceBase):
         """Private Method for retrieving Collection by name."""
         return find_by_value(self.list(), name)
 
-    def _get_by_id(self, secret_id: int) -> Collection | None:
+    def _get_by_id(self, collection_id: int) -> Collection | None:
         """Private Method for retrieving Collection by id."""
-        return find_by_value(self.list(), secret_id, lambda c: c.id == secret_id)
+        return find_by_value(
+            self.list(), collection_id, lambda c: c.id == collection_id
+        )
 
     def list(self) -> list[Collection]:
         """
@@ -215,7 +218,7 @@ class CollectionResource(CollectionResourceBase):
         description: str | None = None,
         tags: builtins.list[str] | None = None,
         *,
-        collection_id: int,
+        collection_id: int | None = None,
     ) -> Collection:
         """
         Update collection by ID or use default collection if collection_id not provided.
@@ -276,7 +279,7 @@ class CollectionResource(CollectionResourceBase):
         return Collection.model_validate(response)
 
     @validate_collection
-    def delete(self, collection_id: int) -> None:
+    def delete(self, collection_id: int | None = None) -> None:
         """
         Delete collection by ID or use default collection if collection_id not provided.
 
@@ -316,7 +319,8 @@ class AsyncCollectionResource(CollectionResourceBase):
     def __init__(self, client: "AsyncDataForceClient") -> None:
         self._client = client
 
-    async def get(self, collection_value: str | int) -> Collection | None:
+    @validate_collection
+    async def get(self, collection_value: str | int | None = None) -> Collection | None:
         """
         Get collection by id or name.
 
@@ -364,9 +368,11 @@ class AsyncCollectionResource(CollectionResourceBase):
         """Private Method for retrieving Collection by name."""
         return find_by_value(await self.list(), name)
 
-    async def _get_by_id(self, secret_id: int) -> Collection | None:
+    async def _get_by_id(self, collection_id: int) -> Collection | None:
         """Private Method for retrieving Collection by id."""
-        return find_by_value(await self.list(), secret_id, lambda c: c.id == secret_id)
+        return find_by_value(
+            await self.list(), collection_id, lambda c: c.id == collection_id
+        )
 
     async def list(self) -> list[Collection]:
         """
@@ -427,7 +433,7 @@ class AsyncCollectionResource(CollectionResourceBase):
             ...     collection = await dfs.collections.create(
             ...         name="Training Dataset",
             ...         description="Dataset for model training",
-            ...         collection_type=CollectionType.MODEL,
+            ...         collection_type=CollectionType.DATASET,
             ...         tags=["ml", "training"]
             ...     )
 
@@ -461,7 +467,7 @@ class AsyncCollectionResource(CollectionResourceBase):
         description: str | None = None,
         tags: builtins.list[str] | None = None,
         *,
-        collection_id: int | None,
+        collection_id: int | None = None,
     ) -> Collection:
         """
         Update collection by ID or use default collection if collection_id not provided.
@@ -523,7 +529,7 @@ class AsyncCollectionResource(CollectionResourceBase):
         return Collection.model_validate(response)
 
     @validate_collection
-    async def delete(self, collection_id: int | None) -> None:
+    async def delete(self, collection_id: int | None = None) -> None:
         """
         Delete collection by ID or use default collection if collection_id not provided.
 

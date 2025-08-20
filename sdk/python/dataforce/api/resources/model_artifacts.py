@@ -909,6 +909,7 @@ class AsyncModelArtifactResource(ModelArtifactResourceBase):
             "model": ModelArtifact.model_validate(response["model"]),
         }
 
+    @validate_collection
     async def upload(
         self,
         file_path: str,
@@ -918,39 +919,55 @@ class AsyncModelArtifactResource(ModelArtifactResourceBase):
         *,
         collection_id: int | None = None,
     ) -> ModelArtifact:
-        """
-        Update model artifact metadata.
+        """Upload model artifact file to the collection.
 
-        Updates the model artifact's metadata. Only provided parameters will be
-        updated, others remain unchanged. If collection_id is None,
+        Uploads a model file (.fnnx, .pyfnx, or .dfs format) to the collection storage.
+        Maximum file size is 5GB. If collection_id is None,
             uses the default collection from client.
 
         Args:
-            file_path: Path to model file.
-            model_name: New model name.
-            description: New description.
-            tags: New list of tags.
-            collection_id: ID of the collection containing the model. If not provided,
-                uses the default collection set in the client
+            file_path: Path to the local model file to upload.
+            model_name: Name for the model artifact.
+            description: Optional description of the model.
+            tags: Optional list of tags for organizing models.
+            collection_id: ID of the collection to upload to. If not provided,
+                uses the default collection set in the client.
 
         Returns:
-            ModelArtifact: Updated model artifact object.
+            ModelArtifact: Uploaded model artifact object with
+                UPLOADED or UPLOAD_FAILED status.
 
         Raises:
+            FileError: If file size exceeds 5GB or unsupported format.
+            FileUploadError: If upload to storage fails.
             ConfigurationError: If collection_id not provided and
                 no default collection set.
-            NotFoundError: If model artifact with specified ID doesn't exist.
 
         Example:
             >>> dfs = AsyncDataForceClient(
             ...     api_key="dfs_your_key", organization=1, orbit=1, collection=456
             ... )
             >>> async def main():
-            ...     model = await dfs.model_artifacts.update(
-            ...         123,
-            ...         model_name="Updated Model",
-            ...         status=ModelArtifactStatus.UPLOADED
+            ...     model = await dfs.model_artifacts.upload(
+            ...         file_path="/path/to/model.fnnx",
+            ...         model_name="Production Model",
+            ...         description="Trained on latest dataset",
+            ...         tags=["ml", "production"],
+            ...         collection_id=456
             ...     )
+
+        Response object:
+            >>> ModelArtifact(
+            ...     id=123,
+            ...     model_name="Production Model",
+            ...     file_name="model.fnnx",
+            ...     description="Trained on latest dataset",
+            ...     collection_id=456,
+            ...     status=ModelArtifactStatus.UPLOADED,
+            ...     tags=["ml", "production"],
+            ...     created_at='2025-01-15T10:30:00.123456Z',
+            ...     updated_at='2025-01-15T10:35:00.123456Z'
+            ... )
         """
         model_details = ModelFileHandler(file_path).model_details()
 
@@ -986,14 +1003,14 @@ class AsyncModelArtifactResource(ModelArtifactResourceBase):
                 else ModelArtifactStatus.UPLOAD_FAILED
             )
         except FileUploadError as error:
-            self.update(
+            await self.update(
                 created_model["model"].id,
                 status=ModelArtifactStatus.UPLOAD_FAILED,
                 collection_id=collection_id,
             )
             raise error
 
-        return self.update(
+        return await self.update(
             created_model["model"].id, status=status, collection_id=collection_id
         )
 

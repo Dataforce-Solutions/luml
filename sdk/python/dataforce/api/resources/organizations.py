@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING, Any
 
 from .._types import Organization
 from .._utils import find_by_value
+from ._validators import validate_organization
 
 if TYPE_CHECKING:
     from .._client import AsyncDataForceClient, DataForceClient
@@ -14,7 +15,7 @@ class OrganizationResourceBase(ABC):
 
     @abstractmethod
     def get(
-        self, organization_value: str
+        self, organization_value: str | int | None = None
     ) -> Organization | None | Coroutine[Any, Any, Organization | None]:
         """Abstract method for selecting Organization details"""
         raise NotImplementedError()
@@ -38,28 +39,29 @@ class OrganizationResource(OrganizationResourceBase):
     def __init__(self, client: "DataForceClient") -> None:
         self._client = client
 
-    def get(self, organization_value: str) -> Organization | None:
+    @validate_organization
+    def get(self, organization_value: str | int | None = None) -> Organization | None:
         """
-        Get organization by name.
+        Get organization by name or ID.
 
-        Retrieves organization details by its name.
-        Search is case-sensitive and matches exact organization names.
+        Retrieves organization details by its name or ID.
+        Search by name is case-sensitive and matches exact organization names.
 
         Args:
-            organization_value: The exact name of the organization to retrieve.
+            organization_value: The exact name or ID of the organization to retrieve.
 
         Returns:
-            Organization object.
-
-            Returns None if organization with the specified name is not found.
+            Organization object if found, None if organization
+                with the specified name or ID is not found.
 
         Raises:
-            MultipleResourcesFoundError: if there are several
-                Organizations with that name.
+            MultipleResourcesFoundError: if there are several Organizations
+                with that name.
 
         Example:
             >>> dfs = DataForceClient(api_key="dfs_your_key")
-            >>> org = dfs.organizations.get("my-company")
+            >>> org_by_name = dfs.organizations.get("my-company")
+            >>> org_by_id = dfs.organizations.get(123)
 
         Example response:
             >>> Organization(
@@ -70,7 +72,11 @@ class OrganizationResource(OrganizationResourceBase):
             ...    updated_at=None
             ...)
         """
-        return self._get_by_name(organization_value)
+        if isinstance(organization_value, str):
+            return self._get_by_name(organization_value)
+        if isinstance(organization_value, int):
+            return self._get_by_id(organization_value)
+        return None
 
     def list(self) -> list[Organization]:
         """
@@ -106,6 +112,12 @@ class OrganizationResource(OrganizationResourceBase):
         """Private Method for search organization by name"""
         return find_by_value(self.list(), name)
 
+    def _get_by_id(self, organization_id: int) -> Organization | None:
+        """Private Method for retrieving Organization by id."""
+        return find_by_value(
+            self.list(), organization_id, lambda c: c.id == organization_id
+        )
+
 
 class AsyncOrganizationResource(OrganizationResourceBase):
     """Resource for managing organizations for async client."""
@@ -113,29 +125,32 @@ class AsyncOrganizationResource(OrganizationResourceBase):
     def __init__(self, client: "AsyncDataForceClient") -> None:
         self._client = client
 
-    async def get(self, organization_value: str) -> Organization | None:
+    @validate_organization
+    async def get(
+        self, organization_value: str | int | None = None
+    ) -> Organization | None:
         """
-        Get organization by name.
+        Get organization by name or ID.
 
-        Retrieves organization details by its name.
-        Search is case-sensitive and matches exact organization names.
+        Retrieves organization details by its name or ID.
+        Search by name is case-sensitive and matches exact organization names.
 
         Args:
-            organization_value: The exact name of the organization to retrieve.
+            organization_value: The exact name or ID of the organization to retrieve.
 
         Returns:
-            Organization object.
-
-            Returns None if organization with the specified name is not found.
+            Organization object if found, None if organization
+                with the specified name or ID is not found.
 
         Raises:
-            MultipleResourcesFoundError: if there are several
-                Organizations with that name.
+            MultipleResourcesFoundError: if there are several Organizations
+                with that name.
 
         Example:
             >>> dfs = AsyncDataForceClient(api_key="dfs_your_key")
             >>> async def main():
-            ...     org = await dfs.organizations.get("my-company")
+            ...     org_by_name = await dfs.organizations.get("my-company")
+            ...     org_by_id = await dfs.organizations.get(123)
 
         Example response:
             >>> Organization(
@@ -146,7 +161,11 @@ class AsyncOrganizationResource(OrganizationResourceBase):
             ...    updated_at=None
             ...)
         """
-        return await self._get_by_name(organization_value)
+        if isinstance(organization_value, str):
+            return await self._get_by_name(organization_value)
+        if isinstance(organization_value, int):
+            await self._get_by_id(organization_value)
+        return None
 
     async def list(self) -> list[Organization]:
         """
@@ -181,6 +200,12 @@ class AsyncOrganizationResource(OrganizationResourceBase):
     async def _get_by_name(self, name: str) -> Organization | None:
         """Private Method for search organization by name"""
         return find_by_value(await self.list(), name)
+
+    async def _get_by_id(self, organization_id: int) -> Organization | None:
+        """Private Method for retrieving Organization by id."""
+        return find_by_value(
+            await self.list(), organization_id, lambda c: c.id == organization_id
+        )
 
     # async def create(self, name: str, logo: str | None = None) -> Organization:
     #     response = await self._post(
