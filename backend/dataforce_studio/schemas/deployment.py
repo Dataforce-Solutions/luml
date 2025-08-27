@@ -17,11 +17,12 @@ class Deployment(BaseModel, BaseOrmConfig):
     id: int
     orbit_id: int
     satellite_id: int
-    model_uri: str
+    model_id: int
     inference_url: str | None = None
     status: DeploymentStatus
-    secret_ids: list[int] = Field(default_factory=list)
-    created_by_user_id: int | None = None
+    secrets: dict[str, int] = Field(default_factory=dict)
+    created_by_user: str | None = None
+    tags: list[str] | None = None
     created_at: datetime
     updated_at: datetime | None = None
 
@@ -29,23 +30,27 @@ class Deployment(BaseModel, BaseOrmConfig):
 class DeploymentCreate(BaseModel, BaseOrmConfig):
     orbit_id: int
     satellite_id: int
-    model_uri: str
-    secret_ids: list[int] = Field(default_factory=list)
+    model_id: int
+    secrets: dict[str, int] = Field(default_factory=dict)
     status: DeploymentStatus = DeploymentStatus.PENDING
-    created_by_user_id: int | None = None
+    created_by_user: str | None = None
+    tags: list[str] | None = None
 
 
 class DeploymentCreateIn(BaseModel):
     satellite_id: int
     model_artifact_id: int
-    secret_ids: list[int] = Field(default_factory=list)
+    secrets: dict[str, int] = Field(default_factory=dict)
+    tags: list[str] | None = None
 
 
 class DeploymentUpdate(BaseModel, BaseOrmConfig):
     id: int
     inference_url: str | None = None
     status: DeploymentStatus | None = None
+    tags: list[str] | None = None
 
 
 class DeploymentUpdateIn(BaseModel):
     inference_url: str
+    tags: list[str] | None = None

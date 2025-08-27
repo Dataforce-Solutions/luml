@@ -10,6 +10,7 @@ from dataforce_studio.infra.db import engine
 from dataforce_studio.infra.exceptions import ApplicationError, NotFoundError
 from dataforce_studio.repositories.orbits import OrbitRepository
 from dataforce_studio.repositories.satellites import SatelliteRepository
+from dataforce_studio.repositories.users import UserRepository
 from dataforce_studio.schemas.permissions import Action, Resource
 from dataforce_studio.schemas.satellite import (
     Satellite,
@@ -26,6 +27,7 @@ from dataforce_studio.settings import config
 class SatelliteHandler:
     __sat_repo = SatelliteRepository(engine)
     __orbit_repo = OrbitRepository(engine)
+    __user_repo = UserRepository(engine)
     __permissions_handler = PermissionsHandler()
 
     def __init__(
@@ -89,19 +91,27 @@ class SatelliteHandler:
         if not orbit:
             raise NotFoundError("Orbit not found")
 
+        user = await self.__user_repo.get_public_user_by_id(user_id)
+        if not user:
+            raise NotFoundError("User not found")
+
         api_key = self._generate_api_key()
+
         satellite, task = await self.__sat_repo.create_satellite(
             SatelliteCreate(
                 orbit_id=orbit_id,
                 api_key_hash=self._get_key_hash(api_key),
                 name=data.name,
             ),
-            {"created_by_user_id": user_id},
+            {"created_by_user": user.full_name},
         )
         return SatelliteCreateOut(satellite=satellite, api_key=api_key, task=task)
 
     async def pair_satellite(
-        self, satellite_id: int, capabilities: list[SatelliteCapability]
+        self,
+        satellite_id: int,
+        base_url: str,
+        capabilities: dict[SatelliteCapability, dict | None],
     ) -> Satellite:
         if not capabilities:
             raise ApplicationError("Invalid capabilities", status.HTTP_400_BAD_REQUEST)
@@ -111,13 +121,15 @@ class SatelliteHandler:
             raise NotFoundError("Satellite not found")
 
         if satellite.paired:
-            if set(satellite.capabilities) != set(capabilities):
+            if satellite.capabilities != capabilities:
                 raise ApplicationError(
                     "Satellite already paired", status.HTTP_409_CONFLICT
                 )
             return satellite
 
-        updated_sat = await self.__sat_repo.pair_satellite(satellite_id, capabilities)
+        updated_sat = await self.__sat_repo.pair_satellite(
+            satellite_id, base_url, capabilities
+        )
 
         if not updated_sat:
             raise NotFoundError("Satellite not found")

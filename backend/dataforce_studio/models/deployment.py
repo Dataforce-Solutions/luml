@@ -22,29 +22,29 @@ class DeploymentOrm(TimestampMixin, Base):
     satellite_id: Mapped[int] = mapped_column(
         Integer, ForeignKey("satellites.id", ondelete="CASCADE"), nullable=False
     )
-    model_uri: Mapped[str] = mapped_column(String, nullable=False)
+    model_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("model_artifacts.id", ondelete="RESTRICT"), nullable=False
+    )
     inference_url: Mapped[str | None] = mapped_column(
         String, nullable=True, unique=True
     )
     status: Mapped[str] = mapped_column(
         String, nullable=False, default="pending", server_default="pending"
     )
-    secret_ids: Mapped[list[int]] = mapped_column(
-        postgresql.ARRAY(Integer),
+    secrets: Mapped[dict[str, int]] = mapped_column(
+        postgresql.JSONB,
         nullable=False,
-        default=list,
+        default=dict,
         server_default="{}",
     )
-    created_by_user_id: Mapped[int | None] = mapped_column(
-        Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True
+    created_by_user: Mapped[str | None] = mapped_column(String, nullable=True)
+    tags: Mapped[list[str] | None] = mapped_column(
+        postgresql.JSONB, nullable=True, default=list
     )
 
     orbit = relationship("OrbitOrm", back_populates="deployments")
     satellite = relationship("SatelliteOrm", back_populates="deployments")
-    creator = relationship("UserOrm")
+    models = relationship("ModelArtifactOrm", back_populates="deployments")
 
     def to_deployment(self) -> Deployment:
         return Deployment.model_validate(self)
-
-
-__all__ = ["DeploymentOrm"]

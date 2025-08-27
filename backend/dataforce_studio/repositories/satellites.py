@@ -58,7 +58,10 @@ class SatelliteRepository(RepositoryBase, CrudMixin):
             return [s.to_satellite() for s in sats]
 
     async def pair_satellite(
-        self, satellite_id: int, capabilities: list[SatelliteCapability]
+        self,
+        satellite_id: int,
+        base_url: str,
+        capabilities: dict[SatelliteCapability, dict | None],
     ) -> Satellite | None:
         async with self._get_session() as session:
             result = await session.execute(
@@ -68,6 +71,7 @@ class SatelliteRepository(RepositoryBase, CrudMixin):
             if not sat:
                 return None
             sat.paired = True
+            sat.base_url = base_url
             sat.capabilities = capabilities
             sat.last_seen_at = datetime.now(UTC)
             await session.commit()

@@ -1,12 +1,13 @@
 from dataforce_studio.handlers.permissions import PermissionsHandler
 from dataforce_studio.infra.db import engine
-from dataforce_studio.infra.exceptions import BucketSecretNotFoundError, NotFoundError
+from dataforce_studio.infra.exceptions import NotFoundError
 from dataforce_studio.repositories.bucket_secrets import BucketSecretRepository
 from dataforce_studio.repositories.collections import CollectionRepository
 from dataforce_studio.repositories.deployments import DeploymentRepository
 from dataforce_studio.repositories.model_artifacts import ModelArtifactRepository
 from dataforce_studio.repositories.orbits import OrbitRepository
 from dataforce_studio.repositories.satellites import SatelliteRepository
+from dataforce_studio.repositories.users import UserRepository
 from dataforce_studio.schemas.deployment import (
     Deployment,
     DeploymentCreate,
@@ -15,7 +16,6 @@ from dataforce_studio.schemas.deployment import (
     DeploymentUpdate,
 )
 from dataforce_studio.schemas.permissions import Action, Resource
-from dataforce_studio.services.s3_service import S3Service
 
 
 class DeploymentHandler:
@@ -25,13 +25,8 @@ class DeploymentHandler:
     __artifact_repo = ModelArtifactRepository(engine)
     __collection_repo = CollectionRepository(engine)
     __secret_repo = BucketSecretRepository(engine)
+    __user_repo = UserRepository(engine)
     __permissions_handler = PermissionsHandler()
-
-    async def _get_s3_service(self, secret_id: int) -> S3Service:
-        secret = await self.__secret_repo.get_bucket_secret(secret_id)
-        if not secret:
-            raise BucketSecretNotFoundError()
-        return S3Service(secret)
 
     async def create_deployment(
         self,
@@ -66,16 +61,17 @@ class DeploymentHandler:
         if not collection or collection.orbit_id != orbit_id:
             raise NotFoundError("Model artifact not in orbit")
 
-        s3_service = await self._get_s3_service(orbit.bucket_secret_id)
-        model_uri = await s3_service.get_download_url(artifact.bucket_location)
+        user = await self.__user_repo.get_public_user_by_id(user_id)
+        if not user:
+            raise NotFoundError("User not found")
 
         deployment, _ = await self.__repo.create_deployment(
             DeploymentCreate(
                 orbit_id=orbit_id,
                 satellite_id=data.satellite_id,
-                model_uri=model_uri,
-                secret_ids=data.secret_ids,
-                created_by_user_id=user_id,
+                model_id=data.model_artifact_id,
+                secrets=data.secrets,
+                created_by_user=user.full_name,
             )
         )
         return deployment

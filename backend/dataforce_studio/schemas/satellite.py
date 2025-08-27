@@ -1,7 +1,7 @@
 from datetime import datetime
 from enum import StrEnum
 
-from pydantic import BaseModel
+from pydantic import BaseModel, HttpUrl
 
 from dataforce_studio.schemas.base import BaseOrmConfig
 
@@ -27,7 +27,7 @@ class Satellite(BaseModel, BaseOrmConfig):
     orbit_id: int
     name: str | None = None
     paired: bool
-    capabilities: list[SatelliteCapability]
+    capabilities: dict[SatelliteCapability, dict | None]
     created_at: datetime
     updated_at: datetime | None = None
     last_seen_at: datetime | None = None
@@ -44,7 +44,8 @@ class SatelliteCreate(BaseModel, BaseOrmConfig):
 
 
 class SatellitePairIn(BaseModel):
-    capabilities: list[SatelliteCapability]
+    base_url: HttpUrl
+    capabilities: dict[SatelliteCapability, dict | None]
 
 
 class SatelliteQueueTask(BaseModel, BaseOrmConfig):

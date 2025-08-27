@@ -32,6 +32,7 @@ orbit_secret_handler = OrbitSecretHandler()
 async def pair_satellite(request: Request, data: SatellitePairIn) -> Satellite:
     return await satellite_handler.pair_satellite(
         request.user.id,
+        str(data.base_url),
         data.capabilities,
     )
 

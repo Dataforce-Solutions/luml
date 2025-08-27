@@ -24,7 +24,7 @@ class DeploymentRepository(RepositoryBase, CrudMixin):
                 type=SatelliteTaskType.DEPLOY,
                 payload={
                     "deployment_id": db_dep.id,
-                    "model_uri": deployment.model_uri,
+                    "model_id": deployment.model_id,
                 },
             )
             session.add(task)

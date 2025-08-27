@@ -34,6 +34,3 @@ class OrbitSecretOrm(TimestampMixin, Base):
         data = secret.model_dump()
         data["value"] = encrypt(secret.value)
         return cls(**data)
-
-
-__all__ = ["OrbitSecretOrm"]

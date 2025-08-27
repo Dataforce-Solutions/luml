@@ -35,10 +35,11 @@ class SatelliteOrm(TimestampMixin, Base):
     paired: Mapped[bool] = mapped_column(
         Boolean, nullable=False, default=False, server_default="false"
     )
-    capabilities: Mapped[list[SatelliteCapability]] = mapped_column(
-        postgresql.ARRAY(String), nullable=False, default=list, server_default="{}"
+    capabilities: Mapped[dict[SatelliteCapability, dict | None]] = mapped_column(
+        postgresql.JSONB, nullable=False, default=dict, server_default="{}"
     )
     name: Mapped[str | None] = mapped_column(String, nullable=True)
+    base_url: Mapped[str | None] = mapped_column(String, nullable=True)
     last_seen_at: Mapped[datetime | None] = mapped_column(
         postgresql.TIMESTAMP(timezone=True), nullable=True
     )
@@ -95,6 +96,3 @@ class SatelliteQueueOrm(TimestampMixin, Base):
 
     def to_queue_task(self) -> SatelliteQueueTask:
         return SatelliteQueueTask.model_validate(self)
-
-
-__all__ = ["SatelliteOrm", "SatelliteQueueOrm"]
