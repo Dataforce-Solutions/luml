@@ -8,3 +8,5 @@ wasm/test_*.py
 __pycache__/
 *.py[cod]
 .DS_Store
+/sdk/python/venv/
+/.idea/
