@@ -76,6 +76,13 @@
               ></span>
               {{ modelsInfo[slotProps.data[column]]?.name }}
             </div>
+            <button
+              v-else-if="column === 'id'"
+              class="cell link"
+              @click="showTraces(slotProps.data.dataset_id, slotProps.data.id)"
+            >
+              {{ slotProps.data[column] }}
+            </button>
             <div v-else v-tooltip.top="`${slotProps.data[column]}`" class="cell">
               {{ slotProps.data[column] }}
             </div>
@@ -92,6 +99,7 @@ import { computed, ref } from 'vue'
 import { CircleArrowDown, CircleArrowUp, FileText, ChartBar } from 'lucide-vue-next'
 import EvalsToolbar from './EvalsToolbar.vue'
 import type { ModelsInfo } from '../../interfaces/interfaces'
+import { useEvalsStore } from '../../store/evals'
 
 export interface EvalsTableColumn {
   title: string
@@ -105,6 +113,8 @@ type Props = {
 }
 
 const props = defineProps<Props>()
+
+const evalsStore = useEvalsStore()
 
 const tableRef = ref()
 const selectedColumns = ref<string[]>([])
@@ -190,6 +200,10 @@ function setSelectedColumns(columns: string[]) {
   selectedColumns.value = columns
 }
 
+function showTraces(datasetId: string, evalId: string) {
+  evalsStore.setCurrentEvalData(datasetId, evalId)
+}
+
 function exportTable() {
   if (!tableRef.value) {
     console.error('Table for export was not found')
@@ -214,6 +228,7 @@ function exportTable() {
 .evals-table {
   margin-left: -1px;
   margin-right: -1px;
+  font-size: 14px;
 }
 
 .evals-table :deep(th) {
@@ -256,5 +271,9 @@ function exportTable() {
 
 :deep(.p-datatable-column-sorted) .cell {
   width: 123px;
+}
+
+.link {
+  text-decoration: underline;
 }
 </style>

@@ -5,6 +5,8 @@ import type {
   ExperimentSnapshotProvider,
   ExperimentSnapshotStaticParams,
   ModelSnapshot,
+  SpansParams,
+  TraceSpan,
 } from '../interfaces/interfaces'
 import { safeParse } from '../helpers/helpers'
 
@@ -108,5 +110,57 @@ export class ExperimentSnapshotDatabaseProvider implements ExperimentSnapshotPro
       }
     })
     return data
+  }
+
+  async getSpansList(args: SpansParams): Promise<Omit<TraceSpan, 'children'>[]> {
+    const db = this.modelsSnapshots.find((snapshot) => snapshot.modelId === args.modelId)?.database
+    if (!db) return []
+    const traceId = this.getTraceId(args)
+    if (!traceId) return []
+    const result = db.exec(
+      `SELECT trace_id, span_id, parent_span_id, name, kind, start_time_unix_nano, end_time_unix_nano, status_code, status_message, attributes, events, links FROM spans WHERE trace_id = '${traceId}'`,
+    )
+    if (!result[0]) return []
+    const list = result[0].values.map((array) =>
+      array.reduce((acc: any, value, index) => {
+        const columnName = result[0].columns[index]
+        acc[columnName] = safeParse(value)
+        return acc
+      }, {}),
+    )
+    return list
+  }
+
+  getTraceId(args: SpansParams) {
+    const db = this.modelsSnapshots.find((snapshot) => snapshot.modelId === args.modelId)?.database
+    if (!db) return null
+    const bridge = db.exec(
+      `SELECT trace_id FROM eval_traces_bridge WHERE eval_dataset_id = '${args.datasetId}' AND eval_id = '${args.evalId}' LIMIT 1`,
+    )
+    if (bridge.length && bridge[0].values.length) {
+      return bridge[0].values[0][0]
+    }
+    return null
+  }
+
+  buildSpanTree(spans: Omit<TraceSpan, 'children'>[]): TraceSpan[] {
+    const spanMap: Record<string, TraceSpan> = {}
+    spans.forEach((span) => {
+      spanMap[span.span_id] = { ...span, children: [] }
+    })
+    const roots: TraceSpan[] = []
+    for (const span of Object.values(spanMap)) {
+      if (span.parent_span_id) {
+        const parent = spanMap[span.parent_span_id]
+        if (parent) {
+          parent.children!.push(span)
+        } else {
+          roots.push(span)
+        }
+      } else {
+        roots.push(span)
+      }
+    }
+    return roots
   }
 }

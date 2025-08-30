@@ -5,7 +5,7 @@
       :key="name"
       :metric-name="name"
       :data="metricsRecord[name]"
-      :models-names="modelsNames"
+      :models-info="modelsInfo"
     />
   </div>
 </template>
@@ -14,13 +14,14 @@
 import type {
   ExperimentSnapshotDynamicMetric,
   ExperimentSnapshotDynamicMetrics,
+  ModelInfo,
 } from '../../interfaces/interfaces'
 import { computed } from 'vue'
 import DynamicMetricsItem from './DynamicMetricsItem.vue'
 
 type Props = {
   metricsList: ExperimentSnapshotDynamicMetrics[]
-  modelsNames: Record<string, string>
+  modelsInfo: Record<string, ModelInfo>
 }
 
 const props = defineProps<Props>()
@@ -36,7 +37,7 @@ const { uniqueMetrics, metricsRecord } = computed(() => {
       if (!record[metricName]) {
         record[metricName] = []
       }
-      record[metricName][modelIdx] = value as ExperimentSnapshotDynamicMetric
+      record[metricName][modelIdx] = value
     })
   })
 

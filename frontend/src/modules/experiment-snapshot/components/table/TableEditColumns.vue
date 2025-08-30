@@ -21,15 +21,12 @@
         <InputText placeholder="Column" v-model="searchValue" />
         <div class="list">
           <label v-for="column in visibleColumns" :key="column.name" class="column">
-            <ToggleSwitch v-model="column.selected" :disabled="column.name === target" />
+            <ToggleSwitch
+              v-model="column.selected"
+              :disabled="disabledColumns.includes(column.name)"
+            />
             <div class="item-title">
               <span class="label">{{ cutStringOnMiddle(column.name, 24) }}</span>
-              <Target
-                v-if="column.name === target"
-                width="16"
-                height="16"
-                color="var(--p-message-error-color)"
-              />
             </div>
           </label>
         </div>
@@ -47,7 +44,7 @@
 </template>
 
 <script setup lang="ts">
-import { Target, type LucideIcon } from 'lucide-vue-next'
+import { type LucideIcon } from 'lucide-vue-next'
 import { computed, ref, watch } from 'vue'
 import { cutStringOnMiddle } from '../../helpers/helpers'
 import { OverlayBadge, Button, Popover, InputText, ToggleSwitch, Divider, Checkbox } from 'primevue'
@@ -57,11 +54,11 @@ type Column = {
   name: string
 }
 type Props = {
-  target?: string
   columns: string[]
   selectedColumns: string[]
   roundedButton: boolean
   buttonIcon: LucideIcon
+  disabledColumns: string[]
 }
 type Emits = {
   (event: 'edit', list: string[]): void
@@ -114,7 +111,7 @@ watch(isShowAll, (value) => {
   else
     selectedColumnsCurrent.value = fillSelectedColumns(
       props.columns,
-      props.columns.filter((column) => column === props.target),
+      props.columns.filter((column) => props.disabledColumns.includes(column)),
     )
 })
 </script>

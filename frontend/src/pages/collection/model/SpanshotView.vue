@@ -13,7 +13,7 @@
     v-if="modelsStore.experimentSnapshotProvider && currentModel"
     :provider="modelsStore.experimentSnapshotProvider"
     :models-ids="[currentModel.id]"
-    :models-names="modelsNames"
+    :models-info="modelsInfo"
   ></ExperimentSnapshot>
 </template>
 
@@ -24,6 +24,8 @@ import { useModelsStore } from '@/stores/models'
 import { useRoute } from 'vue-router'
 import { Skeleton } from 'primevue'
 import { useExperimentSnapshotsDatabaseProvider } from '@/hooks/useExperimentSnapshotsDatabaseProvider'
+import type { ModelInfo } from '@/modules/experiment-snapshot/interfaces/interfaces'
+import { getModelColorByIndex } from '@/modules/experiment-snapshot/helpers/helpers'
 
 const modelsStore = useModelsStore()
 const route = useRoute()
@@ -36,12 +38,15 @@ const currentModel = computed(() => {
   return modelsStore.modelsList.find((model) => model.id === +route.params.modelId)
 })
 
-const modelsNames = computed(() => {
-  const names: Record<string, string> = {}
+const modelsInfo = computed(() => {
+  const data: Record<string, ModelInfo> = {}
   if (currentModel.value) {
-    names[currentModel.value.id] = currentModel.value.model_name
+    data[currentModel.value.id] = {
+      name: currentModel.value.model_name,
+      color: getModelColorByIndex(0),
+    }
   }
-  return names
+  return data
 })
 
 onMounted(async () => {

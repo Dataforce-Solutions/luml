@@ -8,11 +8,16 @@ export const useVariableValue = (rootSelector = 'body') => {
     return rootStyle.value
   })
 
-  function getVariablesValues(variable: string[]) {
-    const formattedVariables = variable.map((variable) =>
-      variable.replace('var(', '').replace(')', ''),
-    )
-    return formattedVariables.map((variable) => getRootStyle.value.getPropertyValue(variable))
+  function getVariablesValues(variables: string[]) {
+    return variables.map((variable) => {
+      const isVariable = variable.startsWith('var')
+      if (isVariable) {
+        const variableValue = variable.replace('var(', '').replace(')', '')
+        return getRootStyle.value.getPropertyValue(variableValue)
+      } else {
+        return variable
+      }
+    })
   }
 
   function setRootStyle() {

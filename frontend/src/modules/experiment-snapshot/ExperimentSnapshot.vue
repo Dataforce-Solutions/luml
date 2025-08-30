@@ -14,18 +14,26 @@
     <DynamicMetrics
       v-if="dynamicMetrics"
       :metrics-list="dynamicMetrics"
-      :models-names="modelsNames"
+      :models-info="modelsInfo"
     ></DynamicMetrics>
-    <div v-if="evals && Object.keys(evals)" class="evals-list">
-      <EvalsCard v-for="item of evals" :data="item" :models-info="modelsInfo"></EvalsCard>
+    <div v-if="evalsStore.evals && Object.keys(evalsStore.evals)" class="evals-list">
+      <EvalsCard
+        v-for="item of evalsStore.evals"
+        :data="item"
+        :models-info="modelsInfo"
+      ></EvalsCard>
     </div>
   </div>
+  <TracesDialog
+    :visible="!!evalsStore.currentEvalData"
+    :models-info="modelsInfo"
+    @update:visible="evalsStore.resetCurrentEvalData"
+  ></TracesDialog>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { onMounted, onUnmounted, ref, watch } from 'vue'
 import type {
-  EvalsDatasets,
   ExperimentSnapshotDynamicMetrics,
   ExperimentSnapshotProvider,
   ExperimentSnapshotStaticParams,
@@ -37,30 +45,22 @@ import EvalsCard from './components/evals/EvalsCard.vue'
 import { useToast } from 'primevue'
 import { simpleErrorToast } from './lib/primevue/data/toasts'
 import StaticParametersMultiple from './components/static-parameters-multiple/StaticParametersMultiple.vue'
-import { getModelColorByIndex } from './helpers/helpers'
+import TracesDialog from './components/evals/traces/TracesDialog.vue'
+import { useEvalsStore } from './store/evals'
 
 type Props = {
   provider: ExperimentSnapshotProvider
   modelsIds: number[]
-  modelsNames: Record<string, string>
+  modelsInfo: ModelsInfo
 }
 
 const props = defineProps<Props>()
 
 const toast = useToast()
+const evalsStore = useEvalsStore()
 
 const staticParams = ref<ExperimentSnapshotStaticParams[] | null>(null)
 const dynamicMetrics = ref<ExperimentSnapshotDynamicMetrics[] | null>()
-const evals = ref<EvalsDatasets | null>(null)
-
-const modelsInfo = computed(() => {
-  return props.modelsIds.reduce((acc: ModelsInfo, modelId, index) => {
-    const name = props.modelsNames[modelId]
-    const color = getModelColorByIndex(index)
-    acc[modelId] = { name, color }
-    return acc
-  }, {})
-})
 
 async function setStaticParams() {
   try {
@@ -80,17 +80,34 @@ async function setDynamicMetrics() {
 
 async function setEvals() {
   try {
-    evals.value = await props.provider.getEvalsList()
+    evalsStore.setEvals()
   } catch (error: any) {
     toast.add(simpleErrorToast(error.message))
   }
 }
 
 onMounted(async () => {
+  evalsStore.setProvider(props.provider)
   setStaticParams()
   setDynamicMetrics()
   setEvals()
 })
+
+onUnmounted(() => {
+  evalsStore.reset()
+  document.documentElement.classList.remove('lock')
+})
+
+watch(
+  () => !!evalsStore.currentEvalData,
+  (val) => {
+    if (val) {
+      document.documentElement.classList.add('lock')
+    } else {
+      document.documentElement.classList.remove('lock')
+    }
+  },
+)
 </script>
 
 <style scoped>

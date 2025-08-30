@@ -5,6 +5,7 @@
       :columns="columns"
       :rounded-button="false"
       :selected-columns="selectedColumns"
+      :disabled-columns="['id']"
       @edit="(data) => $emit('edit', data)"
     ></TableEditColumns>
     <Button severity="secondary" variant="outlined" @click="$emit('export')">

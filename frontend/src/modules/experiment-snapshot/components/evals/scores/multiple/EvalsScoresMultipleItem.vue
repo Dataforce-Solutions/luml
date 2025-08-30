@@ -39,9 +39,9 @@ const plotlyData = computed(() => {
 
 const plotlyLayout = computed(() => {
   const [bgColor, textColor, gridColor] = getVariablesValues([
-    '--p-card-background',
-    '--p-text-muted-color',
-    '--p-datatable-row-background',
+    'var(--p-card-background)',
+    'var(--p-text-muted-color)',
+    'var(--p-datatable-row-background)',
   ])
 
   return plotlyBarChartLayout({ title: props.data[0].scoreName, bgColor, textColor, gridColor })

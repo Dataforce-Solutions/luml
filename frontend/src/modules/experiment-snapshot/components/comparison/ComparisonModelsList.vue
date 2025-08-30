@@ -13,18 +13,18 @@
 </template>
 
 <script setup lang="ts">
-import { getModelColorByIndex } from '../../helpers/helpers'
 import { computed } from 'vue'
+import type { ModelsInfo } from '../../interfaces/interfaces'
 
 type Props = {
-  modelsInfo: { id: number; name: string }[]
+  modelsInfo: ModelsInfo
 }
 
 const props = defineProps<Props>()
 
 const models = computed(() => {
-  return props.modelsInfo.map((model, index) => {
-    return { ...model, color: getModelColorByIndex(index) }
+  return Object.entries(props.modelsInfo).map((entry) => {
+    return { color: entry[1].color, name: entry[1].name }
   })
 })
 </script>

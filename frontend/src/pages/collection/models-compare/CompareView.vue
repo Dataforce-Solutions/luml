@@ -6,14 +6,21 @@
       :models-list="modelsStore.modelsList"
       :models-info="modelsInfo"
     ></ComparisonModelsList>
-    <div v-if="loading" class="loading-block">
-      <ProgressSpinner></ProgressSpinner>
+    <div v-if="loading">
+      <Skeleton style="height: 210px; margin-bottom: 20px"></Skeleton>
+      <div
+        style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; margin-bottom: 20px"
+      >
+        <Skeleton style="height: 300px; width: 100%"></Skeleton>
+        <Skeleton style="height: 300px; width: 100%"></Skeleton>
+      </div>
+      <Skeleton style="height: 210px; margin-bottom: 20px"></Skeleton>
     </div>
     <ExperimentSnapshot
       v-else-if="modelsStore.experimentSnapshotProvider"
       :provider="modelsStore.experimentSnapshotProvider"
       :models-ids="modelIdsList"
-      :models-names="modelsNames"
+      :models-info="modelsInfo"
     ></ExperimentSnapshot>
   </div>
 </template>
@@ -25,8 +32,10 @@ import { ComparisonHeader } from '@/modules/experiment-snapshot'
 import { ComparisonModelsList } from '@/modules/experiment-snapshot'
 import { useModelsStore } from '@/stores/models'
 import { useExperimentSnapshotsDatabaseProvider } from '@/hooks/useExperimentSnapshotsDatabaseProvider'
-import { ProgressSpinner } from 'primevue'
+import { Skeleton } from 'primevue'
 import { ExperimentSnapshot } from '@/modules/experiment-snapshot'
+import { getModelColorByIndex } from '@/modules/experiment-snapshot/helpers/helpers'
+import type { ModelsInfo } from '@/modules/experiment-snapshot/interfaces/interfaces'
 
 const route = useRoute()
 const modelsStore = useModelsStore()
@@ -46,14 +55,10 @@ const modelsList = computed(() =>
 )
 
 const modelsInfo = computed(() => {
-  return modelsList.value.map((model) => {
-    return { id: model.id, name: model.model_name }
-  })
-})
-
-const modelsNames = computed(() => {
-  return modelsList.value.reduce((acc: Record<string, string>, model) => {
-    acc[model.id] = model.model_name
+  return modelsList.value.reduce((acc: ModelsInfo, model, index) => {
+    const name = model.model_name
+    const color = getModelColorByIndex(index)
+    acc[model.id] = { name, color }
     return acc
   }, {})
 })

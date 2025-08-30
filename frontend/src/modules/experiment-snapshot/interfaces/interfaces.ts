@@ -4,6 +4,9 @@ export interface ExperimentSnapshotProvider {
   getStaticParamsList: () => Promise<ExperimentSnapshotStaticParams[]>
   getDynamicMetricsList: () => Promise<ExperimentSnapshotDynamicMetrics[]>
   getEvalsList: () => Promise<Record<string, EvalsInfo[]> | null>
+  getSpansList: (args: SpansParams) => Promise<Omit<TraceSpan, 'children'>[]>
+  buildSpanTree: (spans: Omit<TraceSpan, 'children'>[]) => TraceSpan[]
+  getTraceId: (params: any) => any
 }
 
 export interface ExperimentSnapshotStaticParams {
@@ -56,4 +59,36 @@ export interface ScoreInfo {
 export interface ModelScores {
   modelId: number | string
   scores: ScoreInfo[]
+}
+
+export interface SpansParams {
+  modelId: number
+  datasetId: string
+  evalId: string
+}
+
+export interface TraceSpan {
+  trace_id: string
+  span_id: string
+  parent_span_id: string | null
+  name: string
+  kind: number
+  start_time_unix_nano: number
+  end_time_unix_nano: number
+  status_code: number
+  status_message: string | null
+  attributes: string
+  events: string | null
+  links: string | null
+  children: TraceSpan[]
+  dfs_span_type: SpanTypeEnum | null
+}
+
+export enum SpanTypeEnum {
+  DEFAULT = 0,
+  CHAT = 1,
+  AGENT = 2,
+  TOOL = 3,
+  EMBEDDER = 4,
+  RERANKER = 5,
 }

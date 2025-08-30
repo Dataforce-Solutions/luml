@@ -11924,6 +11924,22 @@
     "color-10": {
       "$value": "#bc65a1",
       "$type": "color"
+    },
+    "color-11": {
+      "$value": "#e55237",
+      "$type": "color"
+    },
+    "color-12": {
+      "$value": "#7966f0",
+      "$type": "color"
+    },
+    "color-13": {
+      "$value": "#40ca40",
+      "$type": "color"
+    },
+    "color-14": {
+      "$value": "#55797b",
+      "$type": "color"
     }
   },
   "trace": {

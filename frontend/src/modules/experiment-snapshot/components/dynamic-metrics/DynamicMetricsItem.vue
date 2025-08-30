@@ -8,12 +8,11 @@
 </template>
 
 <script setup lang="ts">
-import type { ExperimentSnapshotDynamicMetric } from '../../interfaces/interfaces'
+import type { ExperimentSnapshotDynamicMetric, ModelInfo } from '../../interfaces/interfaces'
 import { computed, nextTick, onMounted, ref } from 'vue'
 import Plotly from 'plotly.js-dist'
 import DynamicMetricsItemContent from './DynamicMetricsItemContent.vue'
 import { useVariableValue } from '../../hooks/useVariableValue'
-import { MODELS_COLORS } from '../../constants/colors'
 import { plotlyLineChartLayout } from '../../lib/plotly/layouts'
 
 const { getVariablesValues } = useVariableValue()
@@ -21,7 +20,7 @@ const { getVariablesValues } = useVariableValue()
 type Props = {
   metricName: string
   data: ExperimentSnapshotDynamicMetric[]
-  modelsNames: Record<string, string>
+  modelsInfo: Record<string, ModelInfo>
 }
 
 const props = defineProps<Props>()
@@ -30,24 +29,29 @@ const chartRef = ref<HTMLDivElement[]>([])
 const chartScaledRef = ref<HTMLDivElement[]>([])
 
 const plotlyData = computed(() => {
-  const colors = getVariablesValues(MODELS_COLORS)
-  return props.data.map((data, index) => ({
-    ...data,
-    type: 'scatter',
-    mode: 'lines',
-    name: props.metricName,
-    line: { color: colors[index] ? colors[index] : colors[colors.length - 1], width: 3 },
-    hovertemplate:
-      '<b>Value:</b> %{y}<br>' + `<b>Model:</b> ${props.modelsNames[data.modelId]}<extra></extra>`,
-  }))
+  return props.data
+    .filter((item) => item.modelId)
+    .map((data) => {
+      const color = getVariablesValues([props.modelsInfo[data.modelId]?.color])[0]
+      return {
+        ...data,
+        type: 'scatter',
+        mode: 'lines',
+        name: props.metricName,
+        line: { color: color, width: 3 },
+        hovertemplate:
+          '<b>Value:</b> %{y}<br>' +
+          `<b>Model:</b> ${props.modelsInfo[data.modelId]?.name}<extra></extra>`,
+      }
+    })
 })
 
 const plotlyLayout = computed(() => {
   const [bgColor, borderColor, textColor, gridColor] = getVariablesValues([
-    '--p-card-background',
-    '--p-content-border-color',
-    '--p-text-muted-color',
-    '--p-datatable-row-background',
+    'var(--p-card-background)',
+    'var(--p-content-border-color)',
+    'var(--p-text-muted-color)',
+    'var(--p-datatable-row-background)',
   ])
 
   return plotlyLineChartLayout({
