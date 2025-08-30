@@ -116,12 +116,17 @@ function searchTags(event: AutoCompleteCompleteEvent) {
   autocompleteItems.value = getTagsByQuery(event.query)
 }
 
+function checkFileSize(size: number) {
+  return size < 524288000
+}
+
 function onSelectFile(event: File) {
   fileError.value = false
   const regex = /^[^\s<>:\"/\\|?*{}\[\]~#%;'^)+!(]+$/
   const isFileNameCorrect = regex.test(event.name)
   const isDfsFile = event.name.endsWith('.dfs')
-  if (isDfsFile && isFileNameCorrect) {
+  const fileSizeCorrect = checkFileSize(event.size)
+  if (isDfsFile && isFileNameCorrect && fileSizeCorrect) {
     formData.value.file = event
   } else {
     fileError.value = true
