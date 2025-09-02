@@ -17,13 +17,18 @@ from tests.conftest import SatelliteFixtureData
 @pytest.mark.asyncio
 async def test_create_deployment(create_satellite: SatelliteFixtureData) -> None:
     data = create_satellite
-    engine, orbit, satellite = data.engine, data.orbit, data.satellite
+    engine, orbit, model, satellite = (
+        data.engine,
+        data.orbit,
+        data.model,
+        data.satellite,
+    )
     repo = DeploymentRepository(engine)
 
     deployment_data = DeploymentCreate(
         orbit_id=orbit.id,
         satellite_id=satellite.id,
-        model_id=1,
+        model_id=model.id,
         secrets={"api_key": 123},
         status=DeploymentStatus.PENDING,
         created_by_user="test_user",
@@ -49,13 +54,18 @@ async def test_create_deployment(create_satellite: SatelliteFixtureData) -> None
 @pytest.mark.asyncio
 async def test_get_deployment(create_satellite: SatelliteFixtureData) -> None:
     data = create_satellite
-    engine, orbit, satellite = data.engine, data.orbit, data.satellite
+    engine, orbit, model, satellite = (
+        data.engine,
+        data.orbit,
+        data.model,
+        data.satellite,
+    )
     repo = DeploymentRepository(engine)
 
     deployment_data = DeploymentCreate(
         orbit_id=orbit.id,
         satellite_id=satellite.id,
-        model_id=1,
+        model_id=model.id,
         secrets={"api_key": 123},
         status=DeploymentStatus.PENDING,
         created_by_user="test_user",
@@ -74,13 +84,18 @@ async def test_get_deployment(create_satellite: SatelliteFixtureData) -> None:
 @pytest.mark.asyncio
 async def test_list_deployments(create_satellite: SatelliteFixtureData) -> None:
     data = create_satellite
-    engine, orbit, satellite = data.engine, data.orbit, data.satellite
+    engine, orbit, model, satellite = (
+        data.engine,
+        data.orbit,
+        data.model,
+        data.satellite,
+    )
     repo = DeploymentRepository(engine)
 
     deployment_data = DeploymentCreate(
         orbit_id=orbit.id,
         satellite_id=satellite.id,
-        model_id=1,
+        model_id=model.id,
         secrets={"api_key": 123},
         status=DeploymentStatus.PENDING,
         created_by_user="test_user",
@@ -105,7 +120,12 @@ async def test_list_satellite_deployments(
     create_satellite: SatelliteFixtureData,
 ) -> None:
     data = create_satellite
-    engine, orbit, satellite = data.engine, data.orbit, data.satellite
+    engine, orbit, model, satellite = (
+        data.engine,
+        data.orbit,
+        data.model,
+        data.satellite,
+    )
     repo = DeploymentRepository(engine)
     deployments_num = 4
     deployments = []
@@ -115,7 +135,7 @@ async def test_list_satellite_deployments(
             DeploymentCreate(
                 orbit_id=orbit.id,
                 satellite_id=satellite.id,
-                model_id=1,
+                model_id=model.id,
                 status=DeploymentStatus.PENDING,
             )
         )
@@ -130,13 +150,18 @@ async def test_list_satellite_deployments(
 @pytest.mark.asyncio
 async def test_update_deployment(create_satellite: SatelliteFixtureData) -> None:
     data = create_satellite
-    engine, orbit, satellite = data.engine, data.orbit, data.satellite
+    engine, orbit, model, satellite = (
+        data.engine,
+        data.orbit,
+        data.model,
+        data.satellite,
+    )
     repo = DeploymentRepository(engine)
 
     deployment_data = DeploymentCreate(
         orbit_id=orbit.id,
         satellite_id=satellite.id,
-        model_id=1,
+        model_id=model.id,
         status=DeploymentStatus.PENDING,
         tags=["original"],
     )

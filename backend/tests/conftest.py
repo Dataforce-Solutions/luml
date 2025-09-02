@@ -12,6 +12,7 @@ from dataforce_studio.models import OrganizationOrm
 from dataforce_studio.repositories.bucket_secrets import BucketSecretRepository
 from dataforce_studio.repositories.collections import CollectionRepository
 from dataforce_studio.repositories.invites import InviteRepository
+from dataforce_studio.repositories.model_artifacts import ModelArtifactRepository
 from dataforce_studio.repositories.orbits import OrbitRepository
 from dataforce_studio.repositories.satellites import SatelliteRepository
 from dataforce_studio.repositories.users import UserRepository
@@ -22,6 +23,7 @@ from dataforce_studio.schemas.model_artifacts import (
     CollectionCreate,
     CollectionType,
     Manifest,
+    ModelArtifact,
     ModelArtifactCreate,
     ModelArtifactStatus,
 )
@@ -123,6 +125,7 @@ class CollectionFixtureData(OrbitFixtureData):
 
 @dataclass
 class SatelliteFixtureData(OrbitFixtureData):
+    model: ModelArtifact
     satellite: Satellite
 
 
@@ -597,13 +600,25 @@ async def create_collection(
 
 @pytest_asyncio.fixture(scope="function")
 async def create_satellite(
-    create_orbit: OrbitFixtureData, test_user_create: CreateUser
+    create_collection: CollectionFixtureData, test_model_artifact: ModelArtifactCreate
 ) -> SatelliteFixtureData:
-    data = create_orbit
+    data = create_collection
     repo = SatelliteRepository(data.engine)
-    orbit = data.orbit
+    model_artifact_repo = ModelArtifactRepository(data.engine)
+    orbit, collection = data.orbit, data.collection
 
     assert orbit is not None, "Orbit should not be None in create_satellite fixture"
+    assert collection is not None, (
+        "Collection should not be None in create_satellite fixture"
+    )
+
+    model_data = test_model_artifact.model_copy()
+    model_data.collection_id = collection.id
+
+    model = await model_artifact_repo.create_model_artifact(model_data)
+    assert model is not None, (
+        "ModelArtifact should not be None in create_satellite fixture"
+    )
 
     satellite_data = SatelliteCreate(
         orbit_id=orbit.id, api_key_hash=str(uuid.uuid4()), name="test"
@@ -620,5 +635,6 @@ async def create_satellite(
         orbit=data.orbit,
         bucket_secret=data.bucket_secret,
         user=data.user,
+        model=model,
         satellite=satellite,
     )
