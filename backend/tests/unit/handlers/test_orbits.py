@@ -1,6 +1,6 @@
 import datetime
 import uuid
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
 import pytest
 
@@ -104,14 +104,10 @@ async def test_create_organization_orbit(
     user_id = 1
     mocked_orbit = test_orbit
 
-    mock_get_bucket_secret.return_value = type(
-        "obj",
-        (),
-        {
-            "id": mocked_orbit.id,
-            "organization_id": mocked_orbit.organization_id,
-            "name": "test_secret",
-        },
+    mock_get_bucket_secret.return_value = Mock(
+        id=mocked_orbit.id,
+        organization_id=mocked_orbit.organization_id,
+        name="test_secret",
     )
     orbit_to_create = OrbitCreateIn(
         name=mocked_orbit.name,
@@ -121,9 +117,7 @@ async def test_create_organization_orbit(
     mock_create_orbit.return_value = mocked_orbit
     mock_get_organization_orbits_count.return_value = 0
     mock_get_organization_member_role.return_value = OrgRole.OWNER
-    mock_get_organization_details.return_value = type(
-        "obj", (), {"orbits_limit": 10, "total_orbits": 0}
-    )
+    mock_get_organization_details.return_value = Mock(orbits_limit=10, total_orbits=0)
 
     result = await handler.create_organization_orbit(
         user_id, mocked_orbit.organization_id, orbit_to_create
@@ -176,9 +170,7 @@ async def test_create_organization_orbit_secret_not_found(
     mock_get_orbits_count.return_value = 0
     mock_get_secret.return_value = None
     mock_get_org_role.return_value = OrgRole.OWNER
-    mock_get_organization_details.return_value = type(
-        "obj", (), {"orbits_limit": 10, "total_orbits": 0}
-    )
+    mock_get_organization_details.return_value = Mock(orbits_limit=10, total_orbits=0)
 
     with pytest.raises(NotFoundError, match="Bucket secret not found") as error:
         await handler.create_organization_orbit(
@@ -232,9 +224,7 @@ async def test_create_organization_orbit_secret_wrong_org(
     mock_get_orbits_count.return_value = 0
     mock_get_secret.return_value = Secret(orbit.organization_id + 1)
     mock_get_org_role.return_value = OrgRole.OWNER
-    mock_get_organization_details.return_value = type(
-        "obj", (), {"orbits_limit": 10, "total_orbits": 0}
-    )
+    mock_get_organization_details.return_value = Mock(orbits_limit=10, total_orbits=0)
 
     with pytest.raises(NotFoundError, match="Bucket secret not found") as error:
         await handler.create_organization_orbit(
@@ -529,10 +519,8 @@ async def test_create_orbit_member(
     mock_get_orbit_members_count.return_value = 0
     mock_get_organization_member_role.return_value = OrgRole.OWNER
     mock_get_orbit_member_role.return_value = OrgRole.ADMIN
-    mock_get_orbit_simple.return_value = type(
-        "obj",
-        (),
-        {"bucket_secret_id": 1, "organization_id": organization_id, "name": "name"},
+    mock_get_orbit_simple.return_value = Mock(
+        bucket_secret_id=1, organization_id=organization_id, name="name"
     )
 
     result = await handler.create_orbit_member(

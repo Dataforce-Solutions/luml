@@ -1,4 +1,4 @@
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 
@@ -134,9 +134,7 @@ async def test_add_organization_member(
 
     mock_create_organization_member.return_value = member_data
     mock_get_organization_member_role.return_value = OrgRole.OWNER
-    mock_get_organization_details.return_value = type(
-        "obj", (), {"members_limit": 50, "total_members": 0}
-    )
+    mock_get_organization_details.return_value = Mock(members_limit=50, total_members=0)
 
     actual = await handler.add_organization_member(
         member_create.user_id, member_create.organization_id, member_create

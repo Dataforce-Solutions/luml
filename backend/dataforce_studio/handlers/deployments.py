@@ -1,7 +1,6 @@
 from dataforce_studio.handlers.api_keys import APIKeyHandler
 from dataforce_studio.handlers.permissions import PermissionsHandler
 from dataforce_studio.infra.db import engine
-from dataforce_studio.infra.exceptions import NotFoundError
 from dataforce_studio.infra.exceptions import (
     InsufficientPermissionsError,
     NotFoundError,

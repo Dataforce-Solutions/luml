@@ -1,5 +1,5 @@
 from datetime import datetime
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
 import pytest
 
@@ -91,9 +91,7 @@ async def test_send_invite(
     mock_create_organization_invite.return_value = mocked_invite
     mock_get_invite.return_value = mocked_invite
     mock_get_organization_member_role.return_value = OrgRole.OWNER
-    mock_get_organization_details.return_value = type(
-        "obj", (), {"members_limit": 50, "total_members": 0}
-    )
+    mock_get_organization_details.return_value = Mock(members_limit=50, total_members=0)
 
     result = await handler.send_invite(test_user_out.id, invite)
 
@@ -198,9 +196,7 @@ async def test_accept_invite(
     mock_get_invite.return_value = invite
     mock_get_organization_members_count.return_value = 0
     mock_get_user_organizations_membership_count.return_value = 0
-    mock_get_organization_details.return_value = type(
-        "obj", (), {"members_limit": 50, "total_members": 0}
-    )
+    mock_get_organization_details.return_value = Mock(members_limit=50, total_members=0)
 
     result = await handler.accept_invite(invite.id, user_id)
 

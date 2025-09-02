@@ -20,10 +20,8 @@ from dataforce_studio.schemas.model_artifacts import (
     ModelArtifactUpdate,
     ModelArtifactUpdateIn,
 )
-from dataforce_studio.schemas.orbit import OrbitRole
-from dataforce_studio.schemas.organization import OrgRole
-from dataforce_studio.schemas.s3 import PartDetails, UploadDetails
 from dataforce_studio.schemas.permissions import Action, Resource
+from dataforce_studio.schemas.s3 import PartDetails, UploadDetails
 
 handler = ModelArtifactHandler()
 
@@ -272,7 +270,20 @@ async def test_create_model_artifact(
     mock_get_collection.return_value = Mock(orbit_id=orbit_id)
     mock_get_secret_or_raise.return_value = mock_secret
     mock_s3_service = AsyncMock()
-    mock_s3_service.get_upload_url.return_value = "url"
+    mock_upload_data = UploadDetails(
+        upload_id=None,
+        parts=[
+            PartDetails(
+                part_number=1,
+                url="url",
+                start_byte=0,
+                end_byte=model_artifact.size,
+                part_size=model_artifact.size,
+            )
+        ],
+        complete_url=None,
+    )
+    mock_s3_service.create_upload.return_value = mock_upload_data
     mock_get_s3_service.return_value = mock_s3_service
     model_artifact_in = ModelArtifactIn(
         metrics={},
@@ -284,7 +295,7 @@ async def test_create_model_artifact(
         model_name=None,
         tags=["tag"],
     )
-    result_model_artifact, url = await handler.create_model_artifact(
+    result = await handler.create_model_artifact(
         user_id,
         organization_id,
         orbit_id,
@@ -292,11 +303,11 @@ async def test_create_model_artifact(
         model_artifact_in,
     )
 
-    assert result_model_artifact == model_artifact
-    assert url == "url"
+    assert result.model == model_artifact
+    assert result.url is not None
     mock_create_model_artifact.assert_awaited_once()
     mock_get_s3_service.assert_awaited_once()
-    mock_s3_service.get_upload_url.assert_awaited_once()
+    mock_s3_service.create_upload.assert_awaited_once()
 
 
 @patch(

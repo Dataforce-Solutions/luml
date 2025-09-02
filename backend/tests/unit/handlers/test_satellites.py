@@ -527,7 +527,7 @@ async def test_list_tasks(mock_list_tasks: AsyncMock) -> None:
     tasks = await handler.list_tasks(satellite_id)
 
     assert tasks == expected
-    mock_list_tasks.assert_awaited_once_with(satellite_id)
+    mock_list_tasks.assert_awaited_once_with(satellite_id, None)
 
 
 @patch(

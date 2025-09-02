@@ -35,8 +35,10 @@ class SatelliteOrm(TimestampMixin, Base):
     paired: Mapped[bool] = mapped_column(
         Boolean, nullable=False, default=False, server_default="false"
     )
-    capabilities: Mapped[dict[SatelliteCapability, dict | None]] = mapped_column(
-        postgresql.JSONB, nullable=False, default=dict, server_default="{}"
+    capabilities: Mapped[dict[SatelliteCapability, dict[str, Any] | None]] = (
+        mapped_column(
+            postgresql.JSONB, nullable=False, default=dict, server_default="{}"
+        )
     )
     name: Mapped[str | None] = mapped_column(String, nullable=True)
     base_url: Mapped[str | None] = mapped_column(String, nullable=True)

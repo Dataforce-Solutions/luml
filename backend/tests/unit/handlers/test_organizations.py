@@ -1,4 +1,4 @@
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 
@@ -29,12 +29,12 @@ handler = OrganizationHandler()
 async def test_check_org_members_limit_raises(
     mock_get_organization_details: AsyncMock,
 ) -> None:
-    mock_get_organization_details.return_value = type(
-        "obj", (), {"members_limit": 50, "total_members": 200}
+    mock_get_organization_details.return_value = Mock(
+        members_limit=50, total_members=200
     )
 
     with pytest.raises(OrganizationLimitReachedError):
-        await handler.check_org_members_limit(organization_id=1)
+        await handler._check_org_members_limit(organization_id=1)
 
     mock_get_organization_details.assert_awaited_once()
 

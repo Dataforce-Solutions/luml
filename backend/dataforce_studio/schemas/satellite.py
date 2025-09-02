@@ -29,7 +29,7 @@ class Satellite(BaseModel, BaseOrmConfig):
     name: str | None = None
     base_url: str | None = None
     paired: bool
-    capabilities: dict[SatelliteCapability, dict | None]
+    capabilities: dict[SatelliteCapability, dict[str, Any] | None]
     created_at: datetime
     updated_at: datetime | None = None
     last_seen_at: datetime | None = None
@@ -47,7 +47,7 @@ class SatelliteCreate(BaseModel, BaseOrmConfig):
 
 class SatellitePairIn(BaseModel):
     base_url: HttpUrl
-    capabilities: dict[SatelliteCapability, dict | None]
+    capabilities: dict[SatelliteCapability, dict[str, Any] | None]
 
 
 class SatelliteQueueTask(BaseModel, BaseOrmConfig):
