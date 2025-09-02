@@ -11,11 +11,11 @@ from dataforce_studio.schemas.deployment import (
 from dataforce_studio.schemas.satellite import (
     SatelliteTaskType,
 )
-from tests.conftest import FixtureData
+from tests.conftest import SatelliteFixtureData
 
 
 @pytest.mark.asyncio
-async def test_create_deployment(create_satellite: FixtureData) -> None:
+async def test_create_deployment(create_satellite: SatelliteFixtureData) -> None:
     data = create_satellite
     engine, orbit, satellite = data.engine, data.orbit, data.satellite
     repo = DeploymentRepository(engine)
@@ -47,7 +47,7 @@ async def test_create_deployment(create_satellite: FixtureData) -> None:
 
 
 @pytest.mark.asyncio
-async def test_get_deployment(create_satellite: FixtureData) -> None:
+async def test_get_deployment(create_satellite: SatelliteFixtureData) -> None:
     data = create_satellite
     engine, orbit, satellite = data.engine, data.orbit, data.satellite
     repo = DeploymentRepository(engine)
@@ -72,7 +72,7 @@ async def test_get_deployment(create_satellite: FixtureData) -> None:
 
 
 @pytest.mark.asyncio
-async def test_list_deployments(create_satellite: FixtureData) -> None:
+async def test_list_deployments(create_satellite: SatelliteFixtureData) -> None:
     data = create_satellite
     engine, orbit, satellite = data.engine, data.orbit, data.satellite
     repo = DeploymentRepository(engine)
@@ -101,7 +101,9 @@ async def test_list_deployments(create_satellite: FixtureData) -> None:
 
 
 @pytest.mark.asyncio
-async def test_list_satellite_deployments(create_satellite: FixtureData) -> None:
+async def test_list_satellite_deployments(
+    create_satellite: SatelliteFixtureData,
+) -> None:
     data = create_satellite
     engine, orbit, satellite = data.engine, data.orbit, data.satellite
     repo = DeploymentRepository(engine)
@@ -126,7 +128,7 @@ async def test_list_satellite_deployments(create_satellite: FixtureData) -> None
 
 
 @pytest.mark.asyncio
-async def test_update_deployment(create_satellite: FixtureData) -> None:
+async def test_update_deployment(create_satellite: SatelliteFixtureData) -> None:
     data = create_satellite
     engine, orbit, satellite = data.engine, data.orbit, data.satellite
     repo = DeploymentRepository(engine)

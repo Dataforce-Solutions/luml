@@ -7,11 +7,11 @@ from dataforce_studio.schemas.model_artifacts import (
     CollectionType,
     CollectionUpdate,
 )
-from tests.conftest import FixtureData
+from tests.conftest import CollectionFixtureData, OrbitFixtureData
 
 
 @pytest.mark.asyncio
-async def test_create_collection(create_orbit: FixtureData) -> None:
+async def test_create_collection(create_orbit: OrbitFixtureData) -> None:
     data = create_orbit
     engine, orbit = data.engine, data.orbit
     repo = CollectionRepository(engine)
@@ -30,7 +30,7 @@ async def test_create_collection(create_orbit: FixtureData) -> None:
 
 
 @pytest.mark.asyncio
-async def test_get_collection(create_collection: FixtureData) -> None:
+async def test_get_collection(create_collection: CollectionFixtureData) -> None:
     data = create_collection
     engine, collection = data.engine, data.collection
     repo = CollectionRepository(engine)
@@ -47,7 +47,7 @@ async def test_get_collection(create_collection: FixtureData) -> None:
 
 
 @pytest.mark.asyncio
-async def test_get_orbit_collections(create_orbit: FixtureData) -> None:
+async def test_get_orbit_collections(create_orbit: OrbitFixtureData) -> None:
     data = create_orbit
     engine, orbit = data.engine, data.orbit
     repo = CollectionRepository(engine)
@@ -75,7 +75,9 @@ async def test_get_orbit_collections(create_orbit: FixtureData) -> None:
 
 
 @pytest.mark.asyncio
-async def test_update_collection_partial(create_collection: FixtureData) -> None:
+async def test_update_collection_partial(
+    create_collection: CollectionFixtureData,
+) -> None:
     data = create_collection
     engine, collection = data.engine, data.collection
     repo = CollectionRepository(engine)
@@ -90,7 +92,7 @@ async def test_update_collection_partial(create_collection: FixtureData) -> None
 
 
 @pytest.mark.asyncio
-async def test_delete_collection(create_collection: FixtureData) -> None:
+async def test_delete_collection(create_collection: CollectionFixtureData) -> None:
     data = create_collection
     engine, collection = data.engine, data.collection
     repo = CollectionRepository(engine)

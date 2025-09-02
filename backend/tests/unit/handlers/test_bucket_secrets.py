@@ -267,9 +267,8 @@ async def test_delete_bucket_secret(
     organization_id = 1
     secret_id = 1
 
-    result = await handler.delete_bucket_secret(user_id, organization_id, secret_id)
+    await handler.delete_bucket_secret(user_id, organization_id, secret_id)
 
-    assert result is None
     mock_delete_bucket_secret.assert_awaited_once_with(secret_id)
     mock_check_organization_permission.assert_awaited_once_with(
         organization_id, user_id, Resource.BUCKET_SECRET, Action.DELETE

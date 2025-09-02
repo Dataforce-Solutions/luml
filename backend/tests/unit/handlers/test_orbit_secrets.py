@@ -256,11 +256,7 @@ async def test_delete_orbit_secret(
     mock_check_orbit_action_access.return_value = OrgRole.OWNER, None
     mock_delete_orbit_secret.return_value = None
 
-    result = await handler.delete_orbit_secret(
-        user_id, organization_id, orbit_id, secret_id
-    )
-
-    assert result is None
+    await handler.delete_orbit_secret(user_id, organization_id, orbit_id, secret_id)
     mock_delete_orbit_secret.assert_awaited_once_with(secret_id)
     mock_check_orbit_action_access.assert_awaited_once_with(
         organization_id, orbit_id, user_id, Resource.ORBIT_SECRET, Action.DELETE

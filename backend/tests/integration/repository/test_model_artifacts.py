@@ -13,12 +13,12 @@ from dataforce_studio.schemas.model_artifacts import (
     ModelArtifactUpdate,
 )
 from dataforce_studio.schemas.satellite import SatelliteCreate
-from tests.conftest import FixtureData
+from tests.conftest import CollectionFixtureData
 
 
 @pytest.mark.asyncio
 async def test_create_model_artifact(
-    create_collection: FixtureData, test_model_artifact: ModelArtifactCreate
+    create_collection: CollectionFixtureData, test_model_artifact: ModelArtifactCreate
 ) -> None:
     data = create_collection
     engine, collection = data.engine, data.collection
@@ -44,7 +44,7 @@ async def test_create_model_artifact(
 
 @pytest.mark.asyncio
 async def test_get_model_artifact(
-    create_collection: FixtureData, test_model_artifact: ModelArtifactCreate
+    create_collection: CollectionFixtureData, test_model_artifact: ModelArtifactCreate
 ) -> None:
     data = create_collection
     engine, collection = data.engine, data.collection
@@ -63,7 +63,7 @@ async def test_get_model_artifact(
 
 @pytest.mark.asyncio
 async def test_get_collection_model_artifact(
-    create_collection: FixtureData, test_model_artifact: ModelArtifactCreate
+    create_collection: CollectionFixtureData, test_model_artifact: ModelArtifactCreate
 ) -> None:
     data = create_collection
     engine, collection = data.engine, data.collection
@@ -90,7 +90,7 @@ async def test_get_collection_model_artifact(
 
 @pytest.mark.asyncio
 async def test_get_collection_model_artifacts_count(
-    create_collection: FixtureData, test_model_artifact: ModelArtifactCreate
+    create_collection: CollectionFixtureData, test_model_artifact: ModelArtifactCreate
 ) -> None:
     data = create_collection
     engine, collection = data.engine, data.collection
@@ -109,7 +109,7 @@ async def test_get_collection_model_artifacts_count(
 
 @pytest.mark.asyncio
 async def test_update_status(
-    create_collection: FixtureData, test_model_artifact: ModelArtifactCreate
+    create_collection: CollectionFixtureData, test_model_artifact: ModelArtifactCreate
 ) -> None:
     data = create_collection
     engine, collection = data.engine, data.collection
@@ -132,7 +132,7 @@ async def test_update_status(
 
 @pytest.mark.asyncio
 async def test_update_model_artifact(
-    create_collection: FixtureData, test_model_artifact: ModelArtifactCreate
+    create_collection: CollectionFixtureData, test_model_artifact: ModelArtifactCreate
 ) -> None:
     data = create_collection
     engine, collection = data.engine, data.collection
@@ -158,7 +158,7 @@ async def test_update_model_artifact(
 
 @pytest.mark.asyncio
 async def test_delete_model_artifact(
-    create_collection: FixtureData, test_model_artifact: ModelArtifactCreate
+    create_collection: CollectionFixtureData, test_model_artifact: ModelArtifactCreate
 ) -> None:
     data = create_collection
     engine, collection = data.engine, data.collection
@@ -177,7 +177,7 @@ async def test_delete_model_artifact(
 
 @pytest.mark.asyncio
 async def test_delete_model_artifact_with_deployment_constraint(
-    create_collection: FixtureData, test_model_artifact: ModelArtifactCreate
+    create_collection: CollectionFixtureData, test_model_artifact: ModelArtifactCreate
 ) -> None:
     data = create_collection
     engine, orbit, collection = data.engine, data.orbit, data.collection

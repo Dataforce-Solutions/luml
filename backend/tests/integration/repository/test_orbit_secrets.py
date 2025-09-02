@@ -7,11 +7,11 @@ from dataforce_studio.schemas.orbit_secret import (
     OrbitSecretCreate,
     OrbitSecretUpdate,
 )
-from tests.conftest import FixtureData
+from tests.conftest import OrbitFixtureData
 
 
 @pytest.mark.asyncio
-async def test_create_orbit_secret(create_orbit: FixtureData) -> None:
+async def test_create_orbit_secret(create_orbit: OrbitFixtureData) -> None:
     data = create_orbit
     engine, orbit = data.engine, data.orbit
 
@@ -25,7 +25,7 @@ async def test_create_orbit_secret(create_orbit: FixtureData) -> None:
 
 
 @pytest.mark.asyncio
-async def test_get_orbit_secret(create_orbit: FixtureData) -> None:
+async def test_get_orbit_secret(create_orbit: OrbitFixtureData) -> None:
     data = create_orbit
     engine, orbit = data.engine, data.orbit
     repo = OrbitSecretRepository(engine)
@@ -55,7 +55,7 @@ async def test_get_orbit_secret_not_found(
 
 
 @pytest.mark.asyncio
-async def test_get_orbit_secrets(create_orbit: FixtureData) -> None:
+async def test_get_orbit_secrets(create_orbit: OrbitFixtureData) -> None:
     data = create_orbit
     engine, orbit = data.engine, data.orbit
     repo = OrbitSecretRepository(engine)
@@ -71,7 +71,7 @@ async def test_get_orbit_secrets(create_orbit: FixtureData) -> None:
 
 
 @pytest.mark.asyncio
-async def test_delete_orbit_secrets(create_orbit: FixtureData) -> None:
+async def test_delete_orbit_secrets(create_orbit: OrbitFixtureData) -> None:
     data = create_orbit
     engine, orbit = data.engine, data.orbit
     repo = OrbitSecretRepository(engine)
@@ -88,7 +88,7 @@ async def test_delete_orbit_secrets(create_orbit: FixtureData) -> None:
 
 
 @pytest.mark.asyncio
-async def test_update_orbit_secret(create_orbit: FixtureData) -> None:
+async def test_update_orbit_secret(create_orbit: OrbitFixtureData) -> None:
     data = create_orbit
     engine, orbit = data.engine, data.orbit
     repo = OrbitSecretRepository(engine)

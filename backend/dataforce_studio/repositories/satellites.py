@@ -62,7 +62,7 @@ class SatelliteRepository(RepositoryBase, CrudMixin):
         self,
         satellite_id: int,
         base_url: str,
-        capabilities: dict[SatelliteCapability, dict[str, Any] | None],
+        capabilities: dict[SatelliteCapability, dict[str, str | int] | None],
     ) -> Satellite | None:
         async with self._get_session() as session:
             result = await session.execute(

@@ -29,14 +29,15 @@ async def test_get_organization_members_data(
 ) -> None:
     user_id = 1
 
-    mock_get_organization_members.return_value = member_data
+    expected = [member_data]
+    mock_get_organization_members.return_value = expected
     mock_get_organization_member_role.return_value = OrgRole.OWNER
 
     actual = await handler.get_organization_members_data(
         user_id, member_data.organization_id
     )
 
-    assert actual == member_data
+    assert actual == expected
     mock_get_organization_members.assert_awaited_once()
 
 
@@ -99,11 +100,9 @@ async def test_delete_organization_member_by_id(
     mock_get_organization_member_role.return_value = OrgRole.OWNER
     mock_get_organization_member_by_id.return_value = member_data
 
-    actual = await handler.delete_organization_member_by_id(
+    await handler.delete_organization_member_by_id(
         user_id, member_data.organization_id, member_data.id
     )
-
-    assert actual is None
     mock_delete_organization_member.assert_awaited_once_with(member_data.id)
 
 

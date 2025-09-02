@@ -35,7 +35,7 @@ class SatelliteOrm(TimestampMixin, Base):
     paired: Mapped[bool] = mapped_column(
         Boolean, nullable=False, default=False, server_default="false"
     )
-    capabilities: Mapped[dict[SatelliteCapability, dict[str, Any] | None]] = (
+    capabilities: Mapped[dict[SatelliteCapability, dict[str, str | int] | None]] = (
         mapped_column(
             postgresql.JSONB, nullable=False, default=dict, server_default="{}"
         )

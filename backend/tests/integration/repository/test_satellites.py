@@ -1,4 +1,5 @@
 import uuid
+from typing import Any
 
 import pytest
 from sqlalchemy.ext.asyncio import create_async_engine
@@ -10,11 +11,11 @@ from dataforce_studio.schemas.satellite import (
     SatelliteTaskStatus,
     SatelliteTaskType,
 )
-from tests.conftest import FixtureData
+from tests.conftest import OrbitFixtureData
 
 
 @pytest.mark.asyncio
-async def test_create_satellite(create_orbit: FixtureData) -> None:
+async def test_create_satellite(create_orbit: OrbitFixtureData) -> None:
     data = create_orbit
     engine, orbit = data.engine, data.orbit
     repo = SatelliteRepository(engine)
@@ -34,7 +35,7 @@ async def test_create_satellite(create_orbit: FixtureData) -> None:
 
 
 @pytest.mark.asyncio
-async def test_get_satellite(create_orbit: FixtureData) -> None:
+async def test_get_satellite(create_orbit: OrbitFixtureData) -> None:
     data = create_orbit
     engine, orbit = data.engine, data.orbit
     repo = SatelliteRepository(engine)
@@ -63,7 +64,9 @@ async def test_get_satellite_not_found(
 
 
 @pytest.mark.asyncio
-async def test_get_satellite_get_satellite_by_hash(create_orbit: FixtureData) -> None:
+async def test_get_satellite_get_satellite_by_hash(
+    create_orbit: OrbitFixtureData,
+) -> None:
     data = create_orbit
     engine, orbit = data.engine, data.orbit
     repo = SatelliteRepository(engine)
@@ -80,7 +83,7 @@ async def test_get_satellite_get_satellite_by_hash(create_orbit: FixtureData) ->
 
 
 @pytest.mark.asyncio
-async def test_list_satellites(create_orbit: FixtureData) -> None:
+async def test_list_satellites(create_orbit: OrbitFixtureData) -> None:
     data = create_orbit
     engine, orbit = data.engine, data.orbit
     repo = SatelliteRepository(engine)
@@ -97,7 +100,7 @@ async def test_list_satellites(create_orbit: FixtureData) -> None:
 
 
 @pytest.mark.asyncio
-async def test_pair_satellite(create_orbit: FixtureData) -> None:
+async def test_pair_satellite(create_orbit: OrbitFixtureData) -> None:
     data = create_orbit
     engine, orbit = data.engine, data.orbit
     repo = SatelliteRepository(engine)
@@ -108,7 +111,9 @@ async def test_pair_satellite(create_orbit: FixtureData) -> None:
     satellite, task = await repo.create_satellite(satellite_data)
 
     base_url = "https://test-satellite.com"
-    capabilities = {SatelliteCapability.DEPLOY: {"config": "value"}}
+    capabilities: dict[SatelliteCapability, dict[str, Any] | None] = {
+        SatelliteCapability.DEPLOY: {"config": "value"}
+    }
 
     paired_satellite = await repo.pair_satellite(satellite.id, base_url, capabilities)
 
@@ -120,7 +125,7 @@ async def test_pair_satellite(create_orbit: FixtureData) -> None:
 
 
 @pytest.mark.asyncio
-async def test_list_tasks(create_orbit: FixtureData) -> None:
+async def test_list_tasks(create_orbit: OrbitFixtureData) -> None:
     data = create_orbit
     engine, orbit = data.engine, data.orbit
     repo = SatelliteRepository(engine)
@@ -139,7 +144,7 @@ async def test_list_tasks(create_orbit: FixtureData) -> None:
 
 
 @pytest.mark.asyncio
-async def test_list_tasks_with_status(create_orbit: FixtureData) -> None:
+async def test_list_tasks_with_status(create_orbit: OrbitFixtureData) -> None:
     data = create_orbit
     engine, orbit = data.engine, data.orbit
     repo = SatelliteRepository(engine)
@@ -164,7 +169,7 @@ async def test_list_tasks_empty(create_database_and_apply_migrations: str) -> No
 
 
 @pytest.mark.asyncio
-async def test_update_task_status(create_orbit: FixtureData) -> None:
+async def test_update_task_status(create_orbit: OrbitFixtureData) -> None:
     data = create_orbit
     engine, orbit = data.engine, data.orbit
     repo = SatelliteRepository(engine)
@@ -184,7 +189,7 @@ async def test_update_task_status(create_orbit: FixtureData) -> None:
 
 
 @pytest.mark.asyncio
-async def test_touch_last_seen(create_orbit: FixtureData) -> None:
+async def test_touch_last_seen(create_orbit: OrbitFixtureData) -> None:
     data = create_orbit
     engine, orbit = data.engine, data.orbit
 

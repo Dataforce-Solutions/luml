@@ -4,20 +4,20 @@ from sqlalchemy.ext.asyncio import create_async_engine
 from dataforce_studio.repositories.users import UserRepository
 from dataforce_studio.schemas.organization import Organization, OrganizationCreateIn
 from dataforce_studio.schemas.user import CreateUser
-from tests.conftest import FixtureData
+from tests.conftest import OrganizationWithMembersFixtureData
 
 
 @pytest.mark.asyncio
 async def test_create_organization(
     create_database_and_apply_migrations: str,
-    test_user: CreateUser,
+    test_user_create: CreateUser,
     test_org: Organization,
 ) -> None:
     engine = create_async_engine(create_database_and_apply_migrations)
     repo = UserRepository(engine)
     organization = test_org
 
-    user = await repo.create_user(test_user)
+    user = await repo.create_user(test_user_create)
 
     created_organization = await repo.create_organization(
         user.id, OrganizationCreateIn(name=organization.name, logo=organization.logo)
@@ -31,7 +31,7 @@ async def test_create_organization(
 
 @pytest.mark.asyncio
 async def test_get_user_organizations(
-    create_organization_with_members: FixtureData,
+    create_organization_with_members: OrganizationWithMembersFixtureData,
 ) -> None:
     data = create_organization_with_members
     repo = UserRepository(data.engine)
@@ -51,7 +51,7 @@ async def test_get_user_organizations(
 
 @pytest.mark.asyncio
 async def test_get_organization_details(
-    create_organization_with_members: FixtureData,
+    create_organization_with_members: OrganizationWithMembersFixtureData,
 ) -> None:
     data = create_organization_with_members
     repo = UserRepository(data.engine)

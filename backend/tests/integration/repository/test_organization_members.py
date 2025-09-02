@@ -9,26 +9,18 @@ from dataforce_studio.schemas.organization import (
     UpdateOrganizationMember,
 )
 from dataforce_studio.schemas.user import CreateUser
-from tests.conftest import FixtureData
-
-organization_data = {"name": "test organization", "logo": None}
-
-organization_member_data = {
-    "user_id": "test organization",
-    "organization_id": None,
-    "role": None,
-}
+from tests.conftest import OrganizationFixtureData, OrganizationWithMembersFixtureData
 
 
 @pytest.mark.asyncio
 async def test_create_organization_member(
-    create_organization_with_user: FixtureData, test_user: CreateUser
+    create_organization_with_user: OrganizationFixtureData, test_user_create: CreateUser
 ) -> None:
     data = create_organization_with_user
     repo = UserRepository(data.engine)
     created_organization = data.organization
-    test_user.email = f"{uuid.uuid4()}@gmail.com"
-    user = await repo.create_user(test_user)
+    test_user_create.email = f"{uuid.uuid4()}@gmail.com"
+    user = await repo.create_user(test_user_create)
     created_member = await repo.create_organization_member(
         OrganizationMemberCreate(
             user_id=user.id,
@@ -45,7 +37,7 @@ async def test_create_organization_member(
 
 @pytest.mark.asyncio
 async def test_update_organization_member(
-    create_organization_with_user: FixtureData,
+    create_organization_with_user: OrganizationFixtureData,
 ) -> None:
     data = create_organization_with_user
     repo = UserRepository(data.engine)
@@ -55,33 +47,28 @@ async def test_update_organization_member(
         member.id, UpdateOrganizationMember(role=OrgRole.ADMIN)
     )
 
+    assert updated_member
     assert updated_member.id == member.id
     assert updated_member.role == OrgRole.ADMIN
 
 
 @pytest.mark.asyncio
 async def test_delete_organization_member(
-    create_organization_with_user: FixtureData,
+    create_organization_with_user: OrganizationFixtureData,
 ) -> None:
     data = create_organization_with_user
     repo = UserRepository(data.engine)
-    created_organization, member = (
-        data.organization,
-        data.member,
-    )
+    member = data.member
 
-    deleted_member = await repo.delete_organization_member(member.id)
-    org_members_count = await repo.get_organization_members_count(
-        created_organization.id
-    )
+    await repo.delete_organization_member(member.id)
+    fetched_member = await repo.get_organization_member_by_id(member.id)
 
-    assert deleted_member is None
-    assert org_members_count == 0 or org_members_count is None
+    assert fetched_member is None
 
 
 @pytest.mark.asyncio
 async def test_get_organization_members_count(
-    create_organization_with_members: FixtureData,
+    create_organization_with_members: OrganizationWithMembersFixtureData,
 ) -> None:
     data = create_organization_with_members
     repo = UserRepository(data.engine)
@@ -94,7 +81,7 @@ async def test_get_organization_members_count(
 
 @pytest.mark.asyncio
 async def test_get_organization_members(
-    create_organization_with_members: FixtureData,
+    create_organization_with_members: OrganizationWithMembersFixtureData,
 ) -> None:
     data = create_organization_with_members
     repo = UserRepository(data.engine)

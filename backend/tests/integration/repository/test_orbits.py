@@ -13,11 +13,17 @@ from dataforce_studio.schemas.orbit import (
     OrbitUpdate,
     UpdateOrbitMember,
 )
-from tests.conftest import FixtureData
+from tests.conftest import (
+    OrbitFixtureData,
+    OrbitWithMembersFixtureData,
+    OrganizationFixtureData,
+)
 
 
 @pytest.mark.asyncio
-async def test_create_orbit(create_organization_with_user: FixtureData) -> None:
+async def test_create_orbit(
+    create_organization_with_user: OrganizationFixtureData,
+) -> None:
     data = create_organization_with_user
     engine, organization, secret = (
         data.engine,
@@ -29,13 +35,15 @@ async def test_create_orbit(create_organization_with_user: FixtureData) -> None:
     orbit = OrbitCreateIn(name="test orbit", bucket_secret_id=secret.id)
     created_orbit = await repo.create_orbit(organization.id, orbit)
 
+    assert created_orbit
     assert created_orbit.id
     assert created_orbit.name == orbit.name
-    # assert created_orbit.organization_id == orbit.organization_id
 
 
 @pytest.mark.asyncio
-async def test_update_orbit(create_organization_with_user: FixtureData) -> None:
+async def test_update_orbit(
+    create_organization_with_user: OrganizationFixtureData,
+) -> None:
     data = create_organization_with_user
     engine, organization, secret = (
         data.engine,
@@ -46,6 +54,8 @@ async def test_update_orbit(create_organization_with_user: FixtureData) -> None:
 
     orbit = OrbitCreateIn(name="test orbit", bucket_secret_id=secret.id)
     created_orbit = await repo.create_orbit(organization.id, orbit)
+
+    assert created_orbit
 
     new_name = created_orbit.name + "updated"
     updated_orbit = await repo.update_orbit(
@@ -58,7 +68,9 @@ async def test_update_orbit(create_organization_with_user: FixtureData) -> None:
 
 
 @pytest.mark.asyncio
-async def test_attach_bucket_secret(create_organization_with_user: FixtureData) -> None:
+async def test_attach_bucket_secret(
+    create_organization_with_user: OrganizationFixtureData,
+) -> None:
     data = create_organization_with_user
     engine, organization, secret = (
         data.engine,
@@ -71,34 +83,37 @@ async def test_attach_bucket_secret(create_organization_with_user: FixtureData) 
     orbit = await repo.create_orbit(
         organization.id, OrbitCreateIn(name="test", bucket_secret_id=secret.id)
     )
+    assert orbit
+
     secret = await secret_repo.create_bucket_secret(
         BucketSecretCreate(
             organization_id=organization.id, endpoint="s3", bucket_name="test-bucket"
         )
     )
+    assert secret
 
     updated = await repo.update_orbit(
         orbit.id, OrbitUpdate(name=orbit.name, bucket_secret_id=secret.id)
     )
 
+    assert updated
     assert updated.bucket_secret_id == secret.id
 
 
 @pytest.mark.asyncio
-async def test_delete_orbit(create_orbit: FixtureData) -> None:
+async def test_delete_orbit(create_orbit: OrbitFixtureData) -> None:
     data = create_orbit
     repo = OrbitRepository(data.engine)
     orbit = data.orbit
 
-    deleted_orbit = await repo.delete_orbit(orbit.id)
+    await repo.delete_orbit(orbit.id)
     fetched_orbit = await repo.get_orbit_simple(orbit.id, orbit.organization_id)
 
-    assert deleted_orbit is None
     assert fetched_orbit is None
 
 
 @pytest.mark.asyncio
-async def test_get_orbit(create_orbit: FixtureData) -> None:
+async def test_get_orbit(create_orbit: OrbitFixtureData) -> None:
     data = create_orbit
     repo = OrbitRepository(data.engine)
     orbit = data.orbit
@@ -114,7 +129,7 @@ async def test_get_orbit(create_orbit: FixtureData) -> None:
 
 @pytest.mark.asyncio
 async def test_get_organization_orbits(
-    create_organization_with_user: FixtureData,
+    create_organization_with_user: OrganizationFixtureData,
 ) -> None:
     data = create_organization_with_user
     engine, organization, secret = (
@@ -139,7 +154,9 @@ async def test_get_organization_orbits(
 
 
 @pytest.mark.asyncio
-async def test_get_orbit_members(create_orbit_with_members: FixtureData) -> None:
+async def test_get_orbit_members(
+    create_orbit_with_members: OrbitWithMembersFixtureData,
+) -> None:
     data = create_orbit_with_members
     repo = OrbitRepository(data.engine)
     orbit, members = data.orbit, data.members
@@ -154,7 +171,7 @@ async def test_get_orbit_members(create_orbit_with_members: FixtureData) -> None
 
 
 @pytest.mark.asyncio
-async def test_create_orbit_member(create_orbit: FixtureData) -> None:
+async def test_create_orbit_member(create_orbit: OrbitFixtureData) -> None:
     data = create_orbit
     repo = OrbitRepository(data.engine)
     orbit, user = (
@@ -172,7 +189,7 @@ async def test_create_orbit_member(create_orbit: FixtureData) -> None:
 
 
 @pytest.mark.asyncio
-async def test_update_orbit_member(create_orbit: FixtureData) -> None:
+async def test_update_orbit_member(create_orbit: OrbitFixtureData) -> None:
     data = create_orbit
     repo = OrbitRepository(data.engine)
     orbit, user = (
@@ -184,6 +201,7 @@ async def test_update_orbit_member(create_orbit: FixtureData) -> None:
         user_id=user.id, orbit_id=orbit.id, role=OrbitRole.MEMBER
     )
     created_member = await repo.create_orbit_member(member)
+    assert created_member
 
     updated_member = await repo.update_orbit_member(
         UpdateOrbitMember(id=created_member.id, role=OrbitRole.ADMIN)
@@ -195,7 +213,7 @@ async def test_update_orbit_member(create_orbit: FixtureData) -> None:
 
 
 @pytest.mark.asyncio
-async def test_delete_orbit_member(create_orbit: FixtureData) -> None:
+async def test_delete_orbit_member(create_orbit: OrbitFixtureData) -> None:
     data = create_orbit
     repo = OrbitRepository(data.engine)
     orbit, user = (
@@ -207,7 +225,10 @@ async def test_delete_orbit_member(create_orbit: FixtureData) -> None:
         user_id=user.id, orbit_id=orbit.id, role=OrbitRole.MEMBER
     )
     created_member = await repo.create_orbit_member(member)
+    assert created_member
 
-    deleted_member = await repo.delete_orbit_member(created_member.id)
+    await repo.delete_orbit_member(created_member.id)
 
-    assert deleted_member is None
+    fetched_member = await repo.get_orbit_member(created_member.id)
+
+    assert fetched_member is None

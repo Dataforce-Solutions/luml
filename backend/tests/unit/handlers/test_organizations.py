@@ -171,9 +171,9 @@ async def test_update_organization(
     mock_get_organization_details: AsyncMock,
     mock_update_organization: AsyncMock,
     mock_get_organization_member_role: AsyncMock,
-    test_org_details: dict,
+    test_org_details: OrganizationDetails,
 ) -> None:
-    expected = OrganizationDetails.model_validate(test_org_details)
+    expected = test_org_details
     user_id = 1
 
     mock_get_organization_details.return_value = expected
@@ -237,20 +237,17 @@ async def test_delete_organization(
     mock_get_organization_details: AsyncMock,
     mock_delete_organization: AsyncMock,
     mock_get_organization_member_role: AsyncMock,
-    test_org_details: dict,
+    test_org_details: OrganizationDetails,
 ) -> None:
     user_id = 1
     organization_id = 1
 
     mock_delete_organization.return_value = None
-    mock_get_organization_details.return_value = OrganizationDetails.model_validate(
-        test_org_details
-    )
+    mock_get_organization_details.return_value = test_org_details
     mock_get_organization_member_role.return_value = OrgRole.OWNER
 
-    deleted = await handler.delete_organization(user_id, organization_id)
+    await handler.delete_organization(user_id, organization_id)
 
-    assert deleted is None
     mock_delete_organization.assert_awaited_once_with(organization_id)
 
 
@@ -266,7 +263,6 @@ async def test_delete_organization(
 async def test_leave_from_organization(
     mock_delete_organization_member_by_user_id: AsyncMock,
     mock_get_organization_member_role: AsyncMock,
-    test_org_details: dict,
 ) -> None:
     user_id = 1
     organization_id = 1
@@ -274,9 +270,8 @@ async def test_leave_from_organization(
     mock_delete_organization_member_by_user_id.return_value = None
     mock_get_organization_member_role.return_value = OrgRole.MEMBER
 
-    deleted = await handler.leave_from_organization(user_id, organization_id)
+    await handler.leave_from_organization(user_id, organization_id)
 
-    assert deleted is None
     mock_delete_organization_member_by_user_id.assert_awaited_once_with(
         user_id, organization_id
     )
@@ -294,7 +289,6 @@ async def test_leave_from_organization(
 async def test_leave_from_organization_owner(
     mock_delete_organization_member_by_user_id: AsyncMock,
     mock_get_organization_member_role: AsyncMock,
-    test_org_details: dict,
 ) -> None:
     user_id = 1
     organization_id = 1

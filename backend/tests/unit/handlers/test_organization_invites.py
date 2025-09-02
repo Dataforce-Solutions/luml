@@ -113,7 +113,7 @@ async def test_send_invite(
 async def test_send_invite_to_yourself(
     mock_get_organization_member_role: AsyncMock,
     mock_get_public_user_by_id: AsyncMock,
-    test_user: CreateUser,
+    test_user_create: CreateUser,
     invite_data: CreateOrganizationInvite,
     test_user_out: UserOut,
 ) -> None:
@@ -150,9 +150,7 @@ async def test_cancel_invite(
     mock_delete_organization_invite.return_value = None
     mock_get_organization_member_role.return_value = OrgRole.OWNER
 
-    result = await handler.cancel_invite(user_id, organization_id, invite_id)
-
-    assert result is None
+    await handler.cancel_invite(user_id, organization_id, invite_id)
     mock_delete_organization_invite.assert_awaited_once_with(invite_id)
 
 
@@ -198,9 +196,7 @@ async def test_accept_invite(
     mock_get_user_organizations_membership_count.return_value = 0
     mock_get_organization_details.return_value = Mock(members_limit=50, total_members=0)
 
-    result = await handler.accept_invite(invite.id, user_id)
-
-    assert result is None
+    await handler.accept_invite(invite.id, user_id)
     mock_get_invite.assert_awaited_once_with(invite.id)
     mock_get_organization_details.assert_awaited_once_with(invite.organization_id)
     mock_create_organization_member.assert_awaited_once_with(
@@ -227,9 +223,7 @@ async def test_reject_invite(
 
     mock_delete_organization_invite.return_value = None
 
-    result = await handler.reject_invite(invite_id)
-
-    assert result is None
+    await handler.reject_invite(invite_id)
     mock_delete_organization_invite.assert_awaited_once_with(invite_id)
 
 

@@ -1,5 +1,6 @@
 import datetime
 import uuid
+from typing import Any
 from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
@@ -36,6 +37,9 @@ async def test_list_satellites(
     user_id = 1
     organization_id = 1
     orbit_id = 123
+    capabilities: dict[SatelliteCapability, dict[str, Any] | None] = {
+        SatelliteCapability.DEPLOY: {"key": "test"}
+    }
 
     expected = [
         Satellite(
@@ -44,7 +48,7 @@ async def test_list_satellites(
             name="test",
             base_url="https://url.com",
             paired=False,
-            capabilities={SatelliteCapability.DEPLOY: {"key": "test"}},
+            capabilities=capabilities,
             created_at=datetime.datetime.now(),
             updated_at=None,
             last_seen_at=None,
@@ -302,7 +306,9 @@ async def test_pair_satellite(
     orbit_id = 1
     satellite_id = 123
     base_url = "https://satellite.example.com"
-    capabilities = {SatelliteCapability.DEPLOY: {"key": "kdhfkgjhdkfghk"}}
+    capabilities: dict[SatelliteCapability, dict[str, Any] | None] = {
+        SatelliteCapability.DEPLOY: {"key": "kdhfkgjhdkfghk"}
+    }
 
     unpaired_satellite = Satellite(
         id=satellite_id,
@@ -341,7 +347,7 @@ async def test_pair_satellite(
 async def test_pair_satellite_empty_capabilities() -> None:
     satellite_id = 123
     base_url = "https://satellite.example.com"
-    capabilities = {}
+    capabilities: dict[SatelliteCapability, dict[str, Any] | None] = {}
 
     with pytest.raises(ApplicationError, match="Invalid capabilities") as error:
         await handler.pair_satellite(satellite_id, base_url, capabilities)
@@ -359,7 +365,9 @@ async def test_pair_satellite_satellite_not_found(
 ) -> None:
     satellite_id = 123
     base_url = "https://satellite.example.com"
-    capabilities = {SatelliteCapability.DEPLOY: {"key": "kdhfkgjhdkfghk"}}
+    capabilities: dict[SatelliteCapability, dict[str, Any] | None] = {
+        SatelliteCapability.DEPLOY: {"key": "kdhfkgjhdkfghk"}
+    }
 
     mock_get_satellite.return_value = None
 
@@ -381,7 +389,12 @@ async def test_pair_satellite_capabilities_error(
     orbit_id = 1
     satellite_id = 123
     base_url = "https://satellite.example.com"
-    capabilities = {SatelliteCapability.DEPLOY: None}
+    capabilities: dict[SatelliteCapability, dict[str, Any] | None] = {
+        SatelliteCapability.DEPLOY: None
+    }
+    initial_capabilities: dict[SatelliteCapability, dict[str, Any] | None] = {
+        SatelliteCapability.DEPLOY: {"key": "test"}
+    }
 
     initial_satellite = Satellite(
         id=satellite_id,
@@ -389,7 +402,7 @@ async def test_pair_satellite_capabilities_error(
         name="test-satellite",
         base_url=None,
         paired=True,
-        capabilities={SatelliteCapability.DEPLOY: {"key": "test"}},
+        capabilities=initial_capabilities,
         created_at=datetime.datetime.now(),
         updated_at=None,
         last_seen_at=None,
@@ -420,7 +433,9 @@ async def test_pair_satellite_already_paired(
     orbit_id = 1
     satellite_id = 123
     base_url = "https://satellite.example.com"
-    capabilities = {SatelliteCapability.DEPLOY: {"key": "kdhfkgjhdkfghk"}}
+    capabilities: dict[SatelliteCapability, dict[str, Any] | None] = {
+        SatelliteCapability.DEPLOY: {"key": "kdhfkgjhdkfghk"}
+    }
 
     expected = Satellite(
         id=satellite_id,
@@ -459,7 +474,9 @@ async def test_pair_satellite_update_error(
     orbit_id = 1
     satellite_id = 123
     base_url = "https://satellite.example.com"
-    capabilities = {SatelliteCapability.DEPLOY: {"key": "kdhfkgjhdkfghk"}}
+    capabilities: dict[SatelliteCapability, dict[str, Any] | None] = {
+        SatelliteCapability.DEPLOY: {"key": "kdhfkgjhdkfghk"}
+    }
 
     unpaired_satellite = Satellite(
         id=satellite_id,

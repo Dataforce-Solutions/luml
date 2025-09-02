@@ -111,7 +111,7 @@ class SatelliteHandler:
         self,
         satellite_id: int,
         base_url: str,
-        capabilities: dict[SatelliteCapability, dict[str, Any] | None],
+        capabilities: dict[SatelliteCapability, dict[str, str | int] | None],
     ) -> Satellite:
         if not capabilities:
             raise ApplicationError("Invalid capabilities", status.HTTP_400_BAD_REQUEST)

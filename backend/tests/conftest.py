@@ -1,9 +1,10 @@
 import datetime
 import random
 import uuid
+from collections.abc import AsyncGenerator
 from dataclasses import dataclass
 
-import asyncpg
+import asyncpg  # type: ignore[import-untyped]
 import pytest_asyncio
 from sqlalchemy.ext.asyncio import AsyncConnection, AsyncEngine, create_async_engine
 
@@ -45,7 +46,13 @@ from dataforce_studio.schemas.organization import (
     UserInvite,
 )
 from dataforce_studio.schemas.satellite import Satellite, SatelliteCreate
-from dataforce_studio.schemas.user import AuthProvider, CreateUser, User, UserOut
+from dataforce_studio.schemas.user import (
+    AuthProvider,
+    CreateUser,
+    CreateUserIn,
+    User,
+    UserOut,
+)
 from dataforce_studio.settings import config
 from utils.db import migrate_db
 
@@ -53,7 +60,7 @@ TEST_DB_NAME = "df_studio_test"
 
 
 async def _terminate_connections(conn: AsyncConnection, db_name: str) -> None:
-    await conn.execute(
+    await conn.execute(  # type: ignore[call-overload]
         """
         SELECT pg_terminate_backend(pid)
         FROM pg_stat_activity
@@ -79,21 +86,48 @@ async def _drop_database(admin_dsn: str, db_name: str) -> None:
 
 
 @dataclass
-class FixtureData:
+class BaseFixtureData:
     engine: AsyncEngine
     organization: OrganizationOrm
-    orbit: OrbitDetails | None = None
-    bucket_secret: BucketSecret | None = None
-    collection: Collection | None = None
-    satellite: Satellite | None = None
-    user: User | None = None
-    member: OrganizationMember | None = None
-    members: list[OrganizationMember] | list[OrbitMember] | None = None
-    invites: list[OrganizationInviteSimple] | list[OrganizationInvite] | None = None
+
+
+@dataclass
+class OrganizationFixtureData(BaseFixtureData):
+    user: User
+    bucket_secret: BucketSecret
+    member: OrganizationMember
+
+
+@dataclass
+class OrganizationWithMembersFixtureData(OrganizationFixtureData):
+    members: list[OrganizationMember]
+    invites: list[OrganizationInviteSimple]
+
+
+@dataclass
+class OrbitFixtureData(BaseFixtureData):
+    orbit: OrbitDetails
+    bucket_secret: BucketSecret
+    user: User
+
+
+@dataclass
+class OrbitWithMembersFixtureData(OrbitFixtureData):
+    members: list[OrbitMember]
+
+
+@dataclass
+class CollectionFixtureData(OrbitFixtureData):
+    collection: Collection
+
+
+@dataclass
+class SatelliteFixtureData(OrbitFixtureData):
+    satellite: Satellite
 
 
 @pytest_asyncio.fixture(scope="function")
-async def create_database_and_apply_migrations():  # noqa: ANN201
+async def create_database_and_apply_migrations() -> AsyncGenerator[str]:  # noqa: ANN201
     admin_dsn = config.POSTGRESQL_DSN.replace("+asyncpg", "").replace(
         "df_studio_test", "postgres"
     )
@@ -107,8 +141,8 @@ async def create_database_and_apply_migrations():  # noqa: ANN201
 
 
 @pytest_asyncio.fixture(scope="function")
-def invite_data() -> CreateOrganizationInvite:
-    return CreateOrganizationInvite(
+async def invite_data() -> AsyncGenerator[CreateOrganizationInvite, None]:
+    yield CreateOrganizationInvite(
         email="test@example.com",
         role=OrgRole.MEMBER,
         organization_id=1,
@@ -117,8 +151,8 @@ def invite_data() -> CreateOrganizationInvite:
 
 
 @pytest_asyncio.fixture(scope="function")
-def invite_get_data() -> OrganizationInvite:
-    return OrganizationInvite(
+async def invite_get_data() -> AsyncGenerator[OrganizationInvite, None]:
+    yield OrganizationInvite(
         id=1,
         email="test@example.com",
         role=OrgRole.MEMBER,
@@ -135,8 +169,8 @@ def invite_get_data() -> OrganizationInvite:
 
 
 @pytest_asyncio.fixture(scope="function")
-def invite_user_get_data() -> UserInvite:
-    return UserInvite(
+async def invite_user_get_data() -> AsyncGenerator[UserInvite, None]:
+    yield UserInvite(
         id=1,
         email="test@example.com",
         role=OrgRole.MEMBER,
@@ -152,7 +186,7 @@ def invite_user_get_data() -> UserInvite:
         organization=Organization(
             id=1,
             name="test",
-            logo="https://example.com/",
+            logo=None,
             created_at=datetime.datetime.now(),
             updated_at=datetime.datetime.now(),
         ),
@@ -160,8 +194,8 @@ def invite_user_get_data() -> UserInvite:
 
 
 @pytest_asyncio.fixture(scope="function")
-def invite_accept_data() -> CreateOrganizationInvite:
-    return CreateOrganizationInvite(
+async def invite_accept_data() -> AsyncGenerator[CreateOrganizationInvite, None]:
+    yield CreateOrganizationInvite(
         email="test@example.com",
         role=OrgRole.MEMBER,
         organization_id=1,
@@ -170,8 +204,8 @@ def invite_accept_data() -> CreateOrganizationInvite:
 
 
 @pytest_asyncio.fixture(scope="function")
-def member_data() -> OrganizationMember:
-    return OrganizationMember(
+async def member_data() -> AsyncGenerator[OrganizationMember, None]:
+    yield OrganizationMember(
         id=987887,
         organization_id=1,
         role=OrgRole.ADMIN,
@@ -186,33 +220,62 @@ def member_data() -> OrganizationMember:
 
 
 @pytest_asyncio.fixture(scope="function")
-def test_user() -> CreateUser:
-    return CreateUser(
+async def test_user_create() -> AsyncGenerator[CreateUser, None]:
+    yield CreateUser(
         email=f"testuser_{uuid.uuid4()}@example.com",
         full_name="Test User",
-        disabled=False,
-        email_verified=True,
+        disabled=None,
+        email_verified=False,
         auth_method=AuthProvider.EMAIL,
         photo=None,
-        hashed_password="hashed_password",
+        hashed_password="$2b$12$rr/FMTnWz0BGDTiG//l.YuzZe9ZIpZTPZD5FeAVDDdqgchIDUyD66",
     )
 
 
 @pytest_asyncio.fixture(scope="function")
-def test_user_out() -> UserOut:
-    return UserOut(
-        id=1,
-        email=f"{uuid.uuid4()}@userout.com",
-        full_name="Test User",
-        disabled=False,
-        photo=None,
+async def test_user_create_in(
+    test_user_create: CreateUser,
+) -> AsyncGenerator[CreateUserIn, None]:
+    user = test_user_create.model_copy()
+    yield CreateUserIn(
+        email=user.email,
+        full_name=user.full_name,
+        photo=user.photo,
+        password="test_password",
+    )
+
+
+@pytest_asyncio.fixture(scope="function")
+async def test_user(test_user_create: CreateUser) -> AsyncGenerator[User, None]:
+    user = test_user_create.model_copy()
+    yield User(
+        id=986345,
+        email=user.email,
+        full_name=user.full_name,
+        disabled=user.disabled,
+        email_verified=True,
+        auth_method=user.auth_method,
+        photo=user.photo,
+        hashed_password=user.hashed_password,
+    )
+
+
+@pytest_asyncio.fixture(scope="function")
+async def test_user_out(test_user: User) -> AsyncGenerator[UserOut, None]:
+    user = test_user.model_copy()
+    yield UserOut(
+        id=user.id,
+        email=user.email,
+        full_name=user.full_name,
+        disabled=user.disabled,
+        photo=user.photo,
         has_api_key=False,
     )
 
 
 @pytest_asyncio.fixture(scope="function")
-def test_org() -> Organization:
-    return Organization(
+async def test_org() -> AsyncGenerator[Organization, None]:
+    yield Organization(
         id=1,
         name="Test organization",
         logo=None,
@@ -222,12 +285,12 @@ def test_org() -> Organization:
 
 
 @pytest_asyncio.fixture(scope="function")
-def test_org_details(
+async def test_org_details(
     invite_get_data: OrganizationInvite, member_data: OrganizationMember
-) -> OrganizationDetails:
+) -> AsyncGenerator[OrganizationDetails, None]:
     test_org_details_id = 8888
 
-    return OrganizationDetails(
+    yield OrganizationDetails(
         id=test_org_details_id,
         name="Test organization",
         logo=None,
@@ -251,8 +314,8 @@ def test_org_details(
 
 
 @pytest_asyncio.fixture
-def manifest_example() -> Manifest:
-    return Manifest(
+async def manifest_example() -> AsyncGenerator[Manifest, None]:
+    yield Manifest(
         variant="pipeline",
         description="",
         producer_name="falcon.beastbyte.ai",
@@ -284,8 +347,8 @@ def manifest_example() -> Manifest:
 
 
 @pytest_asyncio.fixture
-def test_bucket() -> BucketSecret:
-    return BucketSecret(
+async def test_bucket() -> AsyncGenerator[BucketSecret, None]:
+    yield BucketSecret(
         id=1,
         organization_id=1,
         endpoint="url",
@@ -301,8 +364,10 @@ def test_bucket() -> BucketSecret:
 
 
 @pytest_asyncio.fixture
-def test_model_artifact(manifest_example: Manifest) -> ModelArtifactCreate:
-    return ModelArtifactCreate(
+async def test_model_artifact(
+    manifest_example: Manifest,
+) -> AsyncGenerator[ModelArtifactCreate, None]:
+    yield ModelArtifactCreate(
         collection_id=1,
         file_name="model.dfs",
         model_name="Test Model",
@@ -320,19 +385,33 @@ def test_model_artifact(manifest_example: Manifest) -> ModelArtifactCreate:
 
 @pytest_asyncio.fixture(scope="function")
 async def create_organization_with_user(
-    create_database_and_apply_migrations: str, test_user: CreateUser
-) -> FixtureData:
+    create_database_and_apply_migrations: str, test_user_create: CreateUser
+) -> OrganizationFixtureData:
     engine = create_async_engine(create_database_and_apply_migrations)
     repo = UserRepository(engine)
     secret_repo = BucketSecretRepository(engine)
 
-    user = await repo.create_user(test_user)
+    user = await repo.create_user(test_user_create)
+
+    assert user is not None, (
+        "User should not be None in create_organization_with_user fixture"
+    )
 
     created_organization = await repo.create_organization(
         user.id, OrganizationCreateIn(name="test org")
     )
+
+    assert created_organization is not None, (
+        "Organization should not be None in create_organization_with_user fixture"
+    )
+
     member_orm = await repo.get_organization_member(created_organization.id, user.id)
     member = member_orm.to_organization_member() if member_orm else None
+
+    assert member is not None, (
+        "Organization Member should not be None in "
+        "create_organization_with_user fixture"
+    )
 
     secret = await secret_repo.create_bucket_secret(
         BucketSecretCreate(
@@ -341,11 +420,14 @@ async def create_organization_with_user(
             bucket_name="test-bucket",
         )
     )
+    assert secret is not None, (
+        "BucketSecret should not be None in create_organization_with_user fixture"
+    )
 
-    return FixtureData(
+    return OrganizationFixtureData(
         engine=engine,
-        user=user,
         organization=created_organization,
+        user=user,
         bucket_secret=secret,
         member=member,
     )
@@ -353,8 +435,8 @@ async def create_organization_with_user(
 
 @pytest_asyncio.fixture(scope="function")
 async def create_organization_with_members(
-    create_organization_with_user: FixtureData, test_user: CreateUser
-) -> FixtureData:
+    create_organization_with_user: OrganizationFixtureData, test_user_create: CreateUser
+) -> OrganizationWithMembersFixtureData:
     data = create_organization_with_user
     repo = UserRepository(data.engine)
     invites_repo = InviteRepository(data.engine)
@@ -364,7 +446,7 @@ async def create_organization_with_members(
     invites = []
 
     for _ in range(10):
-        user_data = test_user.model_copy()
+        user_data = test_user_create.model_copy()
         user_data.email = f"user_{uuid.uuid4()}@gmail.com"
         user = await repo.create_user(user_data)
         users.append(user)
@@ -376,7 +458,8 @@ async def create_organization_with_members(
                 role=OrgRole.MEMBER,
             )
         )
-        members.append(member)
+        if member:
+            members.append(member)
 
     for _ in range(5):
         invited_by_user = random.choice(users)
@@ -388,13 +471,14 @@ async def create_organization_with_members(
                 invited_by=invited_by_user.id,
             )
         )
-        invites.append(invite)
+        if invite:
+            invites.append(invite)
 
-    return FixtureData(
+    return OrganizationWithMembersFixtureData(
         engine=data.engine,
         organization=data.organization,
-        bucket_secret=data.bucket_secret,
         user=data.user,
+        bucket_secret=data.bucket_secret,
         member=data.member,
         members=members,
         invites=invites,
@@ -403,33 +487,44 @@ async def create_organization_with_members(
 
 @pytest_asyncio.fixture(scope="function")
 async def create_orbit(
-    create_database_and_apply_migrations: str, test_user: CreateUser
-) -> FixtureData:
+    create_database_and_apply_migrations: str, test_user_create: CreateUser
+) -> OrbitFixtureData:
     engine = create_async_engine(create_database_and_apply_migrations)
     user_repo = UserRepository(engine)
     secret_repo = BucketSecretRepository(engine)
     repo = OrbitRepository(engine)
 
-    user = await user_repo.create_user(test_user)
-    created_organization = await user_repo.create_organization(
+    user = await user_repo.create_user(test_user_create)
+    assert user is not None, "User should not be None in create_orbit fixture"
+
+    organization = await user_repo.create_organization(
         user.id, OrganizationCreateIn(name="test org")
     )
+    assert organization is not None, (
+        "Organization should not be None in create_orbit fixture"
+    )
+
     bucket_secret = await secret_repo.create_bucket_secret(
         BucketSecretCreate(
-            organization_id=created_organization.id,
+            organization_id=organization.id,
             endpoint="s3",
             bucket_name="test-bucket",
         )
     )
-    created_orbit = await repo.create_orbit(
-        created_organization.id,
-        OrbitCreateIn(name="test orbit", bucket_secret_id=bucket_secret.id),
+    assert bucket_secret is not None, (
+        "BucketSecret should not be None in create_orbit fixture"
     )
 
-    return FixtureData(
+    orbit = await repo.create_orbit(
+        organization.id,
+        OrbitCreateIn(name="test orbit", bucket_secret_id=bucket_secret.id),
+    )
+    assert orbit is not None, "Orbit should not be None in create_orbit fixture"
+
+    return OrbitFixtureData(
         engine=engine,
-        organization=created_organization,
-        orbit=created_orbit,
+        organization=organization,
+        orbit=orbit,
         bucket_secret=bucket_secret,
         user=user,
     )
@@ -437,8 +532,8 @@ async def create_orbit(
 
 @pytest_asyncio.fixture(scope="function")
 async def create_orbit_with_members(
-    create_orbit: FixtureData, test_user: CreateUser
-) -> FixtureData:
+    create_orbit: OrbitFixtureData, test_user_create: CreateUser
+) -> OrbitWithMembersFixtureData:
     data = create_orbit
     user_repo = UserRepository(data.engine)
     repo = OrbitRepository(data.engine)
@@ -447,7 +542,7 @@ async def create_orbit_with_members(
     members = []
 
     for _ in range(10):
-        user_data = test_user.model_copy()
+        user_data = test_user_create.model_copy()
         user_data.email = f"{uuid.uuid4()}@example.com"
         created_user = await user_repo.create_user(user_data)
         member = await repo.create_orbit_member(
@@ -460,22 +555,22 @@ async def create_orbit_with_members(
         if member:
             members.append(member)
 
-    return FixtureData(
+    return OrbitWithMembersFixtureData(
         engine=data.engine,
         organization=data.organization,
-        orbit=orbit,
+        orbit=data.orbit,
         bucket_secret=data.bucket_secret,
+        user=data.user,
         members=members,
     )
 
 
 @pytest_asyncio.fixture(scope="function")
 async def create_collection(
-    create_orbit: FixtureData, test_user: CreateUser
-) -> FixtureData:
+    create_orbit: OrbitFixtureData, test_user_create: CreateUser
+) -> CollectionFixtureData:
     data = create_orbit
     repo = CollectionRepository(data.engine)
-    orbit = data.orbit
 
     collection_data = CollectionCreate(
         orbit_id=data.orbit.id,
@@ -486,33 +581,44 @@ async def create_collection(
     )
 
     collection = await repo.create_collection(collection_data)
+    assert collection is not None, (
+        "Collection should not be None in create_collection fixture"
+    )
 
-    return FixtureData(
+    return CollectionFixtureData(
         engine=data.engine,
         organization=data.organization,
-        orbit=orbit,
+        orbit=data.orbit,
         bucket_secret=data.bucket_secret,
+        user=data.user,
         collection=collection,
     )
 
 
 @pytest_asyncio.fixture(scope="function")
 async def create_satellite(
-    create_orbit: FixtureData, test_user: CreateUser
-) -> FixtureData:
+    create_orbit: OrbitFixtureData, test_user_create: CreateUser
+) -> SatelliteFixtureData:
     data = create_orbit
     repo = SatelliteRepository(data.engine)
     orbit = data.orbit
+
+    assert orbit is not None, "Orbit should not be None in create_satellite fixture"
 
     satellite_data = SatelliteCreate(
         orbit_id=orbit.id, api_key_hash=str(uuid.uuid4()), name="test"
     )
     satellite, _ = await repo.create_satellite(satellite_data)
 
-    return FixtureData(
+    assert satellite is not None, (
+        "Satellite should not be None in create_satellite fixture"
+    )
+
+    return SatelliteFixtureData(
         engine=data.engine,
         organization=data.organization,
-        orbit=orbit,
+        orbit=data.orbit,
         bucket_secret=data.bucket_secret,
+        user=data.user,
         satellite=satellite,
     )

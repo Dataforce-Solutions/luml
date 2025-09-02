@@ -423,9 +423,7 @@ async def test_delete_orbit(
     mock_get_organization_member_role.return_value = OrgRole.OWNER
     mock_get_orbit_member_role.return_value = OrgRole.ADMIN
 
-    deleted = await handler.delete_orbit(user_id, organization_id, orbit_id)
-
-    assert deleted is None
+    await handler.delete_orbit(user_id, organization_id, orbit_id)
     mock_delete_orbit.assert_awaited_once_with(orbit_id)
 
 
@@ -449,18 +447,18 @@ async def test_get_orbit_members(
     test_orbit_member: OrbitMember,
 ) -> None:
     organization_id = 1
-    expected = test_orbit_member
+    expected = [test_orbit_member]
 
     mock_get_orbit_members.return_value = expected
     mock_get_organization_member_role.return_value = OrgRole.OWNER
     mock_get_orbit_member_role.return_value = OrgRole.ADMIN
 
     result = await handler.get_orbit_members(
-        expected.user.id, organization_id, expected.orbit_id
+        expected[0].user.id, organization_id, expected[0].orbit_id
     )
 
     assert result == expected
-    mock_get_orbit_members.assert_awaited_once_with(expected.orbit_id)
+    mock_get_orbit_members.assert_awaited_once_with(expected[0].orbit_id)
 
 
 @patch(
@@ -654,9 +652,7 @@ async def test_delete_orbit_member(
     mock_get_organization_member_role.return_value = OrgRole.OWNER
     mock_get_orbit_member_role.return_value = OrgRole.ADMIN
 
-    deleted = await handler.delete_orbit_member(
+    await handler.delete_orbit_member(
         user_id, organization_id, member.orbit_id, member.id
     )
-
-    assert deleted is None
     mock_delete_orbit_member.assert_awaited_once_with(member.id)
