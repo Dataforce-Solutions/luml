@@ -1,0 +1,76 @@
+import { dataforceApi } from '@/lib/api'
+import type { CreateSatellitePayload, Satellite } from '@/lib/api/satellites/interfaces'
+import { defineStore } from 'pinia'
+import { ref } from 'vue'
+
+export const useSatellitesStore = defineStore('satellites', () => {
+  const satellitesList = ref<Satellite[]>([])
+  const creatorVisible = ref(false)
+
+  async function createSatellite(
+    organizationId: number,
+    orbitId: number,
+    payload: CreateSatellitePayload,
+  ) {
+    const data = await dataforceApi.satellites.create(organizationId, orbitId, payload)
+    satellitesList.value.push(data.satellite)
+    return data
+  }
+
+  async function loadSatellites(organizationId: number, orbitId: number) {
+    return dataforceApi.satellites.getList(organizationId, orbitId)
+  }
+
+  function setList(list: Satellite[]) {
+    satellitesList.value = list
+  }
+
+  async function deleteSatellite(organizationId: number, orbitId: number, satelliteId: number) {
+    await dataforceApi.satellites.delete(organizationId, orbitId, satelliteId)
+    setList(satellitesList.value.filter((satellite) => satellite.id !== satelliteId))
+  }
+
+  async function updateSatellite(
+    organizationId: number,
+    orbitId: number,
+    satelliteId: number,
+    payload: CreateSatellitePayload,
+  ) {
+    const newData = await dataforceApi.satellites.update(
+      organizationId,
+      orbitId,
+      satelliteId,
+      payload,
+    )
+    const newList = satellitesList.value.map((satellite) => {
+      if (satellite.id === newData.id) return newData
+      else return satellite
+    })
+    setList(newList)
+  }
+
+  async function regenerateApiKey(organizationId: number, orbitId: number, satelliteId: number) {
+    return dataforceApi.satellites.regenerateApiKye(organizationId, orbitId, satelliteId)
+  }
+
+  function showCreator() {
+    creatorVisible.value = true
+  }
+
+  function hideCreator() {
+    creatorVisible.value = false
+  }
+
+  return {
+    satellitesList,
+    creatorVisible,
+    createSatellite,
+    loadSatellites,
+    setList,
+    deleteSatellite,
+    updateSatellite,
+    regenerateApiKey,
+    showCreator,
+    hideCreator,
+  }
+})

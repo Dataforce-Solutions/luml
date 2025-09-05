@@ -119,6 +119,11 @@ const router = createRouter({
           name: 'orbit-deployments',
           component: () => import('../pages/orbits/OrbitDeploymentsView.vue'),
         },
+        {
+          path: 'satellites',
+          name: 'orbit-satellites',
+          component: () => import('../pages/orbits/OrbitSatellitesView.vue'),
+        }
       ],
     },
     {

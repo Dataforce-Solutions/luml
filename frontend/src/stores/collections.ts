@@ -12,9 +12,11 @@ export const useCollectionsStore = defineStore('collections', () => {
 
   const collectionsList = ref<OrbitCollection[]>([])
   const currentCollection = ref<OrbitCollection | null>(null)
+  const creatorVisible = ref(false)
 
   const requestInfo = computed(() => {
-    if (typeof route.params.organizationId !== 'string') throw new Error('Current organization not found')
+    if (typeof route.params.organizationId !== 'string')
+      throw new Error('Current organization not found')
     if (typeof route.params.id !== 'string') throw new Error('Orbit was not found')
     return {
       organizationId: +route.params.organizationId,
@@ -29,7 +31,10 @@ export const useCollectionsStore = defineStore('collections', () => {
     )
   }
 
-  async function createCollection(payload: OrbitCollectionCreator, requestData?: typeof requestInfo.value) {
+  async function createCollection(
+    payload: OrbitCollectionCreator,
+    requestData?: typeof requestInfo.value,
+  ) {
     const info = requestData ? requestData : requestInfo.value
     const collection = await dataforceApi.orbitCollections.createCollection(
       info.organizationId,
@@ -76,9 +81,18 @@ export const useCollectionsStore = defineStore('collections', () => {
     resetCurrentCollection()
   }
 
+  function showCreator() {
+    creatorVisible.value = true
+  }
+
+  function hideCreator() {
+    creatorVisible.value = false
+  }
+
   return {
     collectionsList,
     currentCollection,
+    creatorVisible,
     loadCollections,
     createCollection,
     updateCollection,
@@ -86,5 +100,7 @@ export const useCollectionsStore = defineStore('collections', () => {
     reset,
     setCurrentCollection,
     resetCurrentCollection,
+    showCreator,
+    hideCreator,
   }
 })
