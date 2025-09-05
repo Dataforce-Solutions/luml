@@ -4,6 +4,13 @@
 
     <Ui404 v-else-if="!orbitsStore.currentOrbitDetails"></Ui404>
     <div v-else class="orbit-page">
+      <header class="header">
+        <h2 class="title">{{ orbitsStore.currentOrbitDetails?.name }}</h2>
+        <Button v-if="buttonInfo" class="button" @click="buttonInfo.action">
+          <Plus :size="14" />
+          <span>{{ buttonInfo.label }}</span>
+        </Button>
+      </header>
       <OrbitTabs></OrbitTabs>
       <div class="view">
         <RouterView></RouterView>
@@ -13,8 +20,8 @@
 </template>
 
 <script setup lang="ts">
-import { onBeforeMount, ref, watch } from 'vue'
-import { useToast } from 'primevue'
+import { computed, onBeforeMount, ref, watch } from 'vue'
+import { useToast, Button } from 'primevue'
 import { useOrbitsStore } from '@/stores/orbits'
 import { useRoute, useRouter } from 'vue-router'
 import { simpleErrorToast } from '@/lib/primevue/data/toasts'
@@ -22,9 +29,14 @@ import Ui404 from '@/components/ui/Ui404.vue'
 import OrbitTabs from '@/components/orbits/tabs/OrbitTabs.vue'
 import UiPageLoader from '@/components/ui/UiPageLoader.vue'
 import { useOrganizationStore } from '@/stores/organization'
+import { Plus } from 'lucide-vue-next'
+import { useSatellitesStore } from '@/stores/satellites'
+import { useCollectionsStore } from '@/stores/collections'
 
 const organizationStore = useOrganizationStore()
 const orbitsStore = useOrbitsStore()
+const satellitesStore = useSatellitesStore()
+const collectionsStore = useCollectionsStore()
 const route = useRoute()
 const router = useRouter()
 const toast = useToast()
@@ -47,11 +59,34 @@ async function loadOrbitDetails() {
   }
 }
 
-watch(() => organizationStore.currentOrganization?.id, async (id) => {
-  if (!id || +route.params.organizationId === id) return
-  
-  await router.push({ name: 'orbits', params: { organizationId: id }})
+const buttonInfo = computed(() => {
+  if (route.name === 'orbit-registry') {
+    return {
+      label: 'Create collection',
+      action: () => {
+        collectionsStore.showCreator()
+      },
+    }
+  } else if (route.name === 'orbit-satellites') {
+    return {
+      label: 'Create satellite',
+      action: () => {
+        satellitesStore.showCreator()
+      },
+    }
+  } else {
+    return null
+  }
 })
+
+watch(
+  () => organizationStore.currentOrganization?.id,
+  async (id) => {
+    if (!id || +route.params.organizationId === id) return
+
+    await router.push({ name: 'orbits', params: { organizationId: id } })
+  },
+)
 
 onBeforeMount(async () => {
   loadOrbitDetails()
@@ -62,7 +97,16 @@ onBeforeMount(async () => {
 .orbit-page {
   padding: 32px 0;
 }
+
 .view {
   padding-top: 20px;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 40px;
+  margin-bottom: 20px;
 }
 </style>

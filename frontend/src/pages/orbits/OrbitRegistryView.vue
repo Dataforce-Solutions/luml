@@ -1,16 +1,5 @@
 <template>
   <div v-if="!loading">
-    <header class="header">
-      <h2 class="title">{{ orbitsStore.currentOrbitDetails?.name }}</h2>
-      <Button
-        v-if="orbitsStore.getCurrentOrbitPermissions?.collection.includes(PermissionEnum.create)"
-        class="button"
-        @click="showCreator = true"
-      >
-        <Plus :size="14" />
-        <span>Create collection</span>
-      </Button>
-    </header>
     <div v-if="!collectionsStore.collectionsList.length" class="content">
       <Folders :size="35" color="var(--p-primary-color)" />
       <h3 class="label">Welcome to the Registry</h3>
@@ -29,13 +18,18 @@
       "
     ></CollectionsList>
   </div>
-  <CollectionCreator v-model:visible="showCreator"></CollectionCreator>
+  <CollectionCreator
+    :visible="collectionsStore.creatorVisible"
+    @update:visible="
+      (val) => (val ? collectionsStore.showCreator() : collectionsStore.hideCreator())
+    "
+  ></CollectionCreator>
 </template>
 
 <script setup lang="ts">
 import { onBeforeMount, onUnmounted, ref } from 'vue'
-import { Button, useToast } from 'primevue'
-import { Plus, Folders } from 'lucide-vue-next'
+import { useToast } from 'primevue'
+import { Folders } from 'lucide-vue-next'
 import { useOrbitsStore } from '@/stores/orbits'
 import { simpleErrorToast } from '@/lib/primevue/data/toasts'
 import { useCollectionsStore } from '@/stores/collections'
@@ -47,7 +41,6 @@ const orbitsStore = useOrbitsStore()
 const collectionsStore = useCollectionsStore()
 const toast = useToast()
 
-const showCreator = ref(false)
 const loading = ref(false)
 
 onBeforeMount(async () => {
@@ -67,16 +60,6 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-.header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 40px;
-  margin-bottom: 20px;
-}
-.button {
-  flex: 0 0 auto;
-}
 .content {
   display: flex;
   flex-direction: column;

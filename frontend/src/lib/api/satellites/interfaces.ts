@@ -1,0 +1,65 @@
+export enum SatelliteTaskTypeEnum {
+  pairing = 'pairing',
+  deploy = 'deploy',
+}
+
+export enum SatelliteTaskStatusEnum {
+  pending = 'pending',
+  running = 'running',
+  done = 'done',
+  failed = 'failed',
+}
+
+export enum SatelliteStatusEnum {
+  active = 'active',
+  inactive = 'inactive',
+  error = 'error',
+}
+
+export interface CreateSatellitePayload {
+  name: string
+  description: string
+}
+
+export interface CreateSatelliteResponse {
+  satellite: Satellite
+  api_key: string
+  task: SatelliteTask
+}
+
+export interface Satellite {
+  id: number
+  orbit_id: number
+  name: string
+  description: string
+  base_url: string
+  paired: boolean
+  capabilities: SatelliteCapabilities
+  created_at: string
+  updated_at: string
+  last_seen_at: string
+  status: SatelliteStatusEnum
+}
+
+export interface SatelliteCapabilities {
+  deploy: any
+}
+
+export interface SatelliteTask {
+  id: number
+  satellite_id: number
+  orbit_id: number
+  type: SatelliteTaskTypeEnum
+  payload: object
+  status: SatelliteTaskStatusEnum
+  scheduled_at: string
+  started_at: string
+  finished_at: string
+  result: object
+  created_at: string
+  updated_at: string
+}
+
+export interface RegenerateApiKeyResponse {
+  key: string
+}

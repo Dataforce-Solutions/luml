@@ -111,5 +111,12 @@ export const modelUploadResolver = zodResolver(
     name: z.string().min(1),
     description: z.string(),
     tags: z.array(z.string()),
-  })
+  }),
+)
+
+export const satellitesResolver = zodResolver(
+  z.object({
+    name: z.string().min(1),
+    description: z.string().optional(),
+  }),
 )
