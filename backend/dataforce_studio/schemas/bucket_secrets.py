@@ -42,7 +42,18 @@ class BucketSecretOut(BaseModel, BaseOrmConfig):
     updated_at: datetime | None = None
 
 
-class BucketSecretUpdate(_BucketSecretBase):
+class BucketSecretUpdateIn(BaseModel):
+    endpoint: str | None = None
+    bucket_name: str | None = None
+    access_key: str | None = None
+    secret_key: str | None = None
+    session_token: str | None = None
+    secure: bool | None = None
+    region: str | None = None
+    cert_check: bool | None = None
+
+
+class BucketSecretUpdate(BucketSecretUpdateIn):
     id: int
 
 

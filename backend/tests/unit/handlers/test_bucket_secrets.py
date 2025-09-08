@@ -1,5 +1,5 @@
 import datetime
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 
@@ -10,6 +10,7 @@ from dataforce_studio.infra.exceptions import (
     NotFoundError,
 )
 from dataforce_studio.schemas.bucket_secrets import (
+    BucketSecret,
     BucketSecretCreateIn,
     BucketSecretOut,
     BucketSecretUpdate,
@@ -317,7 +318,7 @@ async def test_delete_bucket_secret_in_use(
     new_callable=AsyncMock,
 )
 @pytest.mark.asyncio
-async def test_get_bucket_urls(
+async def test_get_new_bucket_urls(
     mock_get_upload_url: AsyncMock,
     mock_get_download_url: AsyncMock,
     mock_get_delete_url: AsyncMock,
@@ -345,9 +346,124 @@ async def test_get_bucket_urls(
     mock_get_download_url.return_value = download_url
     mock_get_delete_url.return_value = delete_url
 
-    urls = await handler.get_bucket_urls(secret)
+    urls = await handler.get_new_bucket_urls(secret)
 
     assert urls == expected
     mock_get_upload_url.assert_awaited_once_with(object_name)
     mock_get_download_url.assert_awaited_once_with(object_name)
     mock_get_delete_url.assert_awaited_once_with(object_name)
+
+
+@patch(
+    "dataforce_studio.handlers.bucket_secrets.PermissionsHandler.check_organization_permission",
+    new_callable=AsyncMock,
+)
+@patch("dataforce_studio.handlers.bucket_secrets.S3Service")
+@patch(
+    "dataforce_studio.handlers.bucket_secrets.BucketSecretRepository.get_bucket_secret",
+    new_callable=AsyncMock,
+)
+@pytest.mark.asyncio
+async def test_get_updated_bucket_urls(
+    mock_get_bucket_secret: AsyncMock,
+    mock_s3_service: Mock,
+    mock_check_organization_permission: AsyncMock,
+) -> None:
+    secret_id = 847658
+    organization_id = 8868
+    user_id = 5656
+    original_secret = BucketSecret(
+        id=secret_id,
+        organization_id=organization_id,
+        created_at=datetime.datetime.now(),
+        updated_at=datetime.datetime.now(),
+        endpoint="s3.amazonaws.com",
+        bucket_name="original_name",
+        access_key="access_key",
+        secret_key="secret_key",
+        session_token=None,
+        secure=True,
+        region="us-east-1",
+        cert_check=None,
+    )
+    secret = BucketSecretUpdate(
+        id=secret_id,
+        bucket_name="new-bucket-name",
+        access_key="new-access_key",
+    )
+    updated_secret = BucketSecret(
+        id=secret_id,
+        organization_id=original_secret.organization_id,
+        created_at=original_secret.created_at,
+        updated_at=original_secret.updated_at,
+        endpoint=original_secret.endpoint,
+        bucket_name=secret.bucket_name,
+        access_key=secret.access_key,
+        secret_key=original_secret.secret_key,
+        session_token=original_secret.session_token,
+        secure=original_secret.secure,
+        region=original_secret.region,
+        cert_check=original_secret.cert_check,
+    )
+
+    object_name = "test_file"
+
+    presigned_url = "https://test-bucket.s3.amazonaws.com/test_file?presigned=true"
+    download_url = "https://test-bucket.s3.amazonaws.com/test_file?download=true"
+    delete_url = "https://test-bucket.s3.amazonaws.com/test_file?delete=true"
+
+    expected = BucketSecretUrls(
+        presigned_url=presigned_url,
+        download_url=download_url,
+        delete_url=delete_url,
+    )
+
+    mock_s3_instance = Mock()
+    mock_s3_instance.get_upload_url = AsyncMock(return_value=presigned_url)
+    mock_s3_instance.get_download_url = AsyncMock(return_value=download_url)
+    mock_s3_instance.get_delete_url = AsyncMock(return_value=delete_url)
+    mock_s3_service.return_value = mock_s3_instance
+    mock_get_bucket_secret.return_value = original_secret
+
+    urls = await handler.get_updated_bucket_urls(organization_id, user_id, secret)
+
+    assert urls == expected
+    mock_s3_service.assert_called_once_with(updated_secret)
+    mock_s3_instance.get_upload_url.assert_awaited_once_with(object_name)
+    mock_s3_instance.get_download_url.assert_awaited_once_with(object_name)
+    mock_s3_instance.get_delete_url.assert_awaited_once_with(object_name)
+    mock_check_organization_permission.assert_awaited_once_with(
+        organization_id, user_id, Resource.BUCKET_SECRET, Action.READ
+    )
+
+
+@patch(
+    "dataforce_studio.handlers.bucket_secrets.PermissionsHandler.check_organization_permission",
+    new_callable=AsyncMock,
+)
+@patch(
+    "dataforce_studio.handlers.bucket_secrets.BucketSecretRepository.get_bucket_secret",
+    new_callable=AsyncMock,
+)
+@pytest.mark.asyncio
+async def test_get_updated_bucket_urls_secret_not_found(
+    mock_get_bucket_secret: AsyncMock, mock_check_organization_permission: AsyncMock
+) -> None:
+    organization_id = 8868
+    user_id = 5656
+
+    secret = BucketSecretUpdate(
+        id=847658,
+        bucket_name="new-bucket-name",
+        access_key="new-access_key",
+    )
+
+    mock_get_bucket_secret.return_value = None
+
+    with pytest.raises(NotFoundError) as error:
+        await handler.get_updated_bucket_urls(organization_id, user_id, secret)
+
+    assert error.value.status_code == 404
+    mock_check_organization_permission.assert_awaited_once_with(
+        organization_id, user_id, Resource.BUCKET_SECRET, Action.READ
+    )

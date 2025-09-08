@@ -7,6 +7,7 @@ from dataforce_studio.infra.exceptions import (
 )
 from dataforce_studio.repositories.bucket_secrets import BucketSecretRepository
 from dataforce_studio.schemas.bucket_secrets import (
+    BucketSecret,
     BucketSecretCreate,
     BucketSecretCreateIn,
     BucketSecretOut,
@@ -83,11 +84,47 @@ class BucketSecretHandler:
             raise BucketSecretInUseError() from e
 
     @staticmethod
-    async def get_bucket_urls(secret: BucketSecretCreateIn) -> BucketSecretUrls:
+    async def get_new_bucket_urls(secret: BucketSecretCreateIn) -> BucketSecretUrls:
         object_name = "test_file"
 
         s3_service = S3Service(secret)
 
+        return BucketSecretUrls(
+            presigned_url=await s3_service.get_upload_url(object_name),
+            download_url=await s3_service.get_download_url(object_name),
+            delete_url=await s3_service.get_delete_url(object_name),
+        )
+
+    async def get_updated_bucket_urls(
+        self, organization_id: int, user_id: int, secret: BucketSecretUpdate
+    ) -> BucketSecretUrls:
+        await self.__permissions_handler.check_organization_permission(
+            organization_id, user_id, Resource.BUCKET_SECRET, Action.READ
+        )
+
+        original_secret = await self.__secret_repository.get_bucket_secret(secret.id)
+
+        if not original_secret:
+            raise NotFoundError("Secret not found")
+
+        updated_secret = BucketSecret(
+            id=original_secret.id,
+            organization_id=original_secret.organization_id,
+            created_at=original_secret.created_at,
+            updated_at=original_secret.updated_at,
+            endpoint=secret.endpoint or original_secret.endpoint,
+            bucket_name=secret.bucket_name or original_secret.bucket_name,
+            access_key=secret.access_key or original_secret.access_key,
+            secret_key=secret.secret_key or original_secret.secret_key,
+            session_token=secret.session_token or original_secret.session_token,
+            secure=secret.secure or original_secret.secure,
+            region=secret.region or original_secret.region,
+            cert_check=secret.cert_check or original_secret.cert_check,
+        )
+
+        s3_service = S3Service(updated_secret)
+
+        object_name = "test_file"
         return BucketSecretUrls(
             presigned_url=await s3_service.get_upload_url(object_name),
             download_url=await s3_service.get_download_url(object_name),
