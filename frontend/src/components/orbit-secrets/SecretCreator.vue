@@ -1,72 +1,49 @@
 <template>
-  <Dialog
-    v-model:visible="visible"
-    header="Create a new secret"
-    modal
-    :draggable="false"
-    :pt="dialogPt"
-  >
-    <Form 
-    id="secret-create-form" 
-    class="form" 
-    :resolver="secretResolver" 
-    @submit="onComponentSubmit"
-    >
+  <Dialog v-model:visible="visible" header="Create a new secret" modal :draggable="false" :pt="dialogPt">
+    <Form :initial-values="formData" :resolver="createSecretResolver" @submit="onSubmit" class="form">
       <div class="form-item">
-        <label for="name" class="label required">Name</label>
-        <InputText 
-        v-model="formState.name" 
-        id="name" 
-        name="name" 
-        autofocus 
-        />
-      </div>
+        <div class="field">
+          <label for="name" class="label required">Name</label>
+          <InputText v-model="formData.name" id="name" name="name" placeholder="Name your secret key" fluid />
+        </div>
 
-      <div class="form-item">
-        <label for="value" class="label required">Secret key</label>
-        <Password 
-        v-model="formState.value" 
-        id="value" 
-        name="value" 
-        :feedback="false" 
-        toggleMask fluid
-        />
-      </div>
+        <div class="form-item">
+          <label for="value" class="label required">Secret key</label>
+          <Password v-model="formData.value" id="value" name="value" :feedback="false" placeholder="Enter secret key"
+            toggleMask fluid />
+        </div>
 
-      <div class="form-item">
-        <label for="tags" class="label">Tags</label>
-        <AutoComplete 
-        v-model="formState.tags" 
-        id="tags" 
-        name="tags" 
-        :suggestions="autocompleteItems" 
-        @complete="searchTags" 
-        multiple 
-        fluid
-        />
+        <div class="form-item">
+          <label for="tags" class="label">Tags</label>
+          <AutoComplete v-model="formData.tags" id="tags" name="tags" fluid multiple placeholder="Type to add tags"
+            :suggestions="autocompleteItems" @complete="searchTags" />
+        </div>
       </div>
+      <Button type="submit" fluid rounded :loading="loading">
+        Create
+      </Button>
     </Form>
-
-    <template #footer>
-      <Button type="submit" form="secret-create-form" fluid  rounded> Create </Button>
-    </template>
   </Dialog>
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
-import { Dialog, Button, InputText, Password, AutoComplete } from 'primevue'
-import { Form } from '@primevue/forms'
-import type { DialogPassThroughOptions } from 'primevue'
-import { useToast } from 'primevue/usetoast'
-import { useOrbitSecretForm } from '@/hooks/useOrbitSecretForm'
-import { simpleErrorToast } from '@/lib/primevue/data/toasts'
-import { zodResolver } from '@primevue/forms/resolvers/zod'
-import type { FormSubmitEvent } from '@primevue/forms'
+import type { DialogPassThroughOptions, AutoCompleteCompleteEvent } from 'primevue'
+import { Dialog, Button, InputText, AutoComplete, Password, useToast } from 'primevue'
+import { Form, type FormSubmitEvent } from '@primevue/forms'
+import { ref, computed } from 'vue'
+import { simpleErrorToast, simpleSuccessToast } from '@/lib/primevue/data/toasts'
+import { useSecretsStore } from '@/stores/orbit-secrets'
+import type { CreateSecretPayload } from '@/lib/api/orbit-secrets/interfaces'
+import { createSecretResolver } from '@/utils/forms/resolvers'
+import { useOrbitsStore } from '@/stores/orbits'
 
+type Props = {
+  organizationId?: number
+  orbitId?: number
+}
 
+const props = defineProps<Props>()
 const visible = defineModel<boolean>('visible')
-const toast = useToast()
 
 const dialogPt: DialogPassThroughOptions = {
   root: { style: 'max-width: 500px; width: 100%;' },
@@ -74,56 +51,84 @@ const dialogPt: DialogPassThroughOptions = {
   content: { style: 'padding: 0 28px 28px;' },
 }
 
-const {
-  formState,
-  secretSchema,
-  autocompleteItems,
-  searchTags,
-  submitForm,
-  resetForm,
-} = useOrbitSecretForm(ref(null), {
-  onSuccess: () => { visible.value = false },
-});
+const secretsStore = useSecretsStore()
+const orbitsStore = useOrbitsStore()
+const toast = useToast()
+const loading = ref(false)
 
-const secretResolver = computed(() => zodResolver(secretSchema.value));
+const getInitialFormData = (): CreateSecretPayload => ({
+  name: '',
+  value: '',
+  tags: [],
+})
 
-async function onComponentSubmit({ valid }: FormSubmitEvent) {
-  if (!valid) return;
-  try {
-    await submitForm();
-  } catch (e: any) {
-    toast.add(simpleErrorToast(e?.response?.data?.detail || e.message || 'Failed to create secret'));
+const formData = ref<CreateSecretPayload>(getInitialFormData())
+
+const existingTags = computed(() => secretsStore.existingTags)
+const autocompleteItems = ref<string[]>([])
+
+function searchTags(event: AutoCompleteCompleteEvent) {
+  autocompleteItems.value = [
+    event.query,
+    ...existingTags.value.filter((tag) =>
+      tag.toLowerCase().includes(event.query.toLowerCase()),
+    ),
+  ]
+}
+
+function getRequestInfo() {
+  if (props.organizationId && props.orbitId) {
+    return { organizationId: props.organizationId, orbitId: props.orbitId }
+  }
+  const orbit = orbitsStore.currentOrbitDetails
+  if (orbit?.organization_id && orbit?.id) {
+    return { organizationId: orbit.organization_id, orbitId: orbit.id }
   }
 }
 
-watch(visible, (v) => {
-  if (v) {
-    resetForm();
+function resetForm() {
+  formData.value = getInitialFormData()
+}
+
+async function onSubmit({ valid }: FormSubmitEvent) {
+  if (!valid) return
+  try {
+    loading.value = true
+    const req = getRequestInfo()
+    if (!req) throw new Error('Orbit info is missing')
+
+    await secretsStore.addSecret(req.organizationId, req.orbitId, { ...formData.value })
+    visible.value = false
+    resetForm()
+    toast.add(simpleSuccessToast('Secret created successfully'))
+  } catch (e: any) {
+    toast.add(
+      simpleErrorToast(
+        e?.response?.data?.detail || e.message || 'Failed to create secret',
+      ),
+    )
+  } finally {
+    loading.value = false
   }
-});
+}
 </script>
 
 <style scoped>
-
-.form {
+.inputs {
+  margin-bottom: 28px;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 16px;
 }
 
-.form-item {
+.field {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 7px;
 }
 
 .label {
-  font-weight: 400;
   align-self: flex-start;
-}
-
-.p-error {
-  color: var(--p-red-500);
-  font-size: 12px;
+  font-size: 14px;
 }
 </style>
