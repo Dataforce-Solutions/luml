@@ -1,175 +1,104 @@
+import { ref, computed } from "vue";
 import { defineStore } from "pinia";
 import { dataforceApi } from "@/lib/api";
-import type { OrbitSecret } from "@/lib/api/orbit-secrets/interfaces";
+import type { OrbitSecret, CreateSecretPayload, UpdateSecretPayload } from "@/lib/api/orbit-secrets/interfaces";
 
-export type CreateSecretPayload = {
-  name: string;
-  value: string;
-  tags?: string[];
-};
+export const useSecretsStore = defineStore("secrets", () => {
+	const secretsList = ref < OrbitSecret[] > ([]);
+	const creatorVisible = ref(false);
 
-export type UpdateSecretPayload = {
-  id: number;
-  name?: string;
-  value?: string;
-  tags?: string[];
-};
+	const existingTags = computed((): string[] => {
+		const tagsSet = secretsList.value.reduce((acc: Set < string > , item) => {
+			item.tags?.forEach((tag: string) => acc.add(tag));
+			return acc;
+		}, new Set < string > ());
+		return Array.from(tagsSet);
+	});
 
-interface ISecretsState {
-  secretsList: OrbitSecret[];
-  loading: boolean;
-  error: string | null;
-  creatorVisible: boolean;
-}
+	function showCreator() {
+		creatorVisible.value = true;
+	}
 
-export const useSecretsStore = defineStore("secrets", {
-  state: (): ISecretsState => ({
-    secretsList: [],
-    loading: false,
-    error: null,
-    creatorVisible: false,
-  }),
-    getters: {
-    /**
-     * @param state 
-     */
-    existingTags(state): string[] {
-      const tagsSet = state.secretsList.reduce((acc: Set<string>, item) => {
-        item.tags?.forEach((tag: string) => acc.add(tag));
-        return acc;
-      }, new Set<string>());
-      return Array.from(tagsSet);
-    },
-  },
+	function hideCreator() {
+		creatorVisible.value = false;
+	}
 
-  actions: {
-    showCreator() {
-      this.creatorVisible = true;
-    },
+	async function loadSecrets(organizationId: number, orbitId: number) {
+		const initialList = await dataforceApi.orbitSecrets.getSecrets(
+			organizationId,
+			orbitId,
+		);
 
-    hideCreator() {
-      this.creatorVisible = false;
-    },
+		if (initialList.length === 0) {
+			secretsList.value = [];
+			return;
+		}
 
-    async loadSecrets(organizationId: number, orbitId: number) {
-      this.loading = true;
-      this.error = null;
-      try {
-        const initialList = await dataforceApi.orbitSecrets.getSecrets(
-          organizationId,
-          orbitId,
-        );
+		const secretDetailPromises = initialList.map((secret) =>
+			dataforceApi.orbitSecrets.getSecretById(organizationId, orbitId, secret.id),
+		);
 
-        if (initialList.length === 0) {
-          this.secretsList = [];
-          return;
-        }
+		const fullSecrets = await Promise.all(secretDetailPromises);
+		secretsList.value = fullSecrets;
+	}
 
-        const secretDetailPromises = initialList.map((secret) =>
-          dataforceApi.orbitSecrets
-            .getSecretById(organizationId, orbitId, secret.id)
-            .catch((e) => {
-              return null;
-            }),
-        );
-        const fullSecretsWithPossibleNulls =
-          await Promise.all(secretDetailPromises);
-        this.secretsList = fullSecretsWithPossibleNulls.filter(
-          (secret) => secret !== null,
-        ) as OrbitSecret[];
-      } catch (e: any) {
-        this.error = e.message || "Failed to load secrets";
-        this.secretsList = [];
-        throw e;
-      } finally {
-        this.loading = false;
-      }
-    },
+	async function addSecret(
+		organizationId: number,
+		orbitId: number,
+		payload: CreateSecretPayload,
+	) {
+		await dataforceApi.orbitSecrets.createSecret(organizationId, orbitId, payload);
+		await loadSecrets(organizationId, orbitId);
+	}
 
-    async addSecret(
-      organizationId: number,
-      orbitId: number,
-      payload: CreateSecretPayload,
-    ) {
-      try {
-        await dataforceApi.orbitSecrets.createSecret(
-          organizationId,
-          orbitId,
-          payload,
-        );
-        await this.loadSecrets(organizationId, orbitId);
-      } catch (e: any) {
-        this.error = e.message || "Failed to create secret";
-        throw e;
-      }
-    },
+	async function updateSecret(
+		organizationId: number,
+		orbitId: number,
+		payload: UpdateSecretPayload,
+	) {
+		await dataforceApi.orbitSecrets.updateSecret(organizationId, orbitId, payload);
+		await loadSecrets(organizationId, orbitId);
+	}
 
-    async updateSecret(
-      organizationId: number,
-      orbitId: number,
-      payload: UpdateSecretPayload,
-    ) {
-      try {
-        await dataforceApi.orbitSecrets.updateSecret(
-          organizationId,
-          orbitId,
-          payload,
-        );
-        await this.loadSecrets(organizationId, orbitId);
-      } catch (e: any) {
-        this.error = e.message || "Failed to update secret";
-        throw e;
-      }
-    },
+	async function deleteSecret(
+		organizationId: number,
+		orbitId: number,
+		secretId: number,
+	) {
+		await dataforceApi.orbitSecrets.deleteSecret(organizationId, orbitId, secretId);
+		secretsList.value = secretsList.value.filter(
+			(secret) => secret.id !== secretId,
+		);
+	}
 
-    async deleteSecret(
-      organizationId: number,
-      orbitId: number,
-      secretId: number,
-    ) {
-      try {
-        await dataforceApi.orbitSecrets.deleteSecret(
-          organizationId,
-          orbitId,
-          secretId,
-        );
-        this.secretsList = this.secretsList.filter(
-          (secret) => secret.id !== secretId,
-        );
-      } catch (e: any) {
-        this.error = e.message || "Failed to delete secret";
-        throw e;
-      }
-    },
+	async function getSecretById(
+		organizationId: number,
+		orbitId: number,
+		secretId: number,
+	) {
+		return await dataforceApi.orbitSecrets.getSecretById(
+			organizationId,
+			orbitId,
+			secretId,
+		);
+	}
 
-    async getSecretById(
-      organizationId: number,
-      orbitId: number,
-      secretId: number,
-    ) {
-      this.loading = true;
-      this.error = null;
-      try {
-        const secret = await dataforceApi.orbitSecrets.getSecretById(
-          organizationId,
-          orbitId,
-          secretId,
-        );
-        return secret as OrbitSecret;
-      } catch (e: any) {
-        this.error = e.message || "Failed to load secret";
-        console.error("Get secret by ID error:", e);
-        throw e;
-      } finally {
-        this.loading = false;
-      }
-    },
+	function reset() {
+		secretsList.value = [];
+		creatorVisible.value = false;
+	}
 
-    reset() {
-      this.secretsList = [];
-      this.error = null;
-      this.loading = false;
-      this.creatorVisible = false;
-    },
-  },
+	return {
+		secretsList,
+		creatorVisible,
+		existingTags,
+		showCreator,
+		hideCreator,
+		loadSecrets,
+		addSecret,
+		updateSecret,
+		deleteSecret,
+		getSecretById,
+		reset,
+	};
 });

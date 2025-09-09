@@ -6,41 +6,67 @@
     :draggable="false"
     :pt="dialogPt"
   >
-    <Form id="secret-create-form" :initial-values="form"  class="form" @submit="handleSubmit">
+    <Form 
+    id="secret-create-form" 
+    class="form" 
+    :resolver="secretResolver" 
+    @submit="onComponentSubmit"
+    >
       <div class="form-item">
         <label for="name" class="label required">Name</label>
-        <InputText v-model="form.name" name="name" id="name" :class="{ 'p-invalid': errors.name }" autofocus />
-        <small v-if="errors.name" class="p-error">{{ errors.name }}</small>
+        <InputText 
+        v-model="formState.name" 
+        id="name" 
+        name="name" 
+        autofocus 
+        />
       </div>
 
       <div class="form-item">
         <label for="value" class="label required">Secret key</label>
-        <Password v-model="form.value" name="value" id="value" :class="{ 'p-invalid': errors.value }" :feedback="false" toggleMask fluid />
-        <small v-if="errors.value" class="p-error">{{ errors.value }}</small>
+        <Password 
+        v-model="formState.value" 
+        id="value" 
+        name="value" 
+        :feedback="false" 
+        toggleMask fluid
+        />
       </div>
 
       <div class="form-item">
         <label for="tags" class="label">Tags</label>
-        <AutoComplete v-model="form.tags" id="tags" name="tags" :suggestions="autocompleteItems" @complete="searchTags" multiple fluid />
+        <AutoComplete 
+        v-model="formState.tags" 
+        id="tags" 
+        name="tags" 
+        :suggestions="autocompleteItems" 
+        @complete="searchTags" 
+        multiple 
+        fluid
+        />
       </div>
     </Form>
 
     <template #footer>
-      <Button type="submit" form="secret-create-form" fluid rounded :loading="isSubmitting">
-        Create Secret
-      </Button>
+      <Button type="submit" form="secret-create-form"> Create </Button>
     </template>
   </Dialog>
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { Dialog, Button, InputText, Password, AutoComplete } from 'primevue'
 import { Form } from '@primevue/forms'
 import type { DialogPassThroughOptions } from 'primevue'
-import { useSecretForm } from '@/hooks/useSecretForm'
+import { useToast } from 'primevue/usetoast'
+import { useOrbitSecretForm } from '@/hooks/useOrbitSecretForm'
+import { simpleErrorToast } from '@/lib/primevue/data/toasts'
+import { zodResolver } from '@primevue/forms/resolvers/zod'
+import type { FormSubmitEvent } from '@primevue/forms'
+
 
 const visible = defineModel<boolean>('visible')
+const toast = useToast()
 
 const dialogPt: DialogPassThroughOptions = {
   root: { style: 'max-width: 500px; width: 100%;' },
@@ -49,42 +75,55 @@ const dialogPt: DialogPassThroughOptions = {
 }
 
 const {
-  form,
-  errors,
-  isSubmitting,
+  formState,
+  secretSchema,
   autocompleteItems,
   searchTags,
-  handleSubmit,
+  submitForm,
   resetForm,
-} = useSecretForm(ref(null), {
+} = useOrbitSecretForm(ref(null), {
   onSuccess: () => { visible.value = false },
-})
+});
 
-watch(visible, (newVisible) => {
-  if (newVisible) resetForm()
-})
+const secretResolver = computed(() => zodResolver(secretSchema.value));
+
+async function onComponentSubmit({ valid }: FormSubmitEvent) {
+  if (!valid) return;
+  try {
+    await submitForm();
+  } catch (e: any) {
+    toast.add(simpleErrorToast(e?.response?.data?.detail || e.message || 'Failed to create secret'));
+  }
+}
+
+watch(visible, (v) => {
+  if (v) {
+    resetForm();
+  }
+});
 </script>
 
 <style scoped>
+
 .form {
   display: flex;
   flex-direction: column;
   gap: 20px;
 }
+
 .form-item {
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
+
 .label {
-  font-weight: 500;
+  font-weight: 400;
   align-self: flex-start;
 }
+
 .p-error {
   color: var(--p-red-500);
   font-size: 12px;
-}
-.p-invalid {
-  border-color: var(--p-red-500);
 }
 </style>

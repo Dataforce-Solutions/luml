@@ -6,7 +6,6 @@
     :draggable="false"
     style="margin-top: 80px; height: 86%; width: 420px"
     :pt="dialogPt"
-    modal
   >
     <template #header>
       <h2 class="dialog-title">
@@ -15,84 +14,118 @@
       </h2>
     </template>
 
-    <div v-if="isLoadingDetails" class="loading-container">
-      <ProgressSpinner />
-    </div>
-
-    <Form
-      v-else
-      id="secret-edit-form"
-      :initial-values="form"
+    <Form id="secret-edit-form"
       class="form"
-      @submit="handleSubmit"
+      :resolver="secretResolver"
+      validateOnSubmit
+      @submit="onComponentSubmit"
     >
       <div class="form-item">
         <label for="editSecretName" class="label">Name</label>
-        <InputText v-model="form.name" id="editSecretName" name="name" :class="{ 'p-invalid': errors.name }" autofocus />
-        <small v-if="errors.name" class="p-error">{{ errors.name }}</small>
+        <InputText
+          v-model="formState.name"
+          id="editSecretName"
+          name="name"
+          autofocus
+        />
       </div>
 
       <div class="form-item">
         <label for="editSecretValue" class="label">Key</label>
-        <Password v-model="form.value" id="editSecretValue" name="value" :class="{ 'p-invalid': errors.value }" :feedback="false" toggleMask fluid />
-        <small v-if="errors.value" class="p-error">{{ errors.value }}</small>
+        <Password
+          v-model="formState.value"
+          id="editSecretValue"
+          name="value"
+          :feedback="false"
+          toggleMask
+          fluid
+          :key="secret?.id"
+        />
       </div>
 
       <div class="form-item">
         <label for="tags" class="label">Tags</label>
-        <AutoComplete v-model="form.tags" id="tags" name="tags" :suggestions="autocompleteItems" @complete="searchTags" multiple fluid />
+        <AutoComplete
+          v-model="formState.tags"
+          id="tags"
+          name="tags"
+          :suggestions="autocompleteItems"
+          @complete="searchTags"
+          multiple
+          fluid
+        />
       </div>
     </Form>
 
     <template #footer>
       <div>
-        <Button outlined severity="warn" :loading="isDeleting" :disabled="isLoadingDetails" @click="handleDelete">
+        <Button outlined severity="warn" @click="onComponentDelete">
           delete key
         </Button>
       </div>
-      <Button type="submit" form="secret-edit-form" :loading="isSubmitting" :disabled="isLoadingDetails">
-        save changes
-      </Button>
+      <Button type="submit" form="secret-edit-form"> save changes </Button>
     </template>
   </Dialog>
 </template>
 
 <script setup lang="ts">
-import { toRef } from 'vue'
+import { computed, toRef } from 'vue'
 import { Dialog, Button, InputText, Password, AutoComplete } from 'primevue'
-import ProgressSpinner from 'primevue/progressspinner'
 import { Form } from '@primevue/forms'
 import { Bolt } from 'lucide-vue-next'
+import { useToast } from 'primevue/usetoast'
 import type { OrbitSecret } from '@/lib/api/orbit-secrets/interfaces'
-import { useSecretForm } from '@/hooks/useSecretForm'
+import { useOrbitSecretForm } from '@/hooks/useOrbitSecretForm'
+import { simpleErrorToast } from '@/lib/primevue/data/toasts'
+import { zodResolver } from '@primevue/forms/resolvers/zod'
+import type { FormSubmitEvent } from '@primevue/forms'
 
 interface Props {
   visible: boolean
   secret?: OrbitSecret | null
 }
+
 const props = defineProps<Props>()
 const emit = defineEmits(['update:visible'])
+const toast = useToast()
 
 const dialogPt = {
   footer: { style: 'display: flex; justify-content: space-between; width: 100%; margin-top: auto;' },
 }
 
 const {
-  form,
-  errors,
-  isSubmitting,
-  isDeleting,
-  isLoadingDetails,
+  formState,
+  secretSchema,
   autocompleteItems,
   searchTags,
-  handleSubmit,
+  submitForm,
   handleDelete,
-} = useSecretForm(toRef(props, 'secret'), { 
-  onSuccess: () => emit('update:visible', false), 
-})
+} = useOrbitSecretForm(toRef(props, 'secret'), {
+  onSuccess: () => emit('update:visible', false),
+});
+
+const secretResolver = computed(() => zodResolver(secretSchema.value));
+
+async function onComponentSubmit({ valid }: FormSubmitEvent) {
+  try {
+    await submitForm();
+  } catch (e) {
+    console.error("Schema validation failed", e)
+    return
+  }
+}
+
+async function onComponentDelete() {
+  try {
+    handleDelete()
+  } catch (e: any) {
+    toast.add(simpleErrorToast(e?.response?.data?.detail || e.message || 'Failed to delete secret'))
+  }
+}
 </script>
 
 <style scoped>
+
 .dialog-title {
   font-weight: 500;
   font-size: 16px;
@@ -101,25 +134,21 @@ const {
   gap: 8px;
   align-items: center;
 }
+
 .form {
   display: flex;
   flex-direction: column;
   gap: 20px;
 }
+
 .form-item {
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
+
 .label {
   font-weight: 500;
   align-self: flex-start;
-}
-.p-error {
-  color: var(--p-red-500);
-  font-size: 12px;
-}
-.p-invalid {
-  border-color: var(--p-red-500);
 }
 </style>

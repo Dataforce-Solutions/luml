@@ -1,26 +1,25 @@
 <template>
-  <DataTable 
-    :value="secretsStore.secretsList" 
-    :loading="secretsStore.loading" 
+  <DataTable
+    :value="secretsStore.secretsList"
     dataKey="id"
     class="secrets-table"
-    tableStyle="min-width: 50rem;"
   >
     <template #empty>
       <div class="placeholder">
-        No secrets yet. Add your first secret to store API keys, tokens, and other sensitive data securely.
+        No secrets yet. Add your first secret to store API keys, tokens, and
+        other sensitive data securely.
       </div>
     </template>
 
-    <Column field="name" header="Secret name"  style="width: 25%">
+    <Column field="name" header="Secret name" style="width: 190px">
       <template #body="{ data }">
-        <div class="secret-name">{{ data.name }}</div>
+        <div class="secret-name-wrap">{{ data.name }}</div>
       </template>
     </Column>
 
-    <Column field="value" header="Key" >
+    <Column field="value" header="Key" style="width: 190px">
       <template #body="{ data }">
-        <div class="secret-key">
+        <div class="secret-key-wrap">
           <span v-if="!visibleSecrets[data.id]" class="secret-hidden">
             {{ '*'.repeat(data.value?.length) }}
           </span>
@@ -29,54 +28,51 @@
       </template>
     </Column>
 
-<Column field="tags" header="Tags" style="width: 200px">
-  <template #body="{ data }">
-    <div class="tags">
-      <Tag 
-        v-for="tag in normalizeTags(data.tags)" 
-        :key="tag" 
-        class="tag"
-      >
-        <span>{{ tag }}</span>
-      </Tag>
-    </div>
-  </template>
-</Column>
+    <Column field="tags" header="Tags" style="width: 190px">
+      <template #body="{ data }">
+        <div class="tags">
+          <Tag v-for="tag in normalizeTags(data.tags)" :key="tag" class="tag">
+            <span>{{ tag }}</span>
+          </Tag>
+        </div>
+      </template>
+    </Column>
 
-<Column field="updated_at" header="Updated">
-  <template #body="{ data }">
-    <div class="updated-date">
-      {{ data.updated_at ? new Date(data.updated_at).toLocaleDateString() : new Date().toLocaleDateString() }}
-    </div>
-  </template>
-</Column>
+    <Column field="updated_at" header="Updated" style="width: 190px">
+      <template #body="{ data }">
+        <div class="updated-date">
+          {{ data.updated_at ? new Date(data.updated_at).toLocaleDateString() : new Date().toLocaleDateString() }}
+        </div>
+      </template>
+    </Column>
 
+    <Column style="width: 67px">
+      <template #body="{ data }">
+        <div class="actions">
+          <Button
+            variant="text"
+            severity="secondary"
+            rounded
+            size="small"
+            @click="toggleMenu($event, data.id)"
+          >
+            <template #icon>
+              <EllipsisVertical :size="14" />
+            </template>
+          </Button>
 
-<Column style="width: 67px">
-  <template #body="{ data }">
-    <div class="actions">
-      <Button
-        variant="text"
-        severity="secondary"
-        rounded
-        size="small"
-        @click="toggleMenu($event, data.id)"
-      >
-        <template #icon>
-          <EllipsisVertical :size="14" />
-        </template>
-      </Button>
-
-      <Menu
-        :model="getMenuItems(data)"
-        :popup="true"
-        :ref="el => menuRefs[data.id] = el"
-      >
-      </Menu>
-    </div>
-  </template>
-</Column>
-
+          <Menu
+            :model="getMenuItems(data)"
+            :popup="true"
+            :ref="el => menuRefs[data.id] = el"
+            :pt="{
+            root: { style: 'background: white;' },
+          }"
+          >
+          </Menu>
+        </div>
+      </template>
+    </Column>
   </DataTable>
   <SecretEditor v-model:visible="editDialogVisible" :secret="secretToEdit" />
 </template>
@@ -159,15 +155,13 @@ const copySecret = async (secret: OrbitSecret) => {
 function normalizeTags(tags: any): string[] {
   if (!tags) return []
   if (Array.isArray(tags)) {
-
-    return tags.map(t => typeof t === 'string' ? t : t.name ?? '')
+    return tags.map(tag => typeof tag === 'string' ? tag : tag.name ?? '')
   }
   if (typeof tags === 'string') {
-    return tags.split(',').map(t => t.trim())
+    return tags.split(',').map(tag => tag.trim())
   }
   return []
 }
-
 </script>
 
 <style scoped>
@@ -175,7 +169,9 @@ function normalizeTags(tags: any): string[] {
   background: white;
   border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
+  box-shadow:
+    0 1px 3px 0 rgba(0, 0, 0, 0.1),
+    0 1px 2px -1px rgba(0, 0, 0, 0.1);
   border: 1px solid #e5e7eb;
 }
 
@@ -195,13 +191,37 @@ function normalizeTags(tags: any): string[] {
   padding: 16px;
 }
 
-
 .secrets-table :deep(.p-datatable-table) {
   background: white;
 }
 
+.secrets-table :deep(.p-datatable-tbody > tr > td) {
+  white-space: normal;
+  word-wrap: break-word;
+  vertical-align: top;
+}
+.secret-name-wrap,
+.secret-key-wrap {
+  white-space: normal;
+  word-wrap: break-word;
+  overflow-wrap: anywhere;
+  font-size: 16px;
+  color: #334155;
+}
+
+.secret-hidden,
+.secret-revealed {
+  display: block;
+  white-space: normal;
+  word-wrap: break-word;
+  overflow-wrap: anywhere;
+  color: #334155;
+  font-weight: 400;
+  font-size: 16px;
+}
+
 .placeholder {
-  padding: 22px 0px;
+  padding: 12px 0px;
   color: #334155;
   background: white;
 }
@@ -212,24 +232,13 @@ function normalizeTags(tags: any): string[] {
   font-size: 16px;
 }
 
-.secret-key {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-weight: 400;
-  color: #334155;
-  font-size: 16px;
-}
-
-.secret-hidden {
-  color: #334155;
-}
-
 .tags {
   overflow-x: auto;
   display: flex;
-  gap: 8px;
+  gap: 10px;
   padding-bottom: 4px;
+  row-gap: 4px;
+  flex-wrap: wrap;
 }
 
 .tag {
