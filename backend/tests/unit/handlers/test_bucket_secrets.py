@@ -307,7 +307,7 @@ async def test_delete_bucket_secret_in_use(
 
 @patch("dataforce_studio.handlers.bucket_secrets.S3Service")
 @pytest.mark.asyncio
-async def test_get_bucket_urls(
+async def test_generate_bucket_urls(
     mock_s3_service: Mock,
 ) -> None:
     secret = BucketSecretCreateIn(
@@ -335,7 +335,7 @@ async def test_get_bucket_urls(
     mock_s3_instance.get_delete_url = AsyncMock(return_value=delete_url)
     mock_s3_service.return_value = mock_s3_instance
 
-    urls = await handler.get_bucket_urls(secret)
+    urls = await handler.generate_bucket_urls(secret)
 
     assert urls == expected
     mock_s3_service.assert_called_once_with(secret)

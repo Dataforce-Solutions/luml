@@ -22,19 +22,6 @@ class BucketSecretHandler:
     __secret_repository = BucketSecretRepository(engine)
     __permissions_handler = PermissionsHandler()
 
-    @staticmethod
-    async def _generate_bucket_urls(
-        secret_data: BucketSecretCreateIn | BucketSecret,
-    ) -> BucketSecretUrls:
-        object_name = "test_file"
-        s3_service = S3Service(secret_data)
-
-        return BucketSecretUrls(
-            presigned_url=await s3_service.get_upload_url(object_name),
-            download_url=await s3_service.get_download_url(object_name),
-            delete_url=await s3_service.get_delete_url(object_name),
-        )
-
     async def create_bucket_secret(
         self, user_id: int, organization_id: int, secret: BucketSecretCreateIn
     ) -> BucketSecretOut:
@@ -99,7 +86,20 @@ class BucketSecretHandler:
             raise BucketSecretInUseError() from e
 
     async def get_bucket_urls(self, secret: BucketSecretCreateIn) -> BucketSecretUrls:
-        return await self._generate_bucket_urls(secret)
+        return await self.generate_bucket_urls(secret)
+
+    @staticmethod
+    async def generate_bucket_urls(
+        secret_data: BucketSecretCreateIn | BucketSecret,
+    ) -> BucketSecretUrls:
+        object_name = "test_file"
+        s3_service = S3Service(secret_data)
+
+        return BucketSecretUrls(
+            presigned_url=await s3_service.get_upload_url(object_name),
+            download_url=await s3_service.get_download_url(object_name),
+            delete_url=await s3_service.get_delete_url(object_name),
+        )
 
     async def get_existing_bucket_urls(
         self, secret: BucketSecretUpdate
@@ -110,4 +110,4 @@ class BucketSecretHandler:
 
         s3_secret = original_secret.update_from_partial(secret)
 
-        return await self._generate_bucket_urls(s3_secret)
+        return await self.generate_bucket_urls(s3_secret)
