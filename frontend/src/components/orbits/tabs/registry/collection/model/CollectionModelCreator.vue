@@ -52,6 +52,10 @@
         @select-file="onSelectFile"
         @remove-file="onRemoveFile"
       />
+      <div v-if="progress !== null" class="upload-section">
+        <p class="text-sm text-gray-600 mb-2">Model uploading</p>
+        <ProgressBar :value="progress" showValue />
+      </div>
       <Button type="submit" fluid rounded :loading="loading">Add</Button>
     </Form>
   </Dialog>
@@ -64,7 +68,7 @@ import { computed, ref } from 'vue'
 import { modelCreatorResolver } from '@/utils/forms/resolvers'
 import FileInput from '@/components/ui/FileInput.vue'
 import { Form } from '@primevue/forms'
-import { Dialog, Button, InputText, Textarea, AutoComplete, useToast } from 'primevue'
+import { Dialog, Button, InputText, Textarea, AutoComplete, useToast, ProgressBar } from 'primevue'
 import { useModelUpload } from '@/hooks/useModelUpload'
 import { simpleErrorToast, simpleSuccessToast } from '@/lib/primevue/data/toasts'
 import { useModelsTags } from '@/hooks/useModelsTags'
@@ -88,7 +92,7 @@ const dialogPt: DialogPassThroughOptions = {
   },
 }
 
-const { upload } = useModelUpload()
+const { upload, progress } = useModelUpload()
 const toast = useToast()
 const { getTagsByQuery } = useModelsTags()
 
@@ -185,5 +189,11 @@ async function onSubmit({ valid }: FormSubmitEvent) {
 }
 .file-field {
   margin-bottom: 28px;
+}
+.upload-section {
+  margin-bottom: 28px;
+}
+.mb-2 {
+  margin-bottom: 8px;
 }
 </style>
