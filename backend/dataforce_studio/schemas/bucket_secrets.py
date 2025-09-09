@@ -29,6 +29,11 @@ class BucketSecret(_BucketSecretBase, BaseOrmConfig):
     created_at: datetime
     updated_at: datetime | None = None
 
+    def update_from_partial(
+        self, update_data: "BucketSecretUpdateIn"
+    ) -> "BucketSecret":
+        return self.model_copy(update=update_data.model_dump(exclude_unset=True))
+
 
 class BucketSecretOut(BaseModel, BaseOrmConfig):
     id: int
@@ -42,7 +47,18 @@ class BucketSecretOut(BaseModel, BaseOrmConfig):
     updated_at: datetime | None = None
 
 
-class BucketSecretUpdate(_BucketSecretBase):
+class BucketSecretUpdateIn(BaseModel):
+    endpoint: str | None = None
+    bucket_name: str | None = None
+    access_key: str | None = None
+    secret_key: str | None = None
+    session_token: str | None = None
+    secure: bool | None = None
+    region: str | None = None
+    cert_check: bool | None = None
+
+
+class BucketSecretUpdate(BucketSecretUpdateIn):
     id: int
 
 

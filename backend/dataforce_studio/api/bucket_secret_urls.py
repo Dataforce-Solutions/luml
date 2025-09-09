@@ -23,4 +23,4 @@ bucket_secret_handler = BucketSecretHandler()
 async def get_bucket_secret_connection_urls(
     secret: BucketSecretCreateIn,
 ) -> BucketSecretUrls:
-    return await bucket_secret_handler.get_bucket_urls(secret)
+    return await bucket_secret_handler.generate_bucket_urls(secret)

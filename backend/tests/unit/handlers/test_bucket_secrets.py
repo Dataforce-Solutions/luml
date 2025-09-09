@@ -1,5 +1,5 @@
 import datetime
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 
@@ -10,6 +10,7 @@ from dataforce_studio.infra.exceptions import (
     NotFoundError,
 )
 from dataforce_studio.schemas.bucket_secrets import (
+    BucketSecret,
     BucketSecretCreateIn,
     BucketSecretOut,
     BucketSecretUpdate,
@@ -304,23 +305,10 @@ async def test_delete_bucket_secret_in_use(
     )
 
 
-@patch(
-    "dataforce_studio.handlers.bucket_secrets.S3Service.get_delete_url",
-    new_callable=AsyncMock,
-)
-@patch(
-    "dataforce_studio.handlers.bucket_secrets.S3Service.get_download_url",
-    new_callable=AsyncMock,
-)
-@patch(
-    "dataforce_studio.handlers.bucket_secrets.S3Service.get_upload_url",
-    new_callable=AsyncMock,
-)
+@patch("dataforce_studio.handlers.bucket_secrets.S3Service")
 @pytest.mark.asyncio
-async def test_get_bucket_urls(
-    mock_get_upload_url: AsyncMock,
-    mock_get_download_url: AsyncMock,
-    mock_get_delete_url: AsyncMock,
+async def test_generate_bucket_urls(
+    mock_s3_service: Mock,
 ) -> None:
     secret = BucketSecretCreateIn(
         endpoint="s3.amazonaws.com",
@@ -341,13 +329,101 @@ async def test_get_bucket_urls(
         delete_url=delete_url,
     )
 
-    mock_get_upload_url.return_value = presigned_url
-    mock_get_download_url.return_value = download_url
-    mock_get_delete_url.return_value = delete_url
+    mock_s3_instance = Mock()
+    mock_s3_instance.get_upload_url = AsyncMock(return_value=presigned_url)
+    mock_s3_instance.get_download_url = AsyncMock(return_value=download_url)
+    mock_s3_instance.get_delete_url = AsyncMock(return_value=delete_url)
+    mock_s3_service.return_value = mock_s3_instance
 
-    urls = await handler.get_bucket_urls(secret)
+    urls = await handler.generate_bucket_urls(secret)
 
     assert urls == expected
-    mock_get_upload_url.assert_awaited_once_with(object_name)
-    mock_get_download_url.assert_awaited_once_with(object_name)
-    mock_get_delete_url.assert_awaited_once_with(object_name)
+    mock_s3_service.assert_called_once_with(secret)
+    mock_s3_instance.get_upload_url.assert_awaited_once_with(object_name)
+    mock_s3_instance.get_download_url.assert_awaited_once_with(object_name)
+    mock_s3_instance.get_delete_url.assert_awaited_once_with(object_name)
+
+
+@patch("dataforce_studio.handlers.bucket_secrets.S3Service")
+@patch(
+    "dataforce_studio.handlers.bucket_secrets.BucketSecretRepository.get_bucket_secret",
+    new_callable=AsyncMock,
+)
+@pytest.mark.asyncio
+async def test_get_existing_bucket_urls(
+    mock_get_bucket_secret: AsyncMock,
+    mock_s3_service: Mock,
+) -> None:
+    secret_id = 847658
+    organization_id = 8868
+    original_secret = BucketSecret(
+        id=secret_id,
+        organization_id=organization_id,
+        created_at=datetime.datetime.now(),
+        updated_at=datetime.datetime.now(),
+        endpoint="s3.amazonaws.com",
+        bucket_name="original_name",
+        access_key="access_key",
+        secret_key="secret_key",
+        session_token=None,
+        secure=True,
+        region="us-east-1",
+        cert_check=None,
+    )
+    secret = BucketSecretUpdate(
+        id=secret_id,
+        bucket_name="new-bucket-name",
+        access_key="new-access_key",
+    )
+
+    object_name = "test_file"
+
+    presigned_url = "https://test-bucket.s3.amazonaws.com/test_file?presigned=true"
+    download_url = "https://test-bucket.s3.amazonaws.com/test_file?download=true"
+    delete_url = "https://test-bucket.s3.amazonaws.com/test_file?delete=true"
+
+    expected = BucketSecretUrls(
+        presigned_url=presigned_url,
+        download_url=download_url,
+        delete_url=delete_url,
+    )
+
+    mock_s3_instance = Mock()
+    mock_s3_instance.get_upload_url = AsyncMock(return_value=presigned_url)
+    mock_s3_instance.get_download_url = AsyncMock(return_value=download_url)
+    mock_s3_instance.get_delete_url = AsyncMock(return_value=delete_url)
+    mock_s3_service.return_value = mock_s3_instance
+    mock_get_bucket_secret.return_value = original_secret
+
+    urls = await handler.get_existing_bucket_urls(secret)
+
+    assert urls == expected
+    mock_get_bucket_secret.assert_awaited_once_with(secret_id)
+    mock_s3_service.assert_called_once()
+    mock_s3_instance.get_upload_url.assert_awaited_once_with(object_name)
+    mock_s3_instance.get_download_url.assert_awaited_once_with(object_name)
+    mock_s3_instance.get_delete_url.assert_awaited_once_with(object_name)
+
+
+@patch(
+    "dataforce_studio.handlers.bucket_secrets.BucketSecretRepository.get_bucket_secret",
+    new_callable=AsyncMock,
+)
+@pytest.mark.asyncio
+async def test_get_existing_bucket_urls_secret_not_found(
+    mock_get_bucket_secret: AsyncMock,
+) -> None:
+    secret_id = 847658
+
+    secret = BucketSecretUpdate(
+        id=secret_id,
+        bucket_name="new-bucket-name",
+        access_key="new-access_key",
+    )
+
+    mock_get_bucket_secret.return_value = None
+
+    with pytest.raises(NotFoundError) as error:
+        await handler.get_existing_bucket_urls(secret)
+
+    assert error.value.status_code == 404

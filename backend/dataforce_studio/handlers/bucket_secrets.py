@@ -7,6 +7,7 @@ from dataforce_studio.infra.exceptions import (
 )
 from dataforce_studio.repositories.bucket_secrets import BucketSecretRepository
 from dataforce_studio.schemas.bucket_secrets import (
+    BucketSecret,
     BucketSecretCreate,
     BucketSecretCreateIn,
     BucketSecretOut,
@@ -51,8 +52,10 @@ class BucketSecretHandler:
             organization_id, user_id, Resource.BUCKET_SECRET, Action.READ
         )
         secret = await self.__secret_repository.get_bucket_secret(secret_id)
+
         if not secret:
             raise NotFoundError("Secret not found")
+
         return BucketSecretOut.model_validate(secret)
 
     async def update_bucket_secret(
@@ -82,14 +85,29 @@ class BucketSecretHandler:
         except DatabaseConstraintError as e:
             raise BucketSecretInUseError() from e
 
-    @staticmethod
-    async def get_bucket_urls(secret: BucketSecretCreateIn) -> BucketSecretUrls:
-        object_name = "test_file"
+    async def get_bucket_urls(self, secret: BucketSecretCreateIn) -> BucketSecretUrls:
+        return await self.generate_bucket_urls(secret)
 
-        s3_service = S3Service(secret)
+    @staticmethod
+    async def generate_bucket_urls(
+        secret_data: BucketSecretCreateIn | BucketSecret,
+    ) -> BucketSecretUrls:
+        object_name = "test_file"
+        s3_service = S3Service(secret_data)
 
         return BucketSecretUrls(
             presigned_url=await s3_service.get_upload_url(object_name),
             download_url=await s3_service.get_download_url(object_name),
             delete_url=await s3_service.get_delete_url(object_name),
         )
+
+    async def get_existing_bucket_urls(
+        self, secret: BucketSecretUpdate
+    ) -> BucketSecretUrls:
+        original_secret = await self.__secret_repository.get_bucket_secret(secret.id)
+        if not original_secret:
+            raise NotFoundError("Secret not found")
+
+        s3_secret = original_secret.update_from_partial(secret)
+
+        return await self.generate_bucket_urls(s3_secret)
