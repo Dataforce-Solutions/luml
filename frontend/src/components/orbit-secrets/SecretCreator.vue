@@ -2,7 +2,6 @@
   <Dialog v-model:visible="visible" header="Create a new secret" modal :draggable="false" :pt="dialogPt">
     <Form :initial-values="formData" :resolver="createSecretResolver" @submit="onSubmit" class="form">
       <div class="form-item">
-        <div class="field">
           <label for="name" class="label required">Name</label>
           <InputText v-model="formData.name" id="name" name="name" placeholder="Name your secret key" fluid />
         </div>
@@ -18,7 +17,6 @@
           <AutoComplete v-model="formData.tags" id="tags" name="tags" fluid multiple placeholder="Type to add tags"
             :suggestions="autocompleteItems" @complete="searchTags" />
         </div>
-      </div>
       <Button type="submit" fluid rounded :loading="loading">
         Create
       </Button>
@@ -118,7 +116,7 @@ async function onSubmit({ valid }: FormSubmitEvent) {
 .form {
   display: flex;
   flex-direction: column;
-  gap: 29px;
+  gap: 15px;
 }
 
 .form-item {
@@ -134,7 +132,7 @@ async function onSubmit({ valid }: FormSubmitEvent) {
 .form-item:last-of-type input,
 .form-item:last-of-type .p-password,
 .form-item:last-of-type .p-autocomplete {
-  margin-bottom: 15px;
+  margin-bottom: 29px;
 }
 
 </style>
