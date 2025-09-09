@@ -48,7 +48,7 @@
     </Form>
 
     <template #footer>
-      <Button type="submit" form="secret-create-form"> Create </Button>
+      <Button type="submit" form="secret-create-form" fluid  rounded> Create </Button>
     </template>
   </Dialog>
 </template>
