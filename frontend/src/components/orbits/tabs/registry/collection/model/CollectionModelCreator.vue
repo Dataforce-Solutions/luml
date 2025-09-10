@@ -53,7 +53,7 @@
         @remove-file="onRemoveFile"
       />
       <div v-if="progress !== null" class="upload-section">
-        <p class="text-sm text-gray-600 mb-2">Model uploading</p>
+        <p class="upload-description">Model uploading</p>
         <ProgressBar :value="progress" showValue />
       </div>
       <Button type="submit" fluid rounded :loading="loading">Add</Button>
@@ -193,7 +193,7 @@ async function onSubmit({ valid }: FormSubmitEvent) {
 .upload-section {
   margin-bottom: 28px;
 }
-.mb-2 {
+.upload-description {
   margin-bottom: 8px;
 }
 </style>
