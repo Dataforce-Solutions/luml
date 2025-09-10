@@ -1,52 +1,44 @@
-import os
-import json
-import random
-import time
+from typing import Any
 
-import httpx
-from fastapi import Depends, FastAPI, HTTPException, Request, status
+from auth import require_api_key
+from handers.model_handler import ModelHandler
+from service import UvicornService
 
-app = FastAPI()
-
-AGENT_URL = os.getenv("SATELLITE_AGENT_URL", "http://host.docker.internal:7000").rstrip("/")
+app = UvicornService()
+model_handler = ModelHandler()
 
 
-@app.get("/healthz")
-def healthz() -> dict:
-    return dict(
-        status="ok",
-    )
+@app.get(
+    "/healthz",
+    summary="Health Check",
+    description="Returns the health status of the service",
+    tags=["model"],
+)
+async def healthz():
+    return {"status": "healthy"}
 
 
-def require_api_key(request: Request) -> None:
-    auth = request.headers.get("Authorization")
-    if not auth or not auth.lower().startswith("bearer "):
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Missing API key")
-    api_key = auth.split()[1]
-
-    try:
-        r = httpx.post(
-            f"{AGENT_URL}/satellites/deployments/inference-access",
-            json={"api_key": api_key},
-            timeout=5.0,
-        )
-        r.raise_for_status()
-        data = r.json()
-        if not bool(data.get("authorized")):
-            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Invalid API key")
-    except HTTPException:
-        raise
-    except Exception:
-        raise HTTPException(
-            status_code=status.HTTP_502_BAD_GATEWAY, detail="Authorization check failed"
-        )
+@app.get(
+    "/manifest",
+    summary="Get Model Manifest",
+    description="Returns the FNNX model manifest with input/output specifications",
+    tags=["model"],
+)
+async def get_manifest(scope):
+    require_api_key(scope)
+    return model_handler.get_manifest()
 
 
-@app.get("/")
-def root(_: None = Depends(require_api_key)):
-    return {
-        "random": random.random(),
-        "ts": time.time(),
-        "model_artifact_url": os.getenv("MODEL_ARTIFACT_URL", ""),
-        "secrets": json.loads(os.getenv("MODEL_SECRETS", "{}")),
-    }
+@app.post(
+    "/compute",
+    summary="Run Model Inference",
+    description="Execute inference on the loaded model",
+    response_model=dict[str, Any],
+    tags=["model"],
+)
+async def compute(scope, request_data):
+    require_api_key(scope)
+    inputs = request_data.get("inputs", {})
+    dynamic_attributes = request_data.get("dynamic_attributes", {}) or {}
+
+    return await model_handler.compute_result(inputs, dynamic_attributes)

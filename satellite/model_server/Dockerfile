@@ -12,6 +12,8 @@ RUN --mount=type=cache,target=/root/.cache/uv \
     --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
     uv sync --no-dev --no-install-project
 
-COPY server.py /app/server.py
+COPY . /app/
+
+ENV PYTHONPATH=/app
 
 CMD ["uv", "run", "python", "-m", "uvicorn", "server:app", "--host", "0.0.0.0", "--port", "8080"]
