@@ -93,7 +93,7 @@ const exists = bucketsStore.buckets.some(
   } catch (e: any) {
     toast.add(
       simpleErrorToast(
-        e?.response?.data?.detail || e.message || 'Validation or update failed',
+        e?.response?.data?.detail || e.message || 'Failed to update bucket',
       ),
     )
   } finally {
