@@ -30,7 +30,6 @@
     </template>
   </Dialog>
 </template>
-
 <script setup lang="ts">
 import type { BucketSecret, BucketSecretCreator } from '@/lib/api/bucket-secrets/interfaces'
 import { computed, ref } from 'vue'
@@ -52,7 +51,6 @@ type Props = {
 }
 
 const props = defineProps<Props>()
-
 const bucketsStore = useBucketsStore()
 const confirm = useConfirm()
 const toast = useToast()
@@ -69,21 +67,40 @@ const initialData = computed<BucketSecretCreator>(() => ({
   secret_key: '',
 }))
 
-async function onFormSubmit(values: BucketSecretCreator) {
+async function onFormSubmit(formData: BucketSecretCreator) {
   try {
-    visible.value = false
     loading.value = true
+const exists = bucketsStore.buckets.some(
+  (bucket) => bucket.bucket_name === formData.bucket_name && bucket.id !== props.bucket.id
+)
+    if (exists) {
+      toast.add(simpleErrorToast(`Bucket with name "${formData.bucket_name}" already exists.`))
+      return
+    }
+    await bucketsStore.checkExistingBucket(
+      props.bucket.organization_id,
+      props.bucket.id,
+      formData,
+    )
+    await bucketsStore.updateBucket(
+      props.bucket.organization_id,
+      props.bucket.id,
+      { ...formData, id: props.bucket.id },
+    )
 
-    const updatedBucket = { ...values, id: props.bucket.id }
-
-    await bucketsStore.updateBucket(props.bucket.organization_id, props.bucket.id, updatedBucket)
-    toast.add(simpleSuccessToast('Bucket have been updated.'))
+    toast.add(simpleSuccessToast('Bucket has been updated.'))
+    visible.value = false
   } catch (e: any) {
-    toast.add(simpleErrorToast(e?.response?.data?.detail || e.message || 'Failed to update bucket'))
+    toast.add(
+      simpleErrorToast(
+        e?.response?.data?.detail || e.message || 'Validation or update failed',
+      ),
+    )
   } finally {
     loading.value = false
   }
 }
+
 
 function onDelete() {
   confirm.require(deleteBucketConfirmOptions(deleteBucket))
@@ -94,7 +111,6 @@ async function deleteBucket() {
     visible.value = false
     loading.value = true
     await bucketsStore.deleteBucket(props.bucket.organization_id, props.bucket.id)
-    toast.add(simpleSuccessToast(`Bucket “${props.bucket.bucket_name}” was deleted.`))
   } catch (e: any) {
     toast.add(simpleErrorToast(e?.response?.data?.detail || e.message || 'Failed to delete bucket'))
   } finally {
@@ -132,5 +148,4 @@ async function deleteBucket() {
   font-size: 12px;
   color: var(--p-text-muted-color);
 }
-
 </style>
