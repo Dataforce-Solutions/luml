@@ -111,6 +111,7 @@ async function deleteBucket() {
     visible.value = false
     loading.value = true
     await bucketsStore.deleteBucket(props.bucket.organization_id, props.bucket.id)
+    toast.add(simpleSuccessToast(`Bucket “${props.bucket.bucket_name}” was deleted.`))
   } catch (e: any) {
     toast.add(simpleErrorToast(e?.response?.data?.detail || e.message || 'Failed to delete bucket'))
   } finally {
