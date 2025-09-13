@@ -34,10 +34,22 @@ jobs:
       - name: Log in to DigitalOcean Container Registry with short-lived credentials
         run: doctl registry login --expiry-seconds 600
 
-      - name: Remove all old images (Optional)
+      - name: Remove all old images
         run: |
-          if [ ! -z "$(doctl registry repository list | grep "$IMAGE_NAME")" ]; then
-            doctl registry repository delete-manifest $IMAGE_NAME $(doctl registry repository list-tags $IMAGE_NAME | grep -o "sha.*") --force
+          set -euo pipefail
+          : "${IMAGE_NAME:?IMAGE_NAME is required}"
+      
+          if doctl registry repository list --format Name --no-header | grep -Fxq "$IMAGE_NAME"; then
+            echo "Repository $IMAGE_NAME found. Deleting all manifests…"
+      
+            doctl registry repository list-tags "$IMAGE_NAME" --format Digest --no-header \
+              | awk 'NF' \
+              | while IFS= read -r digest; do
+                  echo "Deleting manifest $digest"
+                  doctl registry repository delete-manifest "$IMAGE_NAME" "$digest" --force
+                done
+      
+            echo "Done."
           else
             echo "No repository!!!"
           fi
