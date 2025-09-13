@@ -21,6 +21,7 @@ class Deployment(BaseModel, BaseOrmConfig):
     inference_url: str | None = None
     status: DeploymentStatus
     secrets: dict[str, int] = Field(default_factory=dict)
+    satellite_parameters: dict[str, int | str] = Field(default_factory=dict)
     description: str | None = None
     dynamic_attributes_secrets: dict[str, int] = Field(default_factory=dict)
     env_variables_secrets: dict[str, int] = Field(default_factory=dict)
@@ -36,6 +37,7 @@ class DeploymentCreate(BaseModel, BaseOrmConfig):
     satellite_id: int
     model_id: int
     secrets: dict[str, int] = Field(default_factory=dict)
+    satellite_parameters: dict[str, int | str] = Field(default_factory=dict)
     description: str | None = None
     dynamic_attributes_secrets: dict[str, int] = Field(default_factory=dict)
     env_variables_secrets: dict[str, int] = Field(default_factory=dict)
@@ -49,6 +51,7 @@ class DeploymentCreateIn(BaseModel):
     satellite_id: int
     model_artifact_id: int
     secrets: dict[str, int] = Field(default_factory=dict)
+    satellite_parameters: dict[str, int | str] = Field(default_factory=dict)
     description: str | None = None
     dynamic_attributes_secrets: dict[str, int] = Field(default_factory=dict)
     env_variables_secrets: dict[str, int] = Field(default_factory=dict)
