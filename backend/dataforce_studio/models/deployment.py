@@ -1,8 +1,9 @@
-from sqlalchemy import CheckConstraint, ForeignKey, Integer, String
+from sqlalchemy import CheckConstraint, ForeignKey, Integer, String, select
 from sqlalchemy.dialects import postgresql
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.orm import Mapped, column_property, mapped_column, relationship
 
 from dataforce_studio.models.base import Base, TimestampMixin
+from dataforce_studio.models.satellite import SatelliteOrm
 from dataforce_studio.schemas.deployment import Deployment
 
 
@@ -10,7 +11,7 @@ class DeploymentOrm(TimestampMixin, Base):
     __tablename__ = "deployments"
     __table_args__ = (
         CheckConstraint(
-            "status in ('pending','active','failed','deleted')",
+            "status in ('pending','active','failed','deleted','deletion_pending')",
             name="deployments_status_check",
         ),
     )
@@ -19,8 +20,14 @@ class DeploymentOrm(TimestampMixin, Base):
     orbit_id: Mapped[int] = mapped_column(
         Integer, ForeignKey("orbits.id", ondelete="CASCADE"), nullable=False
     )
+    name: Mapped[str | None] = mapped_column(String, nullable=True)
     satellite_id: Mapped[int] = mapped_column(
         Integer, ForeignKey("satellites.id", ondelete="CASCADE"), nullable=False
+    )
+    satellite_name: Mapped[str | None] = column_property(
+        select(SatelliteOrm.name)
+        .where(SatelliteOrm.id == satellite_id)
+        .scalar_subquery()
     )
     model_id: Mapped[int] = mapped_column(
         Integer, ForeignKey("model_artifacts.id", ondelete="RESTRICT"), nullable=False
@@ -30,12 +37,6 @@ class DeploymentOrm(TimestampMixin, Base):
     )
     status: Mapped[str] = mapped_column(
         String, nullable=False, default="pending", server_default="pending"
-    )
-    secrets: Mapped[dict[str, int]] = mapped_column(
-        postgresql.JSONB,
-        nullable=False,
-        default=dict,
-        server_default="{}",
     )
     description: Mapped[str | None] = mapped_column(String, nullable=True)
     dynamic_attributes_secrets: Mapped[dict[str, int]] = mapped_column(

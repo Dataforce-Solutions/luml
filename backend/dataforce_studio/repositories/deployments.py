@@ -5,6 +5,8 @@ from dataforce_studio.repositories.base import CrudMixin, RepositoryBase
 from dataforce_studio.schemas.deployment import (
     Deployment,
     DeploymentCreate,
+    DeploymentDetailsUpdateIn,
+    DeploymentStatus,
     DeploymentUpdate,
 )
 from dataforce_studio.schemas.satellite import SatelliteQueueTask, SatelliteTaskType
@@ -75,3 +77,55 @@ class DeploymentRepository(RepositoryBase, CrudMixin):
             await session.commit()
             await session.refresh(dep)
             return dep.to_deployment()
+
+    async def request_deployment_deletion(
+        self, orbit_id: int, deployment_id: int
+    ) -> tuple[Deployment, SatelliteQueueTask | None] | None:
+        async with self._get_session() as session:
+            result = await session.execute(
+                select(DeploymentOrm)
+                .where(
+                    DeploymentOrm.id == deployment_id,
+                    DeploymentOrm.orbit_id == orbit_id,
+                )
+                .with_for_update()
+            )
+            dep = result.scalar_one_or_none()
+            if not dep:
+                return None
+
+            if dep.status in (
+                DeploymentStatus.DELETION_PENDING.value,
+                DeploymentStatus.DELETED.value,
+            ):
+                return dep.to_deployment(), None
+
+            dep.status = DeploymentStatus.DELETION_PENDING
+
+            task = SatelliteQueueOrm(
+                satellite_id=dep.satellite_id,
+                orbit_id=dep.orbit_id,
+                type=SatelliteTaskType.UNDEPLOY,
+                payload={"deployment_id": dep.id},
+            )
+            session.add(task)
+            await session.commit()
+            await session.refresh(dep)
+            await session.refresh(task)
+            return dep.to_deployment(), task.to_queue_task()
+
+    async def update_deployment_details(
+        self,
+        orbit_id: int,
+        deployment_id: int,
+        update: DeploymentDetailsUpdateIn,
+    ) -> Deployment | None:
+        async with self._get_session() as session:
+            db_dep = await self.update_model_where(
+                session,
+                DeploymentOrm,
+                update,
+                DeploymentOrm.id == deployment_id,
+                DeploymentOrm.orbit_id == orbit_id,
+            )
+            return db_dep.to_deployment() if db_dep else None

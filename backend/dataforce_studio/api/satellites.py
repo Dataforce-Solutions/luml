@@ -10,6 +10,7 @@ from dataforce_studio.infra.dependencies import UserAuthentication
 from dataforce_studio.infra.endpoint_responses import endpoint_responses
 from dataforce_studio.schemas.deployment import (
     Deployment,
+    DeploymentStatusUpdateIn,
     DeploymentUpdateIn,
     InferenceAccessIn,
     InferenceAccessOut,
@@ -117,6 +118,20 @@ async def update_deployment(
         request.user.id,
         deployment_id,
         data.inference_url,
+    )
+
+
+@satellite_worker_router.patch(
+    "/deployments/{deployment_id}/status",
+    responses=endpoint_responses,
+    response_model=Deployment,
+)
+async def update_deployment_status(
+    request: Request, deployment_id: int, data: DeploymentStatusUpdateIn
+) -> Deployment:
+    await satellite_handler.touch_last_seen(request.user.id)
+    return await deployment_handler.update_worker_deployment_status(
+        request.user.id, deployment_id, data.status
     )
 
 

@@ -3,7 +3,11 @@ from fastapi import APIRouter, Depends, Request
 from dataforce_studio.handlers.deployments import DeploymentHandler
 from dataforce_studio.infra.dependencies import UserAuthentication
 from dataforce_studio.infra.endpoint_responses import endpoint_responses
-from dataforce_studio.schemas.deployment import Deployment, DeploymentCreateIn
+from dataforce_studio.schemas.deployment import (
+    Deployment,
+    DeploymentCreateIn,
+    DeploymentDetailsUpdateIn,
+)
 
 deployments_router = APIRouter(
     prefix="/{organization_id}/orbits/{orbit_id}/deployments",
@@ -42,5 +46,31 @@ async def get_deployment(
     request: Request, organization_id: int, orbit_id: int, deployment_id: int
 ) -> Deployment:
     return await handler.get_deployment(
+        request.user.id, organization_id, orbit_id, deployment_id
+    )
+
+
+@deployments_router.patch(
+    "/{deployment_id}", responses=endpoint_responses, response_model=Deployment
+)
+async def update_deployment_details(
+    request: Request,
+    organization_id: int,
+    orbit_id: int,
+    deployment_id: int,
+    data: DeploymentDetailsUpdateIn,
+) -> Deployment:
+    return await handler.update_deployment_details(
+        request.user.id, organization_id, orbit_id, deployment_id, data
+    )
+
+
+@deployments_router.delete(
+    "/{deployment_id}", responses=endpoint_responses, response_model=Deployment
+)
+async def delete_deployment(
+    request: Request, organization_id: int, orbit_id: int, deployment_id: int
+) -> Deployment:
+    return await handler.request_deployment_deletion(
         request.user.id, organization_id, orbit_id, deployment_id
     )

@@ -11,16 +11,18 @@ class DeploymentStatus(StrEnum):
     ACTIVE = "active"
     FAILED = "failed"
     DELETED = "deleted"
+    DELETION_PENDING = "deletion_pending"
 
 
 class Deployment(BaseModel, BaseOrmConfig):
     id: int
     orbit_id: int
     satellite_id: int
+    satellite_name: str | None = None
+    name: str | None = None
     model_id: int
     inference_url: str | None = None
     status: DeploymentStatus
-    secrets: dict[str, int] = Field(default_factory=dict)
     satellite_parameters: dict[str, int | str] = Field(default_factory=dict)
     description: str | None = None
     dynamic_attributes_secrets: dict[str, int] = Field(default_factory=dict)
@@ -36,7 +38,6 @@ class DeploymentCreate(BaseModel, BaseOrmConfig):
     orbit_id: int
     satellite_id: int
     model_id: int
-    secrets: dict[str, int] = Field(default_factory=dict)
     satellite_parameters: dict[str, int | str] = Field(default_factory=dict)
     description: str | None = None
     dynamic_attributes_secrets: dict[str, int] = Field(default_factory=dict)
@@ -50,7 +51,6 @@ class DeploymentCreate(BaseModel, BaseOrmConfig):
 class DeploymentCreateIn(BaseModel):
     satellite_id: int
     model_artifact_id: int
-    secrets: dict[str, int] = Field(default_factory=dict)
     satellite_parameters: dict[str, int | str] = Field(default_factory=dict)
     description: str | None = None
     dynamic_attributes_secrets: dict[str, int] = Field(default_factory=dict)
@@ -77,3 +77,14 @@ class InferenceAccessIn(BaseModel):
 
 class InferenceAccessOut(BaseModel):
     authorized: bool
+
+
+class DeploymentDetailsUpdateIn(BaseModel):
+    name: str | None = None
+    description: str | None = None
+    dynamic_attributes_secrets: dict[str, int] | None = None
+    tags: list[str] | None = None
+
+
+class DeploymentStatusUpdateIn(BaseModel):
+    status: DeploymentStatus

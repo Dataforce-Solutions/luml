@@ -5,6 +5,7 @@ import pytest
 from dataforce_studio.repositories.deployments import DeploymentRepository
 from dataforce_studio.schemas.deployment import (
     DeploymentCreate,
+    DeploymentDetailsUpdateIn,
     DeploymentStatus,
     DeploymentUpdate,
 )
@@ -29,7 +30,6 @@ async def test_create_deployment(create_satellite: SatelliteFixtureData) -> None
         orbit_id=orbit.id,
         satellite_id=satellite.id,
         model_id=model.id,
-        secrets={"api_key": 123},
         status=DeploymentStatus.PENDING,
         created_by_user="test_user",
         tags=["test", "deployment"],
@@ -41,7 +41,6 @@ async def test_create_deployment(create_satellite: SatelliteFixtureData) -> None
     assert deployment.satellite_id == deployment_data.satellite_id
     assert deployment.model_id == deployment_data.model_id
     assert deployment.status == DeploymentStatus.PENDING
-    assert deployment.secrets == deployment_data.secrets
 
     assert task
     assert task.satellite_id == deployment_data.satellite_id
@@ -65,7 +64,6 @@ async def test_get_deployment(create_satellite: SatelliteFixtureData) -> None:
         orbit_id=orbit.id,
         satellite_id=satellite.id,
         model_id=model.id,
-        secrets={"api_key": 123},
         status=DeploymentStatus.PENDING,
         created_by_user="test_user",
         tags=["test", "deployment"],
@@ -95,7 +93,6 @@ async def test_list_deployments(create_satellite: SatelliteFixtureData) -> None:
         orbit_id=orbit.id,
         satellite_id=satellite.id,
         model_id=model.id,
-        secrets={"api_key": 123},
         status=DeploymentStatus.PENDING,
         created_by_user="test_user",
         tags=["test", "deployment"],
@@ -181,3 +178,79 @@ async def test_update_deployment(create_satellite: SatelliteFixtureData) -> None
     assert updated_deployment.inference_url == update_data.inference_url
     assert updated_deployment.status == update_data.status
     assert updated_deployment.tags == update_data.tags
+
+
+@pytest.mark.asyncio
+async def test_update_deployment_details(
+    create_satellite: SatelliteFixtureData,
+) -> None:
+    data = create_satellite
+    engine, orbit, model, satellite = (
+        data.engine,
+        data.orbit,
+        data.model,
+        data.satellite,
+    )
+    repo = DeploymentRepository(engine)
+
+    created_deployment, _ = await repo.create_deployment(
+        DeploymentCreate(
+            orbit_id=orbit.id,
+            satellite_id=satellite.id,
+            model_id=model.id,
+            status=DeploymentStatus.PENDING,
+            tags=["original"],
+        )
+    )
+
+    details = DeploymentDetailsUpdateIn(
+        name="my-deployment",
+        description="some desc",
+        dynamic_attributes_secrets={"token": 123},
+        tags=["one", "two"],
+    )
+
+    updated = await repo.update_deployment_details(
+        orbit.id, created_deployment.id, details
+    )
+
+    assert updated is not None
+    assert updated.id == created_deployment.id
+    assert updated.name == details.name
+    assert updated.description == details.description
+    assert updated.dynamic_attributes_secrets == details.dynamic_attributes_secrets
+    assert updated.tags == details.tags
+
+
+@pytest.mark.asyncio
+async def test_request_deployment_deletion(
+    create_satellite: SatelliteFixtureData,
+) -> None:
+    data = create_satellite
+    engine, orbit, model, satellite = (
+        data.engine,
+        data.orbit,
+        data.model,
+        data.satellite,
+    )
+    repo = DeploymentRepository(engine)
+
+    created, _ = await repo.create_deployment(
+        DeploymentCreate(
+            orbit_id=orbit.id,
+            satellite_id=satellite.id,
+            model_id=model.id,
+            status=DeploymentStatus.PENDING,
+        )
+    )
+
+    dep, task = await repo.request_deployment_deletion(orbit.id, created.id)
+    assert dep.status == DeploymentStatus.DELETION_PENDING
+    assert task is not None
+    assert task.type == SatelliteTaskType.UNDEPLOY
+    assert task.payload["deployment_id"] == created.id
+
+    # Idempotent second call — no new task
+    dep2, task2 = await repo.request_deployment_deletion(orbit.id, created.id)
+    assert dep2.status == DeploymentStatus.DELETION_PENDING
+    assert task2 is None

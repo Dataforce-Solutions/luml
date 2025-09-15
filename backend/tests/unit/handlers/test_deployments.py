@@ -12,6 +12,7 @@ from dataforce_studio.schemas.deployment import (
     Deployment,
     DeploymentCreate,
     DeploymentCreateIn,
+    DeploymentDetailsUpdateIn,
     DeploymentStatus,
     DeploymentUpdate,
 )
@@ -69,14 +70,12 @@ async def test_create_deployment(
     deployment_create_data_in = DeploymentCreateIn(
         satellite_id=1,
         model_artifact_id=1,
-        secrets={"secret": 1},
         tags=["tag"],
     )
     deployment_create_data = DeploymentCreate(
         orbit_id=orbit_id,
         satellite_id=satellite_id,
         model_id=model_artifact_id,
-        secrets=deployment_create_data_in.secrets,
         created_by_user=user_name,
     )
     expected = Deployment(
@@ -86,7 +85,6 @@ async def test_create_deployment(
         model_id=model_artifact_id,
         inference_url=None,
         status=DeploymentStatus.PENDING,
-        secrets=deployment_create_data_in.secrets,
         created_by_user=user_name,
         tags=deployment_create_data_in.tags,
         created_at=datetime.datetime.now(),
@@ -141,7 +139,6 @@ async def test_create_deployment_orbit_not_found(
     deployment_create_data_in = DeploymentCreateIn(
         satellite_id=1,
         model_artifact_id=1,
-        secrets={"secret": 1},
         tags=["tag"],
     )
 
@@ -189,7 +186,6 @@ async def test_create_deployment_satellite_not_found(
     deployment_create_data_in = DeploymentCreateIn(
         satellite_id=1,
         model_artifact_id=1,
-        secrets={"secret": 1},
         tags=["tag"],
     )
 
@@ -245,7 +241,6 @@ async def test_create_deployment_model_artifact_not_found(
     deployment_create_data_in = DeploymentCreateIn(
         satellite_id=1,
         model_artifact_id=1,
-        secrets={"secret": 1},
         tags=["tag"],
     )
 
@@ -309,7 +304,6 @@ async def test_create_deployment_collection_not_found(
     deployment_create_data_in = DeploymentCreateIn(
         satellite_id=1,
         model_artifact_id=1,
-        secrets={"secret": 1},
         tags=["tag"],
     )
     mock_get_orbit_simple.return_value = Mock()
@@ -379,7 +373,6 @@ async def test_create_deployment_user_not_found(
     deployment_create_data_in = DeploymentCreateIn(
         satellite_id=1,
         model_artifact_id=1,
-        secrets={"secret": 1},
         tags=["tag"],
     )
 
@@ -552,6 +545,135 @@ async def test_list_worker_deployments(
 
     assert result == expected_deployments
     mock_list_satellite_deployments.assert_awaited_once_with(satellite_id)
+
+
+@patch(
+    "dataforce_studio.handlers.deployments.DeploymentRepository.update_deployment_details",
+    new_callable=AsyncMock,
+)
+@patch(
+    "dataforce_studio.handlers.deployments.PermissionsHandler.check_orbit_action_access",
+    new_callable=AsyncMock,
+)
+@pytest.mark.asyncio
+async def test_update_deployment_details(
+    mock_check_orbit_action_access: AsyncMock,
+    mock_update_deployment_details: AsyncMock,
+) -> None:
+    user_id = 1
+    organization_id = 1
+    orbit_id = 1
+    deployment_id = 99
+
+    details = DeploymentDetailsUpdateIn(
+        name="new-name",
+        description="desc",
+        dynamic_attributes_secrets={"key": 1},
+        tags=["a", "b"],
+    )
+
+    expected = Deployment(
+        id=deployment_id,
+        orbit_id=orbit_id,
+        satellite_id=5,
+        model_id=10,
+        status=DeploymentStatus.ACTIVE,
+        name=details.name,
+        description=details.description,
+        dynamic_attributes_secrets=details.dynamic_attributes_secrets or {},
+        tags=details.tags,
+        created_by_user="User",
+        created_at=datetime.datetime.now(),
+        updated_at=datetime.datetime.now(),
+    )
+
+    mock_update_deployment_details.return_value = expected
+
+    result = await handler.update_deployment_details(
+        user_id, organization_id, orbit_id, deployment_id, details
+    )
+
+    assert result == expected
+    mock_check_orbit_action_access.assert_awaited_once_with(
+        organization_id, orbit_id, user_id, Resource.DEPLOYMENT, Action.UPDATE
+    )
+    mock_update_deployment_details.assert_awaited_once_with(
+        orbit_id, deployment_id, details
+    )
+
+
+@patch(
+    "dataforce_studio.handlers.deployments.DeploymentRepository.request_deployment_deletion",
+    new_callable=AsyncMock,
+)
+@patch(
+    "dataforce_studio.handlers.deployments.PermissionsHandler.check_orbit_action_access",
+    new_callable=AsyncMock,
+)
+@pytest.mark.asyncio
+async def test_request_deployment_deletion(
+    mock_check_orbit_action_access: AsyncMock, mock_request_delete: AsyncMock
+) -> None:
+    user_id = 1
+    organization_id = 1
+    orbit_id = 1
+    deployment_id = 2
+
+    expected = Deployment(
+        id=deployment_id,
+        orbit_id=orbit_id,
+        satellite_id=1,
+        model_id=1,
+        status=DeploymentStatus.DELETION_PENDING,
+        created_by_user="User",
+        created_at=datetime.datetime.now(),
+        updated_at=datetime.datetime.now(),
+    )
+
+    mock_request_delete.return_value = (expected, None)
+
+    result = await handler.request_deployment_deletion(
+        user_id, organization_id, orbit_id, deployment_id
+    )
+
+    assert result == expected
+    mock_check_orbit_action_access.assert_awaited_once_with(
+        organization_id, orbit_id, user_id, Resource.DEPLOYMENT, Action.DELETE
+    )
+    mock_request_delete.assert_awaited_once_with(orbit_id, deployment_id)
+
+
+@patch(
+    "dataforce_studio.handlers.deployments.DeploymentRepository.update_deployment",
+    new_callable=AsyncMock,
+)
+@pytest.mark.asyncio
+async def test_update_worker_deployment_status(
+    mock_update_deployment: AsyncMock,
+) -> None:
+    satellite_id = 1
+    deployment_id = 10
+    status = DeploymentStatus.DELETED
+
+    expected = Deployment(
+        id=deployment_id,
+        orbit_id=1,
+        satellite_id=satellite_id,
+        model_id=1,
+        status=status,
+        created_by_user="Worker",
+        created_at=datetime.datetime.now(),
+        updated_at=datetime.datetime.now(),
+    )
+
+    mock_update_deployment.return_value = expected
+
+    result = await handler.update_worker_deployment_status(
+        satellite_id, deployment_id, status
+    )
+
+    assert result == expected
+    mock_update_deployment.assert_awaited_once()
 
 
 @patch(

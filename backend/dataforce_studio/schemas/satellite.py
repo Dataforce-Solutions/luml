@@ -14,6 +14,7 @@ class SatelliteCapability(StrEnum):
 class SatelliteTaskType(StrEnum):
     PAIRING = "pairing"
     DEPLOY = "deploy"
+    UNDEPLOY = "undeploy"
 
 
 class SatelliteTaskStatus(StrEnum):
