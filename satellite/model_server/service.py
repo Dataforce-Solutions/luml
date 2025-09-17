@@ -21,9 +21,6 @@ class UvicornService:
         self.title = title
         self.description = description
         self.version = version
-
-        self.model_handler = ModelHandler()
-
         self.routes: dict[tuple, Callable] = {}
         self.route_metadata: dict[tuple, dict[str, Any]] = {}
         self._add_builtin_endpoints()

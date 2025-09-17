@@ -1,8 +1,11 @@
 import json
 
+from agent.handlers.model_server_handler import ModelServerHandler
 from agent.schemas import SatelliteQueueTask, SatelliteTaskStatus
 from agent.settings import config
 from agent.tasks.base import Task
+
+model_server_handler = ModelServerHandler()
 
 
 class DeployTask(Task):
@@ -65,6 +68,7 @@ class DeployTask(Task):
             or info.get("NetworkSettings", {}).get("IPAddress")
             or "127.0.0.1"
         )
+
         health_ok = await self.docker.wait_http_ok(
             f"http://{ip}:{container_port}/healthz", timeout_s=45
         )
@@ -73,6 +77,8 @@ class DeployTask(Task):
                 logs = await container.log(stdout=True, stderr=True, follow=False, tail=80)
                 if isinstance(logs, list):
                     logs = "".join(logs)
+                elif not isinstance(logs, str):
+                    logs = str(logs) if logs is not None else ""
             except Exception:
                 logs = ""
             await self.platform.update_task_status(
@@ -89,3 +95,5 @@ class DeployTask(Task):
             SatelliteTaskStatus.DONE,
             {"inference_url": inference_url},
         )
+
+        await model_server_handler.add_deployment(dep_id, container.id, inference_url, host_port)

@@ -367,7 +367,9 @@ class OpenAPIGenerator:
                 }
             }
 
-    def get_openapi_schema(self, title, version, description) -> dict[str, Any]:
+    def get_openapi_schema(
+        self, title, version, description, routes=None, route_metadata=None
+    ) -> dict[str, Any]:
         try:
             return self.generate_schema(
                 title=title,

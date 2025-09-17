@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Union
 from urllib.parse import urlparse
 import tempfile
 from fnnx.handlers._common import unpack_model
@@ -21,10 +21,18 @@ except Exception:
 
 class ModelHandler:
     def __init__(self, url: str | None = None):
-        self._model_url = os.getenv("MODEL_ARTIFACT_URL", "") if url is None else url
+        self._model_url = (
+            os.getenv("MODEL_ARTIFACT_URL") or os.getenv("MODEL_ARTIFACT_PATH", "")
+            if url is None
+            else url
+        )
         self._file_handler = FileHandler()
         self._cached_models = {}  # url -> local_path mapping
-        self.model_path = self.get_model_path()
+        try:
+            self.model_path = self.get_model_path()
+        except Exception as e:
+            print(f"Warning: Failed to download model during init: {e}")
+            self.model_path = None
 
     def _download_model(self, url: str) -> str:
         parsed_url = urlparse(url)
@@ -81,11 +89,11 @@ class ModelHandler:
     @staticmethod
     def create_nested_list_type(base_type, shape):
         for _ in range(len(shape)):
-            base_type = List[base_type]
+            base_type = list[base_type]
         return base_type
 
     def get_field_type(
-        self, content_type: str, dtype: str, shape: Optional[List[Union[int, str]]] = None
+        self, content_type: str, dtype: str, shape: list[Union[int, str]] | None = None
     ):
         if content_type == "NDJSON":
             if dtype.startswith("Array["):
@@ -93,17 +101,17 @@ class ModelHandler:
                 base_type = self.get_base_type(inner)
             elif dtype.startswith("NDContainer["):
                 inner = dtype[12:-1]
-                base_type = Dict[str, Any]
+                base_type = dict[str, Any]
             else:
                 raise ValueError(f"Unsupported dtype for NDJSON: {dtype}")
 
             if shape:
                 return self.create_nested_list_type(base_type, shape)
             else:
-                return List[base_type]
+                return list[base_type]
 
         elif content_type == "JSON":
-            return Dict[str, Any]
+            return dict[str, Any]
 
         return Any
 
@@ -129,16 +137,23 @@ class ModelHandler:
         for attr in manifest.get("dynamic_attributes", []):
             name = attr["name"]
             desc = attr.get("description", f"Dynamic attribute '{name}'")
-            fields[name] = (Optional[str], Field(default=f"<<<{name}>>>", description=desc))
+            fields[name] = (str | None, Field(default=f"<<<{name}>>>", description=desc))
         return create_model("DynamicAttributesModel", **fields)
 
     def unpacked_model_path(self):
+        if self.model_path is None:
+            raise ValueError("Model not available - failed to download during initialization")
         extracted_path, *_ = unpack_model(self.model_path)
         return extracted_path
 
     def get_manifest(self):
         manifest_path = Path(self.unpacked_model_path()) / "manifest.json"
         with open(manifest_path) as f:
+            return json.load(f)
+
+    def get_env(self):
+        env_path = Path(self.unpacked_model_path()) / "env.json"
+        with open(env_path) as f:
             return json.load(f)
 
     def load_dtypes_schemas(self) -> dict[str, Any]:

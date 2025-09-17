@@ -1,8 +1,9 @@
 from typing import Any
+from pydantic import ValidationError, create_model, Field
 
-from auth import require_api_key
 from handers.model_handler import ModelHandler
 from service import UvicornService
+from auth import HTTPException
 
 app = UvicornService()
 model_handler = ModelHandler()
@@ -24,9 +25,11 @@ async def healthz():
     description="Returns the FNNX model manifest with input/output specifications",
     tags=["model"],
 )
-async def get_manifest(scope):
-    require_api_key(scope)
-    return model_handler.get_manifest()
+async def get_manifest():
+    try:
+        return model_handler.get_manifest()
+    except Exception as e:
+        return {"error": f"Failed to get manifest: {str(e)}"}
 
 
 @app.post(
@@ -36,9 +39,43 @@ async def get_manifest(scope):
     response_model=dict[str, Any],
     tags=["model"],
 )
-async def compute(scope, request_data):
-    require_api_key(scope)
-    inputs = request_data.get("inputs", {})
-    dynamic_attributes = request_data.get("dynamic_attributes", {}) or {}
+async def compute(request_data):
+    try:
+        manifest = model_handler.get_manifest()
+        input_model = model_handler.create_input_model(manifest)
+        dynamic_attrs_model = model_handler.create_dynamic_attributes_model(manifest)
 
-    return await model_handler.compute_result(inputs, dynamic_attributes)
+        ComputeRequest = create_model(
+            "ComputeRequest",
+            inputs=(input_model, Field(..., description="Input data for the model")),
+            dynamic_attributes=(
+                dynamic_attrs_model,
+                Field(default_factory=dict, description="Dynamic attributes"),
+            ),
+        )
+
+        # Валидация запроса
+        try:
+            validated_request = ComputeRequest(**request_data)
+        except ValidationError as e:
+            raise HTTPException(status_code=422, detail=f"Input validation failed: {e}")
+
+        print(f"Validated inputs: {validated_request.inputs}")
+        print(f"Validated dynamic_attributes: {validated_request.dynamic_attributes}")
+
+        # Выполнение вычислений
+        try:
+            result = await model_handler.compute_result(
+                validated_request.inputs, validated_request.dynamic_attributes
+            )
+            print(f"Compute result: {result}")
+            return result
+        except Exception as e:
+            print(f"Model computation error: {e}")
+            raise HTTPException(status_code=500, detail=f"Model computation failed: {e}")
+
+    except HTTPException:
+        # Перебрасываем HTTPException дальше, не обрабатываем здесь
+        raise
+    except Exception as e:
+        return {"error": f"Server error: {str(e)}"}
