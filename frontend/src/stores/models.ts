@@ -42,11 +42,12 @@ interface ModelStore {
     },
   ) => Promise<CreateModelResponse>
   confirmModelUpload: (payload: UpdateMlModelPayload, requestData?: RequestInfo) => Promise<void>
-  loadModelsList: (
+  getModelsList: (
     organizationId?: number,
     orbitId?: number,
     collectionId?: number,
-  ) => Promise<void>
+  ) => Promise<MlModel[]>
+  setModelsList: (list: MlModel[]) => void
   cancelModelUpload: (
     payload: UpdateMlModelPayload,
     requestData?: {
