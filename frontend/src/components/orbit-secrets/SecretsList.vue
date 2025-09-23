@@ -18,7 +18,7 @@
           {{ secret.name }}
         </div>
         <div class="secret-key">
-          <Button variant="text" severity="secondary" size="small" class="eye-button" @click="showSecretModal(secret)">
+          <Button variant="text" severity="secondary" class="eye-button" @click="showSecretModal(secret)">
             <template #icon>
               <Eye :size="15" />
             </template>

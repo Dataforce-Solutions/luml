@@ -4,7 +4,7 @@
       <InputGroup>
         <InputText :value="loading ? 'Loading...' : secretValue" :disabled="loading" readonly />
         <InputGroupAddon>
-          <Button variant="text" severity="secondary" size="small" style="height: 100%" @click="copySecret">
+          <Button variant="text" severity="secondary" style="height: 100%" @click="copySecret">
             <Copy :size="14" />
           </Button>
         </InputGroupAddon>
@@ -17,7 +17,7 @@
 import { ref, watch } from 'vue'
 import { Dialog, InputText, InputGroup, InputGroupAddon, Button, useToast } from 'primevue'
 import type { DialogPassThroughOptions } from 'primevue'
-import { Copy, CopyCheck } from 'lucide-vue-next'
+import { Copy } from 'lucide-vue-next'
 import { simpleErrorToast, simpleSuccessToast } from '@/lib/primevue/data/toasts'
 import type { OrbitSecret } from '@/lib/api/orbit-secrets/interfaces'
 import { useSecretsStore } from '@/stores/orbit-secrets'
@@ -83,7 +83,7 @@ async function loadSecretValue(secretId: number) {
     )
     secretValue.value = fullSecret?.value || ''
   } catch (error) {
-    toast.add(simpleErrorToast('Failed to load secret value'))
+    toast.add(simpleErrorToast('You don’t have access to view this key.'))
   } finally {
     loading.value = false
   }
