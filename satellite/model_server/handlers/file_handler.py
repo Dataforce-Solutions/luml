@@ -23,10 +23,25 @@ class FileHandler:
             timeout = httpx.Timeout(connect=30.0, read=300.0, write=60.0, pool=30.0)
 
             with httpx.stream("GET", url, timeout=timeout) as response:
+                if response.status_code == 403:
+                    raise ValueError(
+                        f"Access denied to model artifact. "
+                        f"The download URL may have expired or access is restricted. "
+                        f"Please regenerate the deployment or check permissions."
+                    )
+                elif response.status_code == 404:
+                    raise ValueError(
+                        f"Model artifact not found at URL. The file may have been moved or deleted."
+                    )
+                elif response.status_code >= 400:
+                    raise ValueError(
+                        f"HTTP {response.status_code} error downloading model artifact: "
+                        f"{response.reason_phrase}"
+                    )
+                
                 response.raise_for_status()
 
                 total_size = int(response.headers.get("content-length", 0))
-
                 chunk_size = self._calculate_optimal_chunk_size(total_size)
 
                 with open(file_path, "wb") as f:
@@ -34,5 +49,12 @@ class FileHandler:
                         f.write(chunk)
 
             return file_path
+
+        except httpx.TimeoutException as error:
+            raise ValueError(f"Download timeout: {str(error)}") from error
+        except httpx.ConnectError as error:
+            raise ValueError(f"Connection error: {str(error)}") from error
+        except OSError as error:
+            raise ValueError(f"File system error: {str(error)}") from error
         except Exception as error:
-            raise ValueError(f" Error: {error}") from error
+            raise ValueError(f"Download failed: {str(error)}") from error

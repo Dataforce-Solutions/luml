@@ -1,5 +1,5 @@
 import asyncio
-from typing import Any, Self
+from typing import Self
 
 import httpx
 
@@ -26,18 +26,6 @@ class ModelServerClient:
     @staticmethod
     def _url(deployment_id: int) -> str:
         return f"http://sat-{deployment_id}:{config.CONTAINER_PORT}"
-
-    async def healthz(self, deployment_id: int) -> dict[str, Any]:
-        assert self._session is not None
-        response = await self._session.get(f"{self._url(deployment_id)}/healthz")
-        response.raise_for_status()
-        return response.json()
-
-    async def manifest(self, deployment_id: int) -> dict[str, Any]:
-        assert self._session is not None
-        response = await self._session.get(f"{self._url(deployment_id)}/manifest")
-        response.raise_for_status()
-        return response.json()
 
     async def compute(
         self,

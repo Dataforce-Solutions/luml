@@ -1,6 +1,6 @@
 from typing import Any
 
-from handers.model_handler import ModelHandler
+from handlers.model_handler import ModelHandler
 
 
 class OpenAPIGenerator:

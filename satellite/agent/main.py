@@ -29,6 +29,7 @@ async def run_async() -> None:
                 handler=handler, poll_interval_s=float(config.POLL_INTERVAL_SEC)
             )
             try:
+                await asyncio.sleep(0.1)
                 await controller.run_forever()
             finally:
                 uv_server.should_exit = True

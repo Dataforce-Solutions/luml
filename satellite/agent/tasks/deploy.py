@@ -7,8 +7,6 @@ from agent.schemas.deployments import Deployment
 from agent.settings import config
 from agent.tasks.base import Task
 
-model_server_client = ModelServerClient()
-
 
 class DeployTask(Task):
     async def _handle_healthcheck_timeout(self, container: DockerContainer, task_id: int) -> None:

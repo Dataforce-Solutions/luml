@@ -25,7 +25,6 @@ class Deployment(BaseModel):
 
 class LocalDeployment(BaseModel):
     deployment_id: int
-    # model_url: str
     dynamic_attributes_secrets: dict[str, int] | None = {}
 
 

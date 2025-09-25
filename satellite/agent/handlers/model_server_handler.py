@@ -1,5 +1,4 @@
 from agent.clients import ModelServerClient, PlatformClient
-from agent.handlers.handler_instances import secrets_handler
 from agent.schemas import Deployment, LocalDeployment
 from agent.settings import config
 
@@ -42,7 +41,7 @@ class ModelServerHandler:
             for dep in deployments_db:
                 try:
                     async with ModelServerClient() as client:
-                        health_ok = await client.healthz(dep["id"])
+                        health_ok = await client.is_healthy(dep["id"])
                 except Exception:
                     health_ok = False
                 if health_ok:
@@ -51,12 +50,12 @@ class ModelServerHandler:
                         dynamic_attributes_secrets=dep.get("dynamic_attributes_secrets"),
                     )
 
-    @staticmethod
     async def get_compute_missing_secrets(
-        deployment: LocalDeployment, compute_dynamic_atr: dict
+        self, deployment: LocalDeployment, compute_dynamic_atr: dict
     ) -> dict:
-        missing_secrets = {}
+        from agent.handlers.handler_instances import secrets_handler
 
+        missing_secrets = {}
         deployment_secrets = deployment.dynamic_attributes_secrets
 
         if deployment_secrets:
@@ -82,21 +81,3 @@ class ModelServerHandler:
                 return await client.compute(deployment_id, body)
         except Exception as e:
             raise RuntimeError(f"Model server request failed: {str(e)}") from e
-
-    async def model_manifest(self, deployment_id: int) -> dict:
-        deployment = await self.get_deployment(str(deployment_id))
-        if not deployment:
-            raise ValueError(f"Deployment {deployment_id} not found")
-
-        try:
-            async with ModelServerClient() as client:
-                return await client.manifest(deployment_id)
-        except Exception as e:
-            raise RuntimeError(f"Model server request failed: {str(e)}") from e
-
-    async def model_healthz(self, deployment_id: int) -> dict:
-        deployment = await self.get_deployment(str(deployment_id))
-        if not deployment:
-            raise ValueError(f"Deployment {deployment_id} not found")
-        async with ModelServerClient() as client:
-            return await client.healthz(deployment_id)
