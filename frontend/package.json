@@ -12,7 +12,7 @@
     "lint": "eslint . --fix",
     "format": "prettier --write src/",
     "style": "npx style-dictionary build --config style-dictionary.config.mjs",
-    "test": "vitest",
+    "test": "vitest run",
     "test:ui": "vitest --ui"
   },
   "dependencies": {
