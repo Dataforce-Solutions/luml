@@ -12,6 +12,7 @@
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write src/",
+    "format:check": "prettier --check src/",
     "style": "npx style-dictionary build --config style-dictionary.config.mjs",
     "test": "vitest",
     "test:ci": "vitest run --environment jsdom",

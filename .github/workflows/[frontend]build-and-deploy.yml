@@ -32,6 +32,11 @@ jobs:
         working-directory: frontend
         run: npm run lint
         continue-on-error: true
+
+      - name: Run Prettier (non-blocking)
+        working-directory: frontend
+        run: npm run format:check
+      
   test:
     runs-on: ubuntu-latest
     steps:
