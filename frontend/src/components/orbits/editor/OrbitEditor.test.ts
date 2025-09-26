@@ -4,7 +4,6 @@ import { createPinia } from 'pinia'
 import OrbitSettingsDialog from './OrbitEditor.vue'
 import { OrbitRoleEnum } from '../orbits.interfaces'
 import { PermissionEnum } from '@/lib/api/DataforceApi.interfaces'
-import { shallowMount } from '@vue/test-utils'
 
 vi.mock('@/stores/buckets', () => ({
   useBucketsStore: () => ({
