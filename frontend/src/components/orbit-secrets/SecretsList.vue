@@ -75,6 +75,14 @@ const secretToEdit = ref<OrbitSecret | null>(null)
 const secretModalVisible = ref(false)
 const currentSecret = ref<OrbitSecret | null>(null)
 
+type Props = {
+  organizationId: number
+  editAvailable?: boolean
+  copyAvailable?: boolean
+}
+
+defineProps<Props>()
+
 const editSecret = (secret: OrbitSecret) => {
   secretToEdit.value = secret
   editDialogVisible.value = true
