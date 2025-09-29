@@ -21,6 +21,7 @@ PRODUCER = "dataforce.studio/prompt-fusion"
 @dataclass
 class PromptOptMetaEntry(MetaEntry):
     provider: str
+    model: str
 
 
 def _add_openai_dynattrs(builder: PyfuncBuilder):
@@ -49,13 +50,14 @@ def _add_ollama_dynattrs(builder: PyfuncBuilder):
     )
 
 
-def _create_meta_callback(f: File, fe_graph_def: dict, provider: str):
+def _create_meta_callback(f: File, fe_graph_def: dict, provider: str, model: str):
     entry = PromptOptMetaEntry(
         id="prompt_optimization_fe_graph_def",
         producer=PRODUCER,
         producer_version=promptopt_version,
         producer_tags=[f"{PRODUCER}::graph_fe_def:v1"],
         provider=provider,
+        model=model,
         payload=fe_graph_def,
     )
 
@@ -72,7 +74,7 @@ def serialize(
 ) -> bytes:
     builder = PyfuncBuilder(
         pyfunc=spec,
-        create_meta_callback=lambda f: _create_meta_callback(f, fe_graph_def, provider),
+        create_meta_callback=lambda f: _create_meta_callback(f, fe_graph_def, provider, model),
     )
 
     if graph.input_node is None:
@@ -105,13 +107,9 @@ def serialize(
     )
 
     builder.add_fnnx_runtime_dependency()
-    builder.add_runtime_dependency(f"promptopt=={promptopt_version}")
-    builder.add_runtime_dependency("fnnx[core]")
-    builder.add_runtime_dependency("pyfnx_utils")
-    builder.add_runtime_dependency("httpx")
-
-    if will_use_jedi_optimizer(dataset_size, evaluation_mode):
-        builder.add_runtime_dependency("optuna")
+    builder.add_runtime_dependency("fnnx[core]==0.0.6")
+    builder.add_runtime_dependency("pyfnx_utils==0.0.1")
+    builder.add_runtime_dependency("httpx==0.28.1")
 
     tmpname = f"dfs-tmp-{uuid.uuid4()}.pyfnx"
     builder.save(tmpname)
