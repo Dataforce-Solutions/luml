@@ -147,3 +147,13 @@
   content: ' *';
   color: var(--p-badge-danger-background);
 }
+.p-autocomplete-token,
+.p-chip {
+  word-wrap: break-word;
+  overflow-wrap: anywhere;
+}
+
+.p-autocomplete-token .p-icon,
+.p-chip .p-icon {
+  flex-shrink: 0;
+}

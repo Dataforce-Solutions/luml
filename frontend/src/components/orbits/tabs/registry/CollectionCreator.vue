@@ -166,16 +166,3 @@ async function onSubmit({ valid }: FormSubmitEvent) {
   font-size: 14px;
 }
 </style>
-
-<style>
-.p-autocomplete-token,
-.p-chip {
-  word-wrap: break-word;
-  overflow-wrap: anywhere;
-}
-
-.p-autocomplete-token .p-icon,
-.p-chip .p-icon {
-  flex-shrink: 0;
-}
-</style>
