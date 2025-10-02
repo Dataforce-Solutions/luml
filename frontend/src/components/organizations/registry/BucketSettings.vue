@@ -76,13 +76,6 @@ const initialData = computed<BucketSecretCreator>(() => ({
 async function onFormSubmit(formData: BucketSecretCreator) {
   try {
     loading.value = true
-    const exists = bucketsStore.buckets.some(
-      (bucket) => bucket.bucket_name === formData.bucket_name && bucket.id !== props.bucket.id,
-    )
-    if (exists) {
-      toast.add(simpleErrorToast(`Bucket with name "${formData.bucket_name}" already exists.`))
-      return
-    }
     await bucketsStore.checkExistingBucket(props.bucket.organization_id, props.bucket.id, formData)
     await bucketsStore.updateBucket(props.bucket.organization_id, props.bucket.id, {
       ...formData,
@@ -92,7 +85,13 @@ async function onFormSubmit(formData: BucketSecretCreator) {
     toast.add(simpleSuccessToast('Bucket has been updated.'))
     visible.value = false
   } catch (e: any) {
-    toast.add(simpleErrorToast(e?.response?.data?.detail || e.message || 'Failed to update bucket'))
+    const rangeErrorMessage = 'Range requests are not supported. Please ensure "Range" is added to "AllowedHeaders" in your bucket\'s CORS configuration.';
+    
+    toast.add(simpleErrorToast(
+      e.message === rangeErrorMessage 
+        ? e.message 
+        : e?.response?.data?.detail || e.message || 'Failed to update bucket'
+    ));
   } finally {
     loading.value = false
   }

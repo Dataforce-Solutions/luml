@@ -58,7 +58,12 @@ async function create(data: BucketSecretCreator) {
     visible.value = false
     toast.add(simpleSuccessToast('New bucket has been added.'))
   } catch (e: any) {
-    toast.add(simpleErrorToast(e?.response?.data?.detail || 'Failed to create bucket'))
+    const rangeErrorMessage = 'Range requests are not supported. Please ensure "Range" is added to "AllowedHeaders" in your bucket\'s CORS configuration.';
+    toast.add(simpleErrorToast(
+      e.message === rangeErrorMessage 
+        ? e.message 
+        : e?.response?.data?.detail || e.message || 'Failed to create bucket'
+    ));
   } finally {
     loading.value = false
   }
