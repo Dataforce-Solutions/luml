@@ -9,6 +9,7 @@ import os
 import uuid
 from dataclasses import asdict, dataclass
 import json
+from importlib import metadata as importlib_metadata
 
 cdir = os.path.dirname(__file__)
 
@@ -107,9 +108,9 @@ def serialize(
     )
 
     builder.add_fnnx_runtime_dependency()
-    builder.add_runtime_dependency("fnnx[core]==0.0.6")
-    builder.add_runtime_dependency("pyfnx_utils==0.0.1")
-    builder.add_runtime_dependency("httpx==0.28.1")
+    builder.add_runtime_dependency(f"fnnx[core]=={importlib_metadata.version('fnnx')}")
+    builder.add_runtime_dependency(f"pyfnx_utils=={importlib_metadata.version('pyfnx_utils')}")
+    builder.add_runtime_dependency(f"httpx=={importlib_metadata.version('httpx')}")
 
     tmpname = f"dfs-tmp-{uuid.uuid4()}.pyfnx"
     builder.save(tmpname)
