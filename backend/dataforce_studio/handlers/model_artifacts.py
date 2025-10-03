@@ -92,6 +92,7 @@ class ModelArtifactHandler:
         )
         unique_id = uuid4().hex
         object_name = f"{unique_id}-{model_artifact.file_name}"
+        # TODO тут должен быть шорт для юезра
         bucket_location = f"orbit-{orbit_id}/collection-{collection_id}/{object_name}"
 
         created_model_artifact = await self.__repository.create_model_artifact(

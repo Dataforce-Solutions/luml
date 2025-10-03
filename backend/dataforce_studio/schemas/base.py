@@ -17,6 +17,7 @@ def validate_short_uuid(value: str | UUID) -> str:
             return str(UUIDConverter.short_to_uuid(value))
         if UUIDConverter.is_valid_uuid(value):
             return value
+        raise ValueError(f"Invalid UUID format: {value}")
 
     raise ValueError(f"Invalid UUID format: {value}")
 

@@ -4,7 +4,7 @@ from collections.abc import Coroutine
 from typing import TYPE_CHECKING, Any
 
 from .._exceptions import FileError, FileUploadError
-from .._types import ModelArtifact, ModelArtifactStatus
+from .._types import ModelArtifact, ModelArtifactStatus, ShortUUID
 from .._utils import find_by_value
 from ..utils.file_handler import FileHandler
 from ..utils.model_artifacts import ModelFileHandler
@@ -21,37 +21,37 @@ class ModelArtifactResourceBase(ABC):
 
     @abstractmethod
     def get(
-        self, model_value: str | int, *, collection_id: int | None = None
+        self, model_value: ShortUUID | int, *, collection_id: ShortUUID | None = None
     ) -> ModelArtifact | None | Coroutine[Any, Any, ModelArtifact | None]:
         raise NotImplementedError()
 
     @abstractmethod
     def _get_by_name(
-        self, collection_id: int | None, name: str
+        self, collection_id: ShortUUID | None, name: str
     ) -> ModelArtifact | None | Coroutine[Any, Any, ModelArtifact | None]:
         raise NotImplementedError()
 
     @abstractmethod
     def _get_by_id(
-        self, collection_id: int | None, model_value: int
+        self, collection_id: ShortUUID | None, model_value: ShortUUID
     ) -> ModelArtifact | None | Coroutine[Any, Any, ModelArtifact | None]:
         raise NotImplementedError()
 
     @abstractmethod
     def list(
-        self, *, collection_id: int | None = None
+        self, *, collection_id: ShortUUID | None = None
     ) -> list[ModelArtifact] | Coroutine[Any, Any, list[ModelArtifact]]:
         raise NotImplementedError()
 
     @abstractmethod
     def download_url(
-        self, model_id: int, *, collection_id: int | None = None
+        self, model_id: ShortUUID, *, collection_id: ShortUUID | None = None
     ) -> dict | Coroutine[Any, Any, dict]:
         raise NotImplementedError()
 
     @abstractmethod
     def delete_url(
-        self, model_id: int, *, collection_id: int | None = None
+        self, model_id: ShortUUID, *, collection_id: ShortUUID | None = None
     ) -> dict | Coroutine[Any, Any, dict]:
         raise NotImplementedError()
 
@@ -63,24 +63,24 @@ class ModelArtifactResourceBase(ABC):
         description: str | None = None,
         tags: builtins.list[str] | None = None,
         *,
-        collection_id: int | None = None,
+        collection_id: ShortUUID | None = None,
     ) -> ModelArtifact | Coroutine[Any, Any, ModelArtifact]:
         raise NotImplementedError()
 
     @abstractmethod
     def download(
         self,
-        model_id: int,
+        model_id: ShortUUID,
         file_path: str | None = None,
         *,
-        collection_id: int | None = None,
+        collection_id: ShortUUID | None = None,
     ) -> None | Coroutine[Any, Any, None]:
         raise NotImplementedError()
 
     @abstractmethod
     def create(
         self,
-        collection_id: int | None,
+        collection_id: ShortUUID | None,
         file_name: str,
         metrics: dict,
         manifest: dict,
@@ -99,20 +99,20 @@ class ModelArtifactResourceBase(ABC):
     @abstractmethod
     def update(
         self,
-        model_id: int,
+        model_id: ShortUUID,
         file_name: str | None = None,
         model_name: str | None = None,
         description: str | None = None,
         tags: builtins.list[str] | None = None,
         status: ModelArtifactStatus | None = None,
         *,
-        collection_id: int | None = None,
+        collection_id: ShortUUID | None = None,
     ) -> ModelArtifact | Coroutine[Any, Any, ModelArtifact]:
         raise NotImplementedError()
 
     @abstractmethod
     def delete(
-        self, model_id: int, *, collection_id: int | None = None
+        self, model_id: ShortUUID, *, collection_id: ShortUUID | None = None
     ) -> None | Coroutine[Any, Any, None]:
         raise NotImplementedError()
 
@@ -125,7 +125,7 @@ class ModelArtifactResource(ModelArtifactResourceBase):
 
     @validate_collection
     def get(
-        self, model_value: str | int, *, collection_id: int | None = None
+        self, model_value: str | ShortUUID, *, collection_id: ShortUUID | None = None
     ) -> ModelArtifact | None:
         """
         Get model artifact by ID or name.
@@ -152,30 +152,33 @@ class ModelArtifactResource(ModelArtifactResourceBase):
 
         Example:
             >>> dfs = DataForceClient(
-            ...     api_key="dfs_your_key",  organization=1, orbit=1, collection=456
+            ...     api_key="dfs_your_key",
+            ...     organization="ReEb5Dw4ojVbhft9tn3BMr",
+            ...     orbit="h2xJWKKcKEdY3ub3Hmhq2g",
+            ...     collection="e3Wy3wMa8gwBodrvcFSB8m"
             ... )
             >>> model_by_name = dfs.model_artifacts.get("my_model")
-            >>> model_by_id = dfs.model_artifacts.get(123)
+            >>> model_by_id = dfs.model_artifacts.get("e3Wy3wMa8gwBodrvcFSB8m")
 
         Example response:
             >>> ModelArtifact(
-            ...     id=123,
+            ...     id="e3Wy3wMa8gwBodrvcFSB8m",
             ...     model_name="my_model",
             ...     file_name="model.fnnx",
             ...     description="Trained model",
-            ...     collection_id=456,
+            ...     collection_id="e3Wy3wMa8gwBodrvcFSB8m",
             ...     status=ModelArtifactStatus.UPLOADED,
             ...     tags=["ml", "production"],
             ...     created_at='2025-01-15T10:30:00.123456Z',
             ...     updated_at=None
             ... )
         """
-        if isinstance(model_value, str):
-            return self._get_by_name(collection_id, model_value)
-        return self._get_by_id(collection_id, model_value)
+        if isinstance(model_value, ShortUUID):
+            return self._get_by_id(collection_id, model_value)
+        return self._get_by_name(collection_id, model_value)
 
     def _get_by_name(
-        self, collection_id: int | None, name: str
+        self, collection_id: ShortUUID | None, name: str
     ) -> ModelArtifact | None:
         return find_by_value(
             self.list(collection_id=collection_id),
@@ -184,7 +187,7 @@ class ModelArtifactResource(ModelArtifactResourceBase):
         )
 
     def _get_by_id(
-        self, collection_id: int | None, model_value: int
+        self, collection_id: ShortUUID | None, model_value: ShortUUID
     ) -> ModelArtifact | None:
         for model in self.list(collection_id=collection_id):
             if model.id == model_value:
@@ -192,7 +195,7 @@ class ModelArtifactResource(ModelArtifactResourceBase):
         return None
 
     @validate_collection
-    def list(self, *, collection_id: int | None = None) -> list[ModelArtifact]:
+    def list(self, *, collection_id: ShortUUID | None = None) -> list[ModelArtifact]:
         """
         List all model artifacts in the collection.
 
@@ -211,18 +214,21 @@ class ModelArtifactResource(ModelArtifactResourceBase):
 
         Example:
             >>> dfs = DataForceClient(
-            ...     api_key="dfs_your_key", organization=1, orbit=1, collection=456
+            ...     api_key="dfs_your_key",
+            ...     organization="ReEb5Dw4ojVbhft9tn3BMr",
+            ...     orbit="h2xJWKKcKEdY3ub3Hmhq2g",
+            ...     collection="e3Wy3wMa8gwBodrvcFSB8m"
             ... )
             >>> models = dfs.model_artifacts.list()
 
         Example response:
             >>> [
             ...     ModelArtifact(
-            ...         id=123,
+            ...         id="e3Wy3wMa8gwBodrvcFSB8m",
             ...         model_name="my_model",
             ...         file_name="model.fnnx",
             ...         description="Trained model",
-            ...         collection_id=456,
+            ...         collection_id="e3Wy3wMa8gwBodrvcFSB8m",
             ...         status=ModelArtifactStatus.UPLOADED,
             ...         tags=["ml", "production"],
             ...         created_at='2025-01-15T10:30:00.123456Z',
@@ -238,7 +244,9 @@ class ModelArtifactResource(ModelArtifactResourceBase):
         return [ModelArtifact.model_validate(model) for model in response]
 
     @validate_collection
-    def download_url(self, model_id: int, *, collection_id: int | None = None) -> dict:
+    def download_url(
+        self, model_id: ShortUUID, *, collection_id: ShortUUID | None = None
+    ) -> dict:
         """Get download URL for model artifact.
 
         Generates a secure download URL for the model file.
@@ -259,9 +267,12 @@ class ModelArtifactResource(ModelArtifactResourceBase):
 
         Example:
             >>> dfs = DataForceClient(
-            ...     api_key="dfs_your_key", organization=1, orbit=1, collection=456
+            ...     api_key="dfs_your_key",
+            ...     organization="ReEb5Dw4ojVbhft9tn3BMr",
+            ...     orbit="h2xJWKKcKEdY3ub3Hmhq2g",
+            ...     collection="e3Wy3wMa8gwBodrvcFSB8m"
             ... )
-            >>> url_info = dfs.model_artifacts.download_url(123)
+            >>> url_info = dfs.model_artifacts.download_url("e3Wy3wMa8gwBodrvcFSB8m")
             >>> download_url = url_info["url"]
         """
         return self._client.get(
@@ -269,7 +280,9 @@ class ModelArtifactResource(ModelArtifactResourceBase):
         )
 
     @validate_collection
-    def delete_url(self, model_id: int, *, collection_id: int | None = None) -> dict:
+    def delete_url(
+        self, model_id: ShortUUID, *, collection_id: ShortUUID | None = None
+    ) -> dict:
         """Get delete URL for model artifact.
 
         Generates a secure delete URL for the model file in storage.
@@ -290,9 +303,12 @@ class ModelArtifactResource(ModelArtifactResourceBase):
 
         Example:
             >>> dfs = DataForceClient(
-            ...     api_key="dfs_your_key", organization=1, orbit=1, collection=456
+            ...     api_key="dfs_your_key",
+            ...     organization="ReEb5Dw4ojVbhft9tn3BMr",
+            ...     orbit="h2xJWKKcKEdY3ub3Hmhq2g",
+            ...     collection="e3Wy3wMa8gwBodrvcFSB8m"
             ... )
-            >>> url_info = dfs.model_artifacts.delete_url(123)
+            >>> url_info = dfs.model_artifacts.delete_url("e3Wy3wMa8gwBodrvcFSB8m")
         """
         return self._client.get(
             f"/organizations/{self._client.organization}/orbits/{self._client.orbit}/collections/{collection_id}/model_artifacts/{model_id}/delete-url"
@@ -306,7 +322,7 @@ class ModelArtifactResource(ModelArtifactResourceBase):
         description: str | None = None,
         tags: builtins.list[str] | None = None,
         *,
-        collection_id: int | None = None,
+        collection_id: ShortUUID | None = None,
     ) -> ModelArtifact:
         """Upload model artifact file to the collection.
 
@@ -333,20 +349,23 @@ class ModelArtifactResource(ModelArtifactResourceBase):
 
         Example:
             >>> dfs = DataForceClient(
-            ...     api_key="dfs_your_key", organization=1, orbit=1, collection=456
+            ...     api_key="dfs_your_key",
+            ...     organization="ReEb5Dw4ojVbhft9tn3BMr",
+            ...     orbit="h2xJWKKcKEdY3ub3Hmhq2g",
+            ...     collection="e3Wy3wMa8gwBodrvcFSB8m"
             ... )
             >>> model = dfs.model_artifacts.upload(
             ...     file_path="/path/to/model.fnnx",
             ...     model_name="Production Model",
             ...     description="Trained on latest dataset",
             ...     tags=["ml", "production"],
-            ...     collection_id=456
+            ...     collection_id="e3Wy3wMa8gwBodrvcFSB8m"
             ... )
 
         Response object:
             >>> ModelArtifact(
-            ...     id=103,
-            ...     collection_id=15,
+            ...     id="e3Wy3wMa8gwBodrvcFSB8m",
+            ...     collection_id="e3Wy3wMa8gwBodrvcFSB8m",
             ...     file_name="output.dfs",
             ...     model_name="500mb",
             ...     description=None,
@@ -421,10 +440,10 @@ class ModelArtifactResource(ModelArtifactResourceBase):
     @validate_collection
     def download(
         self,
-        model_id: int,
+        model_id: ShortUUID,
         file_path: str | None = None,
         *,
-        collection_id: int | None = None,
+        collection_id: ShortUUID | None = None,
     ) -> None:
         """Download model artifact file from the collection.
 
@@ -448,16 +467,19 @@ class ModelArtifactResource(ModelArtifactResourceBase):
 
         Example:
             >>> dfs = DataForceClient(
-            ...     api_key="dfs_your_key", organization=1, orbit=1, collection=456
+            ...     api_key="dfs_your_key",
+            ...     organization="ReEb5Dw4ojVbhft9tn3BMr",
+            ...     orbit="h2xJWKKcKEdY3ub3Hmhq2g",
+            ...     collection="e3Wy3wMa8gwBodrvcFSB8m"
             ... )
             >>> # Download with original filename
-            >>> dfs.model_artifacts.download(123)
+            >>> dfs.model_artifacts.download("e3Wy3wMa8gwBodrvcFSB8m")
 
             >>> # Download to specific path
             >>> dfs.model_artifacts.download(
-            ...     123,
+            ...     "e3Wy3wMa8gwBodrvcFSB8m",
             ...     file_path="/local/path/downloaded_model.fnnx",
-            ...     collection_id=456
+            ...     collection_id="e3Wy3wMa8gwBodrvcFSB8m"
             ... )
         """
         if file_path is None:
@@ -480,7 +502,7 @@ class ModelArtifactResource(ModelArtifactResourceBase):
     @validate_collection
     def create(
         self,
-        collection_id: int | None,
+        collection_id: ShortUUID | None,
         file_name: str,
         metrics: dict,
         manifest: dict,
@@ -517,7 +539,10 @@ class ModelArtifactResource(ModelArtifactResourceBase):
 
         Example:
             >>> dfs = DataForceClient(
-            ...     api_key="dfs_your_key", organization=1, orbit=1, collection=456
+            ...     api_key="dfs_your_key",
+            ...     organization="ReEb5Dw4ojVbhft9tn3BMr",
+            ...     orbit="h2xJWKKcKEdY3ub3Hmhq2g",
+            ...     collection="e3Wy3wMa8gwBodrvcFSB8m"
             ... )
             >>> result = dfs.model_artifacts.create(
             ...     file_name="model.fnnx",
@@ -553,14 +578,14 @@ class ModelArtifactResource(ModelArtifactResourceBase):
     @validate_collection
     def update(
         self,
-        model_id: int,
+        model_id: ShortUUID,
         file_name: str | None = None,
         model_name: str | None = None,
         description: str | None = None,
         tags: builtins.list[str] | None = None,
         status: ModelArtifactStatus | None = None,
         *,
-        collection_id: int | None = None,
+        collection_id: ShortUUID | None = None,
     ) -> ModelArtifact:
         """
         Update model artifact metadata.
@@ -588,10 +613,13 @@ class ModelArtifactResource(ModelArtifactResourceBase):
 
         Example:
             >>> dfs = DataForceClient(
-            ...     api_key="dfs_your_key", organization=1, orbit=1, collection=456
+            ...     api_key="dfs_your_key",
+            ...     organization="ReEb5Dw4ojVbhft9tn3BMr",
+            ...     orbit="h2xJWKKcKEdY3ub3Hmhq2g",
+            ...     collection="e3Wy3wMa8gwBodrvcFSB8m"
             ... )
             >>> model = dfs.model_artifacts.update(
-            ...     123,
+            ...     "e3Wy3wMa8gwBodrvcFSB8m",
             ...     model_name="Updated Model",
             ...     status=ModelArtifactStatus.UPLOADED
             ... )
@@ -610,7 +638,9 @@ class ModelArtifactResource(ModelArtifactResourceBase):
         )
 
     @validate_collection
-    def delete(self, model_id: int, *, collection_id: int | None = None) -> None:
+    def delete(
+        self, model_id: ShortUUID, *, collection_id: ShortUUID | None = None
+    ) -> None:
         """Delete model artifact permanently.
 
         Permanently removes the model artifact record and associated file from storage.
@@ -632,9 +662,12 @@ class ModelArtifactResource(ModelArtifactResourceBase):
 
         Example:
             >>> dfs = DataForceClient(
-            ...     api_key="dfs_your_key", organization=1, orbit=1, collection=456
+            ...     api_key="dfs_your_key",
+            ...     organization="ReEb5Dw4ojVbhft9tn3BMr",
+            ...     orbit="h2xJWKKcKEdY3ub3Hmhq2g",
+            ...     collection="e3Wy3wMa8gwBodrvcFSB8m"
             ... )
-            >>> dfs.model_artifacts.delete(123)
+            >>> dfs.model_artifacts.delete("e3Wy3wMa8gwBodrvcFSB8m")
 
         Warning:
             This operation is irreversible. The model file and all metadata
@@ -654,7 +687,7 @@ class AsyncModelArtifactResource(ModelArtifactResourceBase):
 
     @validate_collection
     async def get(
-        self, model_value: str | int, *, collection_id: int | None = None
+        self, model_value: str | ShortUUID, *, collection_id: ShortUUID | None = None
     ) -> ModelArtifact | None:
         """
         Get model artifact by ID or name.
@@ -681,31 +714,38 @@ class AsyncModelArtifactResource(ModelArtifactResourceBase):
 
         Example:
             >>> dfs = AsyncDataForceClient(
-            ...     api_key="dfs_your_key", organization=1, orbit=1, collection=456
+            ...     api_key="dfs_your_key",
+            ... )
+            ... dfs.setup_config(
+            ...     organization="ReEb5Dw4ojVbhft9tn3BMr",
+            ...     orbit="h2xJWKKcKEdY3ub3Hmhq2g",
+            ...     collection="e3Wy3wMa8gwBodrvcFSB8m"
             ... )
             >>> async def main():
             ...     model_by_name = await dfs.model_artifacts.get("my_model")
-            ...     model_by_id = await dfs.model_artifacts.get(123)
+            ...     model_by_id = await dfs.model_artifacts.get(
+            ...         "e3Wy3wMa8gwBodrvcFSB8m"
+            ...     )
 
         Example response:
             >>> ModelArtifact(
-            ...     id=123,
+            ...     id="e3Wy3wMa8gwBodrvcFSB8m",
             ...     model_name="my_model",
             ...     file_name="model.fnnx",
             ...     description="Trained model",
-            ...     collection_id=456,
+            ...     collection_id="e3Wy3wMa8gwBodrvcFSB8m",
             ...     status=ModelArtifactStatus.UPLOADED,
             ...     tags=["ml", "production"],
             ...     created_at='2025-01-15T10:30:00.123456Z',
             ...     updated_at=None
             ... )
         """
-        if isinstance(model_value, str):
-            return await self._get_by_name(collection_id, model_value)
-        return await self._get_by_id(collection_id, model_value)
+        if isinstance(model_value, ShortUUID):
+            return await self._get_by_id(collection_id, model_value)
+        return await self._get_by_name(collection_id, model_value)
 
     async def _get_by_name(
-        self, collection_id: int | None, name: str
+        self, collection_id: ShortUUID | None, name: str
     ) -> ModelArtifact | None:
         return find_by_value(
             await self.list(collection_id=collection_id),
@@ -714,7 +754,7 @@ class AsyncModelArtifactResource(ModelArtifactResourceBase):
         )
 
     async def _get_by_id(
-        self, collection_id: int | None, model_value: int
+        self, collection_id: ShortUUID | None, model_value: ShortUUID
     ) -> ModelArtifact | None:
         for model in await self.list(collection_id=collection_id):
             if model.id == model_value:
@@ -722,7 +762,9 @@ class AsyncModelArtifactResource(ModelArtifactResourceBase):
         return None
 
     @validate_collection
-    async def list(self, *, collection_id: int | None = None) -> list[ModelArtifact]:
+    async def list(
+        self, *, collection_id: ShortUUID | None = None
+    ) -> list[ModelArtifact]:
         """
         List all model artifacts in the collection.
 
@@ -741,7 +783,12 @@ class AsyncModelArtifactResource(ModelArtifactResourceBase):
 
         Example:
             >>> dfs = AsyncDataForceClient(
-            ...     api_key="dfs_your_key", organization=1, orbit=1, collection=456
+            ...     api_key="dfs_your_key",
+            ... )
+            ... dfs.setup_config(
+            ...     organization="ReEb5Dw4ojVbhft9tn3BMr",
+            ...     orbit="h2xJWKKcKEdY3ub3Hmhq2g",
+            ...     collection="e3Wy3wMa8gwBodrvcFSB8m"
             ... )
             >>> async def main():
             ...     models = await dfs.model_artifacts.list()
@@ -749,11 +796,11 @@ class AsyncModelArtifactResource(ModelArtifactResourceBase):
         Example response:
             >>> [
             ...     ModelArtifact(
-            ...         id=123,
+            ...         id="e3Wy3wMa8gwBodrvcFSB8m",
             ...         model_name="my_model",
             ...         file_name="model.fnnx",
             ...         description="Trained model",
-            ...         collection_id=456,
+            ...         collection_id="e3Wy3wMa8gwBodrvcFSB8m",
             ...         status=ModelArtifactStatus.UPLOADED,
             ...         tags=["ml", "production"],
             ...         created_at='2025-01-15T10:30:00.123456Z',
@@ -770,7 +817,7 @@ class AsyncModelArtifactResource(ModelArtifactResourceBase):
 
     @validate_collection
     async def download_url(
-        self, model_id: int, *, collection_id: int | None = None
+        self, model_id: ShortUUID, *, collection_id: ShortUUID | None = None
     ) -> dict:
         """
         Get download URL for model artifact.
@@ -793,10 +840,17 @@ class AsyncModelArtifactResource(ModelArtifactResourceBase):
 
         Example:
             >>> dfs = AsyncDataForceClient(
-            ...     api_key="dfs_your_key", organization=1, orbit=1, collection=456
+            ...     api_key="dfs_your_key",
+            ... )
+            ... dfs.setup_config(
+            ...     organization="ReEb5Dw4ojVbhft9tn3BMr",
+            ...     orbit="h2xJWKKcKEdY3ub3Hmhq2g",
+            ...     collection="e3Wy3wMa8gwBodrvcFSB8m"
             ... )
             >>> async def main():
-            ...     url_info = await dfs.model_artifacts.download_url(123)
+            ...     url_info = await dfs.model_artifacts.download_url(
+            ...         "e3Wy3wMa8gwBodrvcFSB8m"
+            ...     )
         """
         return await self._client.get(
             f"/organizations/{self._client.organization}/orbits/{self._client.orbit}/collections/{collection_id}/model_artifacts/{model_id}/download-url"
@@ -804,7 +858,7 @@ class AsyncModelArtifactResource(ModelArtifactResourceBase):
 
     @validate_collection
     async def delete_url(
-        self, model_id: int, *, collection_id: int | None = None
+        self, model_id: ShortUUID, *, collection_id: ShortUUID | None = None
     ) -> dict:
         """
         Get delete URL for model artifact.
@@ -827,10 +881,17 @@ class AsyncModelArtifactResource(ModelArtifactResourceBase):
 
         Example:
             >>> dfs = AsyncDataForceClient(
-            ...     api_key="dfs_your_key", organization=1, orbit=1, collection=456
+            ...     api_key="dfs_your_key",
+            ... )
+            ... dfs.setup_config(
+            ...     organization="ReEb5Dw4ojVbhft9tn3BMr",
+            ...     orbit="h2xJWKKcKEdY3ub3Hmhq2g",
+            ...     collection="e3Wy3wMa8gwBodrvcFSB8m"
             ... )
             >>> async def main():
-            ...     url_info = await dfs.model_artifacts.delete_url(123)
+            ...     url_info = await dfs.model_artifacts.delete_url(
+            ...         "e3Wy3wMa8gwBodrvcFSB8m"
+            ...     )
         """
         return await self._client.get(
             f"/organizations/{self._client.organization}/orbits/{self._client.orbit}/collections/{collection_id}/model_artifacts/{model_id}/delete-url"
@@ -839,7 +900,7 @@ class AsyncModelArtifactResource(ModelArtifactResourceBase):
     @validate_collection
     async def create(
         self,
-        collection_id: int | None,
+        collection_id: ShortUUID | None,
         file_name: str,
         metrics: dict,
         manifest: dict,
@@ -877,7 +938,12 @@ class AsyncModelArtifactResource(ModelArtifactResourceBase):
 
         Example:
             >>> dfs = AsyncDataForceClient(
-            ...     api_key="dfs_your_key", organization=1, orbit=1, collection=456
+            ...     api_key="dfs_your_key",
+            ... )
+            ... dfs.setup_config(
+            ...     organization="ReEb5Dw4ojVbhft9tn3BMr",
+            ...     orbit="h2xJWKKcKEdY3ub3Hmhq2g",
+            ...     collection="e3Wy3wMa8gwBodrvcFSB8m"
             ... )
             >>> async def main():
             ...     result = await dfs.model_artifacts.create(
@@ -918,7 +984,7 @@ class AsyncModelArtifactResource(ModelArtifactResourceBase):
         description: str | None = None,
         tags: builtins.list[str] | None = None,
         *,
-        collection_id: int | None = None,
+        collection_id: ShortUUID | None = None,
     ) -> ModelArtifact:
         """Upload model artifact file to the collection.
 
@@ -946,7 +1012,12 @@ class AsyncModelArtifactResource(ModelArtifactResourceBase):
 
         Example:
             >>> dfs = AsyncDataForceClient(
-            ...     api_key="dfs_your_key", organization=1, orbit=1, collection=456
+            ...     api_key="dfs_your_key",
+            ... )
+            ... dfs.setup_config(
+            ...     organization="ReEb5Dw4ojVbhft9tn3BMr",
+            ...     orbit="h2xJWKKcKEdY3ub3Hmhq2g",
+            ...     collection="e3Wy3wMa8gwBodrvcFSB8m"
             ... )
             >>> async def main():
             ...     model = await dfs.model_artifacts.upload(
@@ -954,16 +1025,16 @@ class AsyncModelArtifactResource(ModelArtifactResourceBase):
             ...         model_name="Production Model",
             ...         description="Trained on latest dataset",
             ...         tags=["ml", "production"],
-            ...         collection_id=456
+            ...         collection_id="e3Wy3wMa8gwBodrvcFSB8m"
             ...     )
 
         Response object:
             >>> ModelArtifact(
-            ...     id=123,
+            ...     id="e3Wy3wMa8gwBodrvcFSB8m",
             ...     model_name="Production Model",
             ...     file_name="model.fnnx",
             ...     description="Trained on latest dataset",
-            ...     collection_id=456,
+            ...     collection_id="e3Wy3wMa8gwBodrvcFSB8m",
             ...     status=ModelArtifactStatus.UPLOADED,
             ...     tags=["ml", "production"],
             ...     created_at='2025-01-15T10:30:00.123456Z',
@@ -1018,10 +1089,10 @@ class AsyncModelArtifactResource(ModelArtifactResourceBase):
     @validate_collection
     async def download(
         self,
-        model_id: int,
+        model_id: ShortUUID,
         file_path: str | None = None,
         *,
-        collection_id: int | None = None,
+        collection_id: ShortUUID | None = None,
     ) -> None:
         """
         Download model artifact file from the collection.
@@ -1046,17 +1117,22 @@ class AsyncModelArtifactResource(ModelArtifactResourceBase):
 
         Example:
             >>> dfs = AsyncDataForceClient(
-            ...     api_key="dfs_your_key", organization=1, orbit=1, collection=456
+            ...     api_key="dfs_your_key",
+            ... )
+            ... dfs.setup_config(
+            ...     organization="ReEb5Dw4ojVbhft9tn3BMr",
+            ...     orbit="h2xJWKKcKEdY3ub3Hmhq2g",
+            ...     collection="e3Wy3wMa8gwBodrvcFSB8m"
             ... )
             >>> async def main():
             ...     # Download with original filename
-            ...     await dfs.model_artifacts.download(123)
+            ...     await dfs.model_artifacts.download("e3Wy3wMa8gwBodrvcFSB8m")
             ...
             ...     # Download to specific path
             ...     await dfs.model_artifacts.download(
-            ...         123,
+            ...         "e3Wy3wMa8gwBodrvcFSB8m",
             ...         file_path="/local/path/downloaded_model.fnnx",
-            ...         collection_id=456
+            ...         collection_id="e3Wy3wMa8gwBodrvcFSB8m"
             ...     )
         """
         if file_path is None:
@@ -1081,14 +1157,14 @@ class AsyncModelArtifactResource(ModelArtifactResourceBase):
     @validate_collection
     async def update(
         self,
-        model_id: int,
+        model_id: ShortUUID,
         file_name: str | None = None,
         model_name: str | None = None,
         description: str | None = None,
         tags: builtins.list[str] | None = None,
         status: ModelArtifactStatus | None = None,
         *,
-        collection_id: int | None = None,
+        collection_id: ShortUUID | None = None,
     ) -> ModelArtifact:
         """
         Update model artifact metadata.
@@ -1116,11 +1192,16 @@ class AsyncModelArtifactResource(ModelArtifactResourceBase):
 
         Example:
             >>> dfs = AsyncDataForceClient(
-            ...     api_key="dfs_your_key", organization=1, orbit=1, collection=456
+            ...     api_key="dfs_your_key",
+            ... )
+            ... dfs.setup_config(
+            ...     organization="ReEb5Dw4ojVbhft9tn3BMr",
+            ...     orbit="h2xJWKKcKEdY3ub3Hmhq2g",
+            ...     collection="e3Wy3wMa8gwBodrvcFSB8m"
             ... )
             >>> async def main():
             >>>     model = await dfs.model_artifacts.update(
-            ...         123,
+            ...         "e3Wy3wMa8gwBodrvcFSB8m",
             ...         model_name="Updated Model",
             ...         status=ModelArtifactStatus.UPLOADED
             ...     )
@@ -1139,7 +1220,9 @@ class AsyncModelArtifactResource(ModelArtifactResourceBase):
         )
 
     @validate_collection
-    async def delete(self, model_id: int, *, collection_id: int | None = None) -> None:
+    async def delete(
+        self, model_id: ShortUUID, *, collection_id: ShortUUID | None = None
+    ) -> None:
         """
         Delete model artifact permanently.
 
@@ -1162,10 +1245,15 @@ class AsyncModelArtifactResource(ModelArtifactResourceBase):
 
         Example:
             >>> dfs = AsyncDataForceClient(
-            ...     api_key="dfs_your_key", organization=1, orbit=1, collection=456
+            ...     api_key="dfs_your_key",
+            ... )
+            ... dfs.setup_config(
+            ...     organization="ReEb5Dw4ojVbhft9tn3BMr",
+            ...     orbit="h2xJWKKcKEdY3ub3Hmhq2g",
+            ...     collection="e3Wy3wMa8gwBodrvcFSB8m"
             ... )
             >>> async def main():
-            ...     await dfs.model_artifacts.delete(123)
+            ...     await dfs.model_artifacts.delete("e3Wy3wMa8gwBodrvcFSB8m")
 
         Warning:
             This operation is irreversible. The model file and all metadata

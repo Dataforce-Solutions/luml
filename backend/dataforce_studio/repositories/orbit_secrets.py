@@ -23,7 +23,7 @@ class OrbitSecretRepository(RepositoryBase, CrudMixin):
             return db_secret.to_orbit_secret() if db_secret else None
 
     async def get_orbit_secrets(self, orbit_id: str) -> list[OrbitSecret]:
-        print(f'[OrbitSecretHandler.create_orbit_secret] orbit_id {orbit_id} type {type(orbit_id)}')
+        print(f'[OrbitSecretRepository.get_orbit_secrets] orbit_id {orbit_id} type {type(orbit_id)}')
 
         async with self._get_session() as session:
             db_secrets = await self.get_models_where(

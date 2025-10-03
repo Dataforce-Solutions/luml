@@ -54,8 +54,8 @@ class BaseClient(ABC):
             **self.auth_headers,
         }
 
+    @staticmethod
     def _make_status_error(
-        self,
         err_msg: str,
         *,
         body: object,
@@ -115,7 +115,8 @@ class BaseClient(ABC):
     def put(self, url: str, **kwargs) -> Any:  # noqa: ANN401
         raise NotImplementedError()
 
-    def filter_none(self, data: dict[str, Any]) -> dict[str, Any]:  # noqa: ANN401
+    @staticmethod
+    def filter_none(data: dict[str, Any]) -> dict[str, Any]:  # noqa: ANN401
         return {key: value for key, value in data.items() if value is not None}
 
 

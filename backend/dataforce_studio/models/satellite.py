@@ -1,4 +1,4 @@
-import uuid
+import uuid6
 from datetime import datetime
 from typing import Any
 
@@ -28,8 +28,8 @@ class SatelliteOrm(TimestampMixin, Base):
         ),
     )
 
-    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=False), primary_key=True, default=uuid.uuid4)
-    orbit_id: Mapped[uuid.UUID] = mapped_column(
+    id: Mapped[uuid6.UUID] = mapped_column(UUID(as_uuid=False), primary_key=True, default=uuid6.uuid7)
+    orbit_id: Mapped[uuid6.UUID] = mapped_column(
         UUID(as_uuid=False), ForeignKey("orbits.id", ondelete="CASCADE"), nullable=False
     )
     api_key_hash: Mapped[str] = mapped_column(String, nullable=False, unique=True)
@@ -68,11 +68,11 @@ class SatelliteQueueOrm(TimestampMixin, Base):
     __tablename__ = "satellite_queue"
     __table_args__ = ()
 
-    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=False), primary_key=True, default=uuid.uuid4)
-    satellite_id: Mapped[uuid.UUID] = mapped_column(
+    id: Mapped[uuid6.UUID] = mapped_column(UUID(as_uuid=False), primary_key=True, default=uuid6.uuid7)
+    satellite_id: Mapped[uuid6.UUID] = mapped_column(
         UUID(as_uuid=False), ForeignKey("satellites.id", ondelete="CASCADE"), nullable=False
     )
-    orbit_id: Mapped[uuid.UUID] = mapped_column(
+    orbit_id: Mapped[uuid6.UUID] = mapped_column(
         UUID(as_uuid=False), ForeignKey("orbits.id", ondelete="CASCADE"), nullable=False
     )
     type: Mapped[SatelliteTaskType] = mapped_column(String, nullable=False)

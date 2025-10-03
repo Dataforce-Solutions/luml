@@ -39,7 +39,8 @@ async def create_orbit_secret(
 async def list_orbit_secrets(
     request: Request, organization_id: ShortUUID, orbit_id: ShortUUID
 ) -> list[OrbitSecretOut]:
-    print(f'[orbit_secrets_router.create_orbit_secret] orbit_id {orbit_id} type {type(orbit_id)}')
+    print(f'[orbit_secrets_router.list_orbit_secrets] orbit_id {orbit_id} type {type(orbit_id)}')
+    print(f'[orbit_secrets_router.list_orbit_secrets] organization_id {organization_id} type {type(organization_id)}')
     return await orbit_secret_handler.get_orbit_secrets(
         request.user.id, organization_id, orbit_id
     )

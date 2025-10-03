@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from collections.abc import Coroutine
 from typing import TYPE_CHECKING, Any
 
-from .._types import BucketSecret
+from .._types import BucketSecret, ShortUUID
 from .._utils import find_by_value
 
 if TYPE_CHECKING:
@@ -14,13 +14,13 @@ class BucketSecretResourceBase(ABC):
 
     @abstractmethod
     def get(
-        self, secret_value: int | str
+        self, secret_value: ShortUUID | str
     ) -> BucketSecret | None | Coroutine[Any, Any, BucketSecret | None]:
         raise NotImplementedError()
 
     @abstractmethod
     def _get_by_id(
-        self, secret_id: int
+        self, secret_id: ShortUUID
     ) -> BucketSecret | Coroutine[Any, Any, BucketSecret]:
         raise NotImplementedError()
 
@@ -51,7 +51,7 @@ class BucketSecretResourceBase(ABC):
     @abstractmethod
     def update(
         self,
-        secret_id: int,
+        secret_id: ShortUUID,
         endpoint: str | None = None,
         bucket_name: str | None = None,
         access_key: str | None = None,
@@ -64,7 +64,7 @@ class BucketSecretResourceBase(ABC):
         raise NotImplementedError()
 
     @abstractmethod
-    def delete(self, secret_id: int) -> None | Coroutine[Any, Any, None]:
+    def delete(self, secret_id: ShortUUID) -> None | Coroutine[Any, Any, None]:
         raise NotImplementedError()
 
 
@@ -74,7 +74,7 @@ class BucketSecretResource(BucketSecretResourceBase):
     def __init__(self, client: "DataForceClient") -> None:
         self._client = client
 
-    def get(self, secret_value: int | str) -> BucketSecret | None:
+    def get(self, secret_value: ShortUUID | str) -> BucketSecret | None:
         """
         Get BucketSecret by ID or bucket name.
 
@@ -95,31 +95,32 @@ class BucketSecretResource(BucketSecretResourceBase):
 
         Example:
             >>> dfs = DataForceClient(
-            ...     api_key="dfs_your_key", organization=1, orbit=1, collection=1
+            ...     api_key="dfs_your_key",
+            ...     organization="ReEb5Dw4ojVbhft9tn3BMr",
+            ...     orbit="h2xJWKKcKEdY3ub3Hmhq2g",
+            ...     collection="e3Wy3wMa8gwBodrvcFSB8m"
             ... )
             ... bucket_by_name = dfs.bucket_secrets.get("default-bucket")
-            ... bucket_by_id = dfs.bucket_secrets.get(123)
+            ... bucket_by_id = dfs.bucket_secrets.get("h2xJWKKcKEdY3ub3Hmhq2g")
 
         Example response:
             >>> BucketSecret(
-            ...    id=1,
+            ...    id="h2xJWKKcKEdY3ub3Hmhq2g",
             ...    endpoint='default-endpoint',
             ...    bucket_name='default-bucket',
             ...    secure=None,
             ...    region=None,
             ...    cert_check=None,
-            ...    organization_id=1,
+            ...    organization_id="ReEb5Dw4ojVbhft9tn3BMr",
             ...    created_at='2025-05-21T19:35:17.340408Z',
             ...    updated_at='2025-08-13T22:44:58.035731Z'
             ...)
         """
-        if isinstance(secret_value, int):
+        if isinstance(secret_value, ShortUUID):
             return self._get_by_id(secret_value)
-        if isinstance(secret_value, str):
-            return self._get_by_name(secret_value)
-        return None
+        return self._get_by_name(secret_value)
 
-    def _get_by_id(self, secret_id: int) -> BucketSecret:
+    def _get_by_id(self, secret_id: ShortUUID) -> BucketSecret:
         response = self._client.get(
             f"/organizations/{self._client.organization}/bucket-secrets/{secret_id}"
         )
@@ -137,20 +138,23 @@ class BucketSecretResource(BucketSecretResourceBase):
 
         Example:
             >>> dfs = DataForceClient(
-            ...     api_key="dfs_your_key", organization=1, orbit=1, collection=1
+            ...     api_key="dfs_your_key",
+            ...     organization="ReEb5Dw4ojVbhft9tn3BMr",
+            ...     orbit="h2xJWKKcKEdY3ub3Hmhq2g",
+            ...     collection="e3Wy3wMa8gwBodrvcFSB8m"
             ... )
             >>> secrets = dfs.bucket_secrets.list()
 
         Example response:
             >>> [
             ...     BucketSecret(
-            ...         id=1,
+            ...         id="h2xJWKKcKEdY3ub3Hmhq2g",
             ...         endpoint='default-endpoint',
             ...         bucket_name='default-bucket',
             ...         secure=None,
             ...         region=None,
             ...         cert_check=None,
-            ...         organization_id=1,
+            ...         organization_id="ReEb5Dw4ojVbhft9tn3BMr",
             ...         created_at='2025-06-18T12:44:54.443715Z',
             ...         updated_at=None
             ...     )
@@ -194,7 +198,10 @@ class BucketSecretResource(BucketSecretResourceBase):
 
         Example:
             >>> dfs = DataForceClient(
-            ...     api_key="dfs_your_key", organization=1, orbit=1, collection=1
+            ...     api_key="dfs_your_key",
+            ...     organization="ReEb5Dw4ojVbhft9tn3BMr",
+            ...     orbit="h2xJWKKcKEdY3ub3Hmhq2g",
+            ...     collection="e3Wy3wMa8gwBodrvcFSB8m"
             ... )
             >>> bucket_secret = dfs.bucket_secrets.create(
             ...     endpoint="s3.amazonaws.com",
@@ -207,13 +214,13 @@ class BucketSecretResource(BucketSecretResourceBase):
 
         Response object:
             >>> BucketSecret(
-            ...     id=123,
+            ...     id="h2xJWKKcKEdY3ub3Hmhq2g",
             ...     endpoint="s3.amazonaws.com",
             ...     bucket_name="my-data-bucket",
             ...     secure=True,
             ...     region="us-east-1",
             ...     cert_check=True,
-            ...     organization_id=1,
+            ...     organization_id="ReEb5Dw4ojVbhft9tn3BMr",
             ...     created_at='2025-01-15T10:30:00.123456Z',
             ...     updated_at=None
             ... )
@@ -237,7 +244,7 @@ class BucketSecretResource(BucketSecretResourceBase):
 
     def update(
         self,
-        secret_id: int,
+        secret_id: ShortUUID,
         endpoint: str | None = None,
         bucket_name: str | None = None,
         access_key: str | None = None,
@@ -269,10 +276,13 @@ class BucketSecretResource(BucketSecretResourceBase):
 
         Example:
             >>> dfs = DataForceClient(
-            ...     api_key="dfs_your_key", organization=1, orbit=1, collection=1
+            ...     api_key="dfs_your_key",
+            ...     organization="ReEb5Dw4ojVbhft9tn3BMr",
+            ...     orbit="h2xJWKKcKEdY3ub3Hmhq2g",
+            ...     collection="e3Wy3wMa8gwBodrvcFSB8m"
             ... )
             >>> bucket_secret = dfs.bucket_secrets.update(
-            ...     secret_id=123,
+            ...     secret_id="h2xJWKKcKEdY3ub3Hmhq2g",
             ...     endpoint="s3.amazonaws.com",
             ...     bucket_name="updated-bucket",
             ...     region="us-west-2",
@@ -281,13 +291,13 @@ class BucketSecretResource(BucketSecretResourceBase):
 
         Response object:
             >>> BucketSecret(
-            ...     id=123,
+            ...     id="h2xJWKKcKEdY3ub3Hmhq2g",
             ...     endpoint="s3.amazonaws.com",
             ...     bucket_name="updated-bucket",
             ...     secure=True,
             ...     region="us-west-2",
             ...     cert_check=True,
-            ...     organization_id=1,
+            ...     organization_id="ReEb5Dw4ojVbhft9tn3BMr",
             ...     created_at='2025-01-15T10:30:00.123456Z',
             ...     updated_at='2025-01-15T14:22:30.987654Z'
             ... )
@@ -309,7 +319,7 @@ class BucketSecretResource(BucketSecretResourceBase):
         )
         return BucketSecret.model_validate(response)
 
-    def delete(self, secret_id: int) -> None:
+    def delete(self, secret_id: ShortUUID) -> None:
         """
         Delete bucket secret permanently.
 
@@ -325,9 +335,12 @@ class BucketSecretResource(BucketSecretResourceBase):
 
         Example:
             >>> dfs = DataForceClient(
-            ...     api_key="dfs_your_key", organization=1, orbit=1, collection=1
+            ...     api_key="dfs_your_key",
+            ...     organization="ReEb5Dw4ojVbhft9tn3BMr",
+            ...     orbit="h2xJWKKcKEdY3ub3Hmhq2g",
+            ...     collection="e3Wy3wMa8gwBodrvcFSB8m"
             ... )
-            >>> dfs.bucket_secrets.delete(123)
+            >>> dfs.bucket_secrets.delete("h2xJWKKcKEdY3ub3Hmhq2g")
 
         Warning:
             This operation is irreversible. Orbits using this bucket secret
@@ -345,7 +358,7 @@ class AsyncBucketSecretResource(BucketSecretResourceBase):
     def __init__(self, client: "AsyncDataForceClient") -> None:
         self._client = client
 
-    async def get(self, secret_value: int | str) -> BucketSecret | None:
+    async def get(self, secret_value: ShortUUID | str) -> BucketSecret | None:
         """
         Get BucketSecret by ID or bucket name.
 
@@ -366,32 +379,37 @@ class AsyncBucketSecretResource(BucketSecretResourceBase):
 
         Example:
             >>> dfs = AsyncDataForceClient(
-            ...     api_key="dfs_your_key", organization=1, orbit=1, collection=1
+            ...     api_key="dfs_your_key",
+            ... )
+            ... dfs.setup_config(
+            ...     organization="ReEb5Dw4ojVbhft9tn3BMr",
+            ...     orbit="h2xJWKKcKEdY3ub3Hmhq2g",
+            ...     collection="e3Wy3wMa8gwBodrvcFSB8m"
             ... )
             >>> async def main():
             ...     bucket_by_name = await dfs.bucket_secrets.get("default-bucket")
-            ...     bucket_by_id = await dfs.bucket_secrets.get(123)
+            ...     bucket_by_id = await dfs.bucket_secrets.get(
+            ...         "h2xJWKKcKEdY3ub3Hmhq2g"
+            ...     )
 
         Example response:
             >>> BucketSecret(
-            ...         id=1,
+            ...         id="h2xJWKKcKEdY3ub3Hmhq2g",
             ...         endpoint='default-endpoint',
             ...         bucket_name='default-bucket',
             ...         secure=None,
             ...         region=None,
             ...         cert_check=None,
-            ...         organization_id=1,
+            ...         organization_id="ReEb5Dw4ojVbhft9tn3BMr",
             ...         created_at='2025-05-21T19:35:17.340408Z',
             ...         updated_at='2025-08-13T22:44:58.035731Z'
             ... )
         """
-        if isinstance(secret_value, int):
+        if isinstance(secret_value, ShortUUID):
             return await self._get_by_id(secret_value)
-        if isinstance(secret_value, str):
-            return await self._get_by_name(secret_value)
-        return None
+        return await self._get_by_name(secret_value)
 
-    async def _get_by_id(self, secret_id: int) -> BucketSecret:
+    async def _get_by_id(self, secret_id: ShortUUID) -> BucketSecret:
         response = await self._client.get(
             f"/organizations/{self._client.organization}/bucket-secrets/{secret_id}"
         )
@@ -409,7 +427,12 @@ class AsyncBucketSecretResource(BucketSecretResourceBase):
 
         Example:
             >>> dfs = AsyncDataForceClient(
-            ...     api_key="dfs_your_key", organization=1, orbit=1, collection=1
+            ...     api_key="dfs_your_key",
+            ... )
+            ... dfs.setup_config(
+            ...     organization="ReEb5Dw4ojVbhft9tn3BMr",
+            ...     orbit="h2xJWKKcKEdY3ub3Hmhq2g",
+            ...     collection="e3Wy3wMa8gwBodrvcFSB8m"
             ... )
             >>> async def main():
             ...     secrets = await dfs.bucket_secrets.list()
@@ -417,13 +440,13 @@ class AsyncBucketSecretResource(BucketSecretResourceBase):
         Example response:
             >>> [
             ...     BucketSecret(
-            ...         id=1,
+            ...         id="h2xJWKKcKEdY3ub3Hmhq2g",
             ...         endpoint='default-endpoint',
             ...         bucket_name='default-bucket',
             ...         secure=None,
             ...         region=None,
             ...         cert_check=None,
-            ...         organization_id=1,
+            ...         organization_id="ReEb5Dw4ojVbhft9tn3BMr",
             ...         created_at='2025-06-18T12:44:54.443715Z',
             ...         updated_at=None
             ...     )
@@ -467,7 +490,12 @@ class AsyncBucketSecretResource(BucketSecretResourceBase):
 
         Example:
             >>> dfs = AsyncDataForceClient(
-            ...     api_key="dfs_your_key", organization=1, orbit=1, collection=1
+            ...     api_key="dfs_your_key",
+            ... )
+            ... dfs.setup_config(
+            ...     organization="ReEb5Dw4ojVbhft9tn3BMr",
+            ...     orbit="h2xJWKKcKEdY3ub3Hmhq2g",
+            ...     collection="e3Wy3wMa8gwBodrvcFSB8m"
             ... )
             >>> async def main():
             ...     bucket_secret = await dfs.bucket_secrets.create(
@@ -481,13 +509,13 @@ class AsyncBucketSecretResource(BucketSecretResourceBase):
 
         Response object:
             >>> BucketSecret(
-            ...     id=123,
+            ...     id="h2xJWKKcKEdY3ub3Hmhq2g",
             ...     endpoint="s3.amazonaws.com",
             ...     bucket_name="my-data-bucket",
             ...     secure=True,
             ...     region="us-east-1",
             ...     cert_check=True,
-            ...     organization_id=1,
+            ...     organization_id="ReEb5Dw4ojVbhft9tn3BMr",
             ...     created_at='2025-01-15T10:30:00.123456Z',
             ...     updated_at=None
             ... )
@@ -511,7 +539,7 @@ class AsyncBucketSecretResource(BucketSecretResourceBase):
 
     async def update(
         self,
-        secret_id: int,
+        secret_id: ShortUUID,
         endpoint: str | None = None,
         bucket_name: str | None = None,
         access_key: str | None = None,
@@ -543,11 +571,16 @@ class AsyncBucketSecretResource(BucketSecretResourceBase):
 
         Example:
             >>> dfs = AsyncDataForceClient(
-            ...     api_key="dfs_your_key", organization=1, orbit=1, collection=1
+            ...     api_key="dfs_your_key",
+            ... )
+            ... dfs.setup_config(
+            ...     organization="ReEb5Dw4ojVbhft9tn3BMr",
+            ...     orbit="h2xJWKKcKEdY3ub3Hmhq2g",
+            ...     collection="e3Wy3wMa8gwBodrvcFSB8m"
             ... )
             >>> async def main():
             ...     bucket_secret = await dfs.bucket_secrets.update(
-            ...         secret_id=123,
+            ...         secret_id="h2xJWKKcKEdY3ub3Hmhq2g",
             ...         endpoint="s3.amazonaws.com",
             ...         bucket_name="updated-bucket",
             ...         region="us-west-2",
@@ -556,13 +589,13 @@ class AsyncBucketSecretResource(BucketSecretResourceBase):
 
         Response object:
             >>> BucketSecret(
-            ...     id=123,
+            ...     id="h2xJWKKcKEdY3ub3Hmhq2g",
             ...     endpoint="s3.amazonaws.com",
             ...     bucket_name="updated-bucket",
             ...     secure=True,
             ...     region="us-west-2",
             ...     cert_check=True,
-            ...     organization_id=1,
+            ...     organization_id="ReEb5Dw4ojVbhft9tn3BMr",
             ...     created_at='2025-01-15T10:30:00.123456Z',
             ...     updated_at='2025-01-15T14:22:30.987654Z'
             ... )
@@ -584,7 +617,7 @@ class AsyncBucketSecretResource(BucketSecretResourceBase):
         )
         return BucketSecret.model_validate(response)
 
-    async def delete(self, secret_id: int) -> None:
+    async def delete(self, secret_id: ShortUUID) -> None:
         """
         Delete bucket secret permanently.
 
@@ -600,10 +633,15 @@ class AsyncBucketSecretResource(BucketSecretResourceBase):
 
         Example:
             >>> dfs = AsyncDataForceClient(
-            ...     api_key="dfs_your_key", organization=1, orbit=1, collection=1
+            ...     api_key="dfs_your_key",
+            ... )
+            ... dfs.setup_config(
+            ...     organization="ReEb5Dw4ojVbhft9tn3BMr",
+            ...     orbit="h2xJWKKcKEdY3ub3Hmhq2g",
+            ...     collection="e3Wy3wMa8gwBodrvcFSB8m"
             ... )
             >>> async def main():
-            ...     await dfs.bucket_secrets.delete(123)
+            ...     await dfs.bucket_secrets.delete("h2xJWKKcKEdY3ub3Hmhq2g")
 
         Warning:
             This operation is irreversible. Orbits using this bucket secret

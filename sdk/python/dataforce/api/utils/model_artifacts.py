@@ -3,7 +3,7 @@ import json
 import os
 import tarfile
 
-from dataforce.api._types import ModelDetails
+from .._types import ModelDetails
 
 
 class ModelFileHandler:

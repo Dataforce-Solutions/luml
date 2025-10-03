@@ -4,7 +4,7 @@ from threading import Lock
 
 import httpx
 
-from dataforce.api._exceptions import FileDownloadError, FileUploadError
+from .._exceptions import FileDownloadError, FileUploadError
 
 
 class FileHandler:
@@ -152,8 +152,8 @@ class FileHandler:
 
         return result
 
+    @staticmethod
     def _upload_single_part(
-        self,
         part: dict,
         file_path: str,
         progress_lock: Lock,

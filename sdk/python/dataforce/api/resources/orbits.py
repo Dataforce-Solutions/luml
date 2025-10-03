@@ -3,7 +3,7 @@ from collections.abc import Coroutine
 from typing import TYPE_CHECKING, Any
 
 from .. import DataForceAPIError
-from .._types import Orbit
+from .._types import Orbit, ShortUUID
 from .._utils import find_by_value
 
 if TYPE_CHECKING:
@@ -15,7 +15,7 @@ class OrbitResourceBase(ABC):
 
     @abstractmethod
     def get(
-        self, orbit_value: int | str | None = None
+        self, orbit_value: ShortUUID | str | None = None
     ) -> Orbit | None | Coroutine[Any, Any, Orbit | None]:
         raise NotImplementedError()
 
@@ -35,18 +35,18 @@ class OrbitResourceBase(ABC):
 
     @abstractmethod
     def create(
-        self, name: str, bucket_secret_id: int
+        self, name: str, bucket_secret_id: ShortUUID
     ) -> Orbit | Coroutine[Any, Any, Orbit]:
         raise NotImplementedError()
 
     @abstractmethod
     def update(
-        self, name: str | None = None, bucket_secret_id: int | None = None
+        self, name: str | None = None, bucket_secret_id: ShortUUID | None = None
     ) -> Orbit | Coroutine[Any, Any, Orbit]:
         raise NotImplementedError()
 
     @abstractmethod
-    def delete(self, orbit_id: int) -> None | Coroutine[Any, Any, None]:
+    def delete(self, orbit_id: ShortUUID) -> None | Coroutine[Any, Any, None]:
         raise NotImplementedError()
 
 
@@ -56,7 +56,7 @@ class OrbitResource(OrbitResourceBase):
     def __init__(self, client: "DataForceClient") -> None:
         self._client = client
 
-    def get(self, orbit_value: int | str | None = None) -> Orbit | None:
+    def get(self, orbit_value: ShortUUID | str | None = None) -> Orbit | None:
         """
         Get orbit by ID or name.
 
@@ -77,28 +77,29 @@ class OrbitResource(OrbitResourceBase):
 
         Example:
             >>> dfs = DataForceClient(
-            ...     api_key="dfs_your_key", organization=1, orbit=1215, collection=1
+            ...     api_key="dfs_your_key",
+            ...     organization="ReEb5Dw4ojVbhft9tn3BMr",
+            ...     orbit="h2xJWKKcKEdY3ub3Hmhq2g",
+            ...     collection="e3Wy3wMa8gwBodrvcFSB8m"
             ... )
             ... orbit_by_name = dfs.orbits.get("Default Orbit")
-            ... orbit_by_id = dfs.orbits.get(1215)
+            ... orbit_by_id = dfs.orbits.get("h2xJWKKcKEdY3ub3Hmhq2g")
 
         Example response:
             >>> Orbit(
-            ...    id=1215,
+            ...    id="h2xJWKKcKEdY3ub3Hmhq2g",
             ...    name="Default Orbit",
-            ...    organization_id=1,
-            ...    bucket_secret_id=1292,
+            ...    organization_id="ReEb5Dw4ojVbhft9tn3BMr",
+            ...    bucket_secret_id="h2xJWKKcKEdY3ub3Hmhq2g",
             ...    total_members=2,
             ...    total_collections=9,
             ...    created_at='2025-05-21T19:35:17.340408Z',
             ...    updated_at='2025-08-13T22:44:58.035731Z'
             ...)
         """
-        if isinstance(orbit_value, int) or orbit_value is None:
+        if isinstance(orbit_value, ShortUUID) or orbit_value is None:
             return self._get_by_id()
-        if isinstance(orbit_value, str):
-            return self._get_by_name(orbit_value)
-        return None
+        return self._get_by_name(orbit_value)
 
     def _get_by_id(self) -> Orbit:
         response = self._client.get(
@@ -118,17 +119,20 @@ class OrbitResource(OrbitResourceBase):
 
         Example:
             >>> dfs = DataForceClient(
-            ...     api_key="dfs_your_key", organization=1, orbit=1215, collection=1
+            ...     api_key="dfs_your_key",
+            ...     organization="ReEb5Dw4ojVbhft9tn3BMr",
+            ...     orbit="h2xJWKKcKEdY3ub3Hmhq2g",
+            ...     collection="e3Wy3wMa8gwBodrvcFSB8m"
             ... )
             >>> orgs = dfs.orbits.list()
 
         Example response:
             >>> [
             ...     Orbit(
-            ...         id=1215,
+            ...         id="h2xJWKKcKEdY3ub3Hmhq2g",
             ...         name="Default Orbit",
-            ...         organization_id=1,
-            ...         bucket_secret_id=1292,
+            ...         organization_id="ReEb5Dw4ojVbhft9tn3BMr",
+            ...         bucket_secret_id="h2xJWKKcKEdY3ub3Hmhq2g",
             ...         total_members=2,
             ...         total_collections=9,
             ...         created_at='2025-05-21T19:35:17.340408Z',
@@ -143,7 +147,7 @@ class OrbitResource(OrbitResourceBase):
             return []
         return [Orbit.model_validate(orbit) for orbit in response]
 
-    def create(self, name: str, bucket_secret_id: int) -> Orbit:
+    def create(self, name: str, bucket_secret_id: ShortUUID) -> Orbit:
         """Create new orbit in the default organization.
 
         Args:
@@ -156,19 +160,22 @@ class OrbitResource(OrbitResourceBase):
 
         Example:
             >>> dfs = DataForceClient(
-            ...     api_key="dfs_your_key", organization=1, orbit=1215, collection=1
+            ...     api_key="dfs_your_key",
+            ...     organization="ReEb5Dw4ojVbhft9tn3BMr",
+            ...     orbit="h2xJWKKcKEdY3ub3Hmhq2g",
+            ...     collection="e3Wy3wMa8gwBodrvcFSB8m"
             ... )
             >>> orbit = dfs.orbits.create(
             ...     name="ML Models",
-            ...     bucket_secret_id=123
+            ...     bucket_secret_id="h2xJWKKcKEdY3ub3Hmhq2g"
             ... )
 
         Response object:
             >>> Orbit(
-            ...    id=1215,
+            ...    id="h2xJWKKcKEdY3ub3Hmhq2g",
             ...    name="Default Orbit",
-            ...    organization_id=1,
-            ...    bucket_secret_id=1292,
+            ...    organization_id="ReEb5Dw4ojVbhft9tn3BMr",
+            ...    bucket_secret_id="h2xJWKKcKEdY3ub3Hmhq2g",
             ...    total_members=2,
             ...    total_collections=9,
             ...    created_at='2025-05-21T19:35:17.340408Z',
@@ -183,7 +190,7 @@ class OrbitResource(OrbitResourceBase):
         return Orbit.model_validate(response)
 
     def update(
-        self, name: str | None = None, bucket_secret_id: int | None = None
+        self, name: str | None = None, bucket_secret_id: ShortUUID | None = None
     ) -> Orbit:
         """
         Update default orbit configuration.
@@ -201,21 +208,24 @@ class OrbitResource(OrbitResourceBase):
 
         Example:
             >>> dfs = DataForceClient(
-            ...     api_key="dfs_your_key", organization=1, orbit=1215, collection=1
+            ...     api_key="dfs_your_key",
+            ...     organization="ReEb5Dw4ojVbhft9tn3BMr",
+            ...     orbit="h2xJWKKcKEdY3ub3Hmhq2g",
+            ...     collection="e3Wy3wMa8gwBodrvcFSB8m"
             ... )
             >>> orbit = dfs.orbits.update(name="New Orbit Name")
 
             >>> orbit = dfs.orbits.update(
             ...     name="New Orbit Name",
-            ...     bucket_secret_id=456
+            ...     bucket_secret_id="h2xJWKKcKEdY3ub3Hmhq2g"
             ... )
 
             Response object:
                 >>> Orbit(
-                ...    id=1215,
+                ...    id="h2xJWKKcKEdY3ub3Hmhq2g",
                 ...    name="Default Orbit",
-                ...    organization_id=1,
-                ...    bucket_secret_id=1292,
+                ...    organization_id="ReEb5Dw4ojVbhft9tn3BMr",
+                ...    bucket_secret_id="h2xJWKKcKEdY3ub3Hmhq2g",
                 ...    total_members=2,
                 ...    total_collections=9,
                 ...    created_at='2025-05-21T19:35:17.340408Z',
@@ -236,7 +246,7 @@ class OrbitResource(OrbitResourceBase):
         )
         return Orbit.model_validate(response)
 
-    def delete(self, orbit_id: int) -> None:
+    def delete(self, orbit_id: ShortUUID) -> None:
         """
         Delete orbit by ID.
 
@@ -251,9 +261,12 @@ class OrbitResource(OrbitResourceBase):
 
         Example:
             >>> dfs = DataForceClient(
-            ...     api_key="dfs_your_key", organization=1, orbit=1, collection=1
+            ...     api_key="dfs_your_key",
+            ...     organization="ReEb5Dw4ojVbhft9tn3BMr",
+            ...     orbit="h2xJWKKcKEdY3ub3Hmhq2g",
+            ...     collection="e3Wy3wMa8gwBodrvcFSB8m"
             ... )
-            ... dfs.orbits.delete(3)
+            ... dfs.orbits.delete("h2xJWKKcKEdY3ub3Hmhq2g")
 
         Warning:
             This operation is irreversible. All collections, models, and data
@@ -275,7 +288,7 @@ class AsyncOrbitResource(OrbitResourceBase):
     def __init__(self, client: "AsyncDataForceClient") -> None:
         self._client = client
 
-    async def get(self, orbit_value: int | str | None = None) -> Orbit | None:
+    async def get(self, orbit_value: ShortUUID | str | None = None) -> Orbit | None:
         """
         Get orbit by ID or name.
 
@@ -296,29 +309,32 @@ class AsyncOrbitResource(OrbitResourceBase):
 
         Example:
             >>> dfs = AsyncDataForceClient(
-            ...     api_key="dfs_your_key", organization=1, orbit=1215, collection=1
+            ...     api_key="dfs_your_key",
+            ... )
+            ... dfs.setup_config(
+            ...     organization="ReEb5Dw4ojVbhft9tn3BMr",
+            ...     orbit="h2xJWKKcKEdY3ub3Hmhq2g",
+            ...     collection="e3Wy3wMa8gwBodrvcFSB8m"
             ... )
             >>> async def main():
             ...     orbit_by_name = await dfs.orbits.get("Default Orbit")
-            ...     orbit_by_id = await dfs.orbits.get(1215)
+            ...     orbit_by_id = await dfs.orbits.get("h2xJWKKcKEdY3ub3Hmhq2g")
 
         Example response:
             >>> Orbit(
-            ...    id=1215,
+            ...    id="h2xJWKKcKEdY3ub3Hmhq2g",
             ...    name="Default Orbit",
-            ...    organization_id=1,
-            ...    bucket_secret_id=1292,
+            ...    organization_id="ReEb5Dw4ojVbhft9tn3BMr",
+            ...    bucket_secret_id="h2xJWKKcKEdY3ub3Hmhq2g",
             ...    total_members=2,
             ...    total_collections=9,
             ...    created_at='2025-05-21T19:35:17.340408Z',
             ...    updated_at='2025-08-13T22:44:58.035731Z'
             ...)
         """
-        if isinstance(orbit_value, int) or orbit_value is None:
+        if isinstance(orbit_value, ShortUUID) or orbit_value is None:
             return await self._get_by_id()
-        if isinstance(orbit_value, str):
-            return await self._get_by_name(orbit_value)
-        return None
+        return await self._get_by_name(orbit_value)
 
     async def _get_by_id(self) -> Orbit:
         response = await self._client.get(
@@ -338,7 +354,12 @@ class AsyncOrbitResource(OrbitResourceBase):
 
         Example:
             >>> dfs = AsyncDataForceClient(
-            ...     api_key="dfs_your_key", organization=1, orbit=1215, collection=1
+            ...     api_key="dfs_your_key",
+            ... )
+            ... dfs.setup_config(
+            ...     organization="ReEb5Dw4ojVbhft9tn3BMr",
+            ...     orbit="h2xJWKKcKEdY3ub3Hmhq2g",
+            ...     collection="e3Wy3wMa8gwBodrvcFSB8m"
             ... )
             >>> async def main():
             ...     orgs = await dfs.orbits.list()
@@ -346,10 +367,10 @@ class AsyncOrbitResource(OrbitResourceBase):
         Example response:
             >>> [
             ...     Orbit(
-            ...         id=1215,
+            ...         id="h2xJWKKcKEdY3ub3Hmhq2g",
             ...         name="Default Orbit",
-            ...         organization_id=1,
-            ...         bucket_secret_id=1292,
+            ...         organization_id="ReEb5Dw4ojVbhft9tn3BMr",
+            ...         bucket_secret_id="h2xJWKKcKEdY3ub3Hmhq2g",
             ...         total_members=2,
             ...         total_collections=9,
             ...         created_at='2025-05-21T19:35:17.340408Z',
@@ -364,7 +385,7 @@ class AsyncOrbitResource(OrbitResourceBase):
             return []
         return [Orbit.model_validate(orbit) for orbit in response]
 
-    async def create(self, name: str, bucket_secret_id: int) -> Orbit:
+    async def create(self, name: str, bucket_secret_id: ShortUUID) -> Orbit:
         """Create new orbit in the default organization.
 
         Args:
@@ -377,20 +398,25 @@ class AsyncOrbitResource(OrbitResourceBase):
 
         Example:
             >>> dfs = AsyncDataForceClient(
-            ...     api_key="dfs_your_key", organization=1, orbit=1215, collection=1
+            ...     api_key="dfs_your_key",
+            ... )
+            ... dfs.setup_config(
+            ...     organization="ReEb5Dw4ojVbhft9tn3BMr",
+            ...     orbit="h2xJWKKcKEdY3ub3Hmhq2g",
+            ...     collection="e3Wy3wMa8gwBodrvcFSB8m"
             ... )
             >>> async def main():
             ...     orbit = await dfs.orbits.create(
             ...         name="ML Models",
-            ...         bucket_secret_id=123
+            ...         bucket_secret_id="h2xJWKKcKEdY3ub3Hmhq2g"
             ...     )
 
         Response object:
             >>> Orbit(
-            ...    id=1215,
+            ...    id="h2xJWKKcKEdY3ub3Hmhq2g",
             ...    name="Default Orbit",
-            ...    organization_id=1,
-            ...    bucket_secret_id=1292,
+            ...    organization_id="ReEb5Dw4ojVbhft9tn3BMr",
+            ...    bucket_secret_id="h2xJWKKcKEdY3ub3Hmhq2g",
             ...    total_members=2,
             ...    total_collections=9,
             ...    created_at='2025-05-21T19:35:17.340408Z',
@@ -405,7 +431,7 @@ class AsyncOrbitResource(OrbitResourceBase):
         return Orbit.model_validate(response)
 
     async def update(
-        self, name: str | None = None, bucket_secret_id: int | None = None
+        self, name: str | None = None, bucket_secret_id: ShortUUID | None = None
     ) -> Orbit:
         """
         Update default orbit configuration.
@@ -423,22 +449,27 @@ class AsyncOrbitResource(OrbitResourceBase):
 
         Example:
             >>> dfs = AsyncDataForceClient(
-            ...     api_key="dfs_your_key", organization=1, orbit=1215, collection=1
+            ...     api_key="dfs_your_key",
+            ... )
+            ... dfs.setup_config(
+            ...     organization="ReEb5Dw4ojVbhft9tn3BMr",
+            ...     orbit="h2xJWKKcKEdY3ub3Hmhq2g",
+            ...     collection="e3Wy3wMa8gwBodrvcFSB8m"
             ... )
             >>> async def main():
             ...     orbit = await dfs.orbits.update(name="New Orbit Name")
             ...
             ...     orbit = await dfs.orbits.update(
             ...         name="New Orbit Name",
-            ...         bucket_secret_id=456
+            ...         bucket_secret_id="h2xJWKKcKEdY3ub3Hmhq2g"
             ...     )
 
             Response object:
                 >>> Orbit(
-                ...    id=1215,
+                ...    id="h2xJWKKcKEdY3ub3Hmhq2g",
                 ...    name="Default Orbit",
-                ...    organization_id=1,
-                ...    bucket_secret_id=1292,
+                ...    organization_id="ReEb5Dw4ojVbhft9tn3BMr",
+                ...    bucket_secret_id="h2xJWKKcKEdY3ub3Hmhq2g",
                 ...    total_members=2,
                 ...    total_collections=9,
                 ...    created_at='2025-05-21T19:35:17.340408Z',
@@ -459,7 +490,7 @@ class AsyncOrbitResource(OrbitResourceBase):
         )
         return Orbit.model_validate(response)
 
-    async def delete(self, orbit_id: int) -> None:
+    async def delete(self, orbit_id: ShortUUID) -> None:
         """
         Delete orbit by ID.
 
@@ -474,10 +505,15 @@ class AsyncOrbitResource(OrbitResourceBase):
 
         Example:
             >>> dfs = AsyncDataForceClient(
-            ...     api_key="dfs_your_key", organization=1, orbit=1215, collection=1
+            ...     api_key="dfs_your_key",
+            ... )
+            ... dfs.setup_config(
+            ...     organization="ReEb5Dw4ojVbhft9tn3BMr",
+            ...     orbit="h2xJWKKcKEdY3ub3Hmhq2g",
+            ...     collection="e3Wy3wMa8gwBodrvcFSB8m"
             ... )
             >>> async def main():
-            ...     await dfs.orbits.delete(3)
+            ...     await dfs.orbits.delete("X9ucrDykDxdqzbrLsqWUVu")
 
         Warning:
             This operation is irreversible. All collections, models, and data

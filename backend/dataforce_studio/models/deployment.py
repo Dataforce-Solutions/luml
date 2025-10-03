@@ -1,4 +1,4 @@
-import uuid
+import uuid6
 
 from sqlalchemy import UUID, CheckConstraint, ForeignKey, String, select
 from sqlalchemy.dialects import postgresql
@@ -19,12 +19,12 @@ class DeploymentOrm(TimestampMixin, Base):
         ),
     )
 
-    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=False), primary_key=True, default=uuid.uuid4)
-    orbit_id: Mapped[uuid.UUID] = mapped_column(
+    id: Mapped[uuid6.UUID] = mapped_column(UUID(as_uuid=False), primary_key=True, default=uuid6.uuid7)
+    orbit_id: Mapped[uuid6.UUID] = mapped_column(
         UUID(as_uuid=False), ForeignKey("orbits.id", ondelete="CASCADE"), nullable=False
     )
     name: Mapped[str] = mapped_column(String, nullable=False)
-    satellite_id: Mapped[uuid.UUID] = mapped_column(
+    satellite_id: Mapped[uuid6.UUID] = mapped_column(
         UUID(as_uuid=False), ForeignKey("satellites.id", ondelete="CASCADE"), nullable=False
     )
     satellite_name: Mapped[str] = column_property(
@@ -32,7 +32,7 @@ class DeploymentOrm(TimestampMixin, Base):
         .where(SatelliteOrm.id == satellite_id)
         .scalar_subquery()
     )
-    model_id: Mapped[uuid.UUID] = mapped_column(
+    model_id: Mapped[uuid6.UUID] = mapped_column(
         UUID(as_uuid=False), ForeignKey("model_artifacts.id", ondelete="RESTRICT"), nullable=False
     )
     model_artifact_name: Mapped[str] = column_property(
@@ -40,7 +40,7 @@ class DeploymentOrm(TimestampMixin, Base):
         .where(ModelArtifactOrm.id == model_id)
         .scalar_subquery()
     )
-    collection_id: Mapped[uuid.UUID] = column_property(
+    collection_id: Mapped[uuid6.UUID] = column_property(
         select(ModelArtifactOrm.collection_id)
         .where(ModelArtifactOrm.id == model_id)
         .scalar_subquery()
@@ -52,10 +52,10 @@ class DeploymentOrm(TimestampMixin, Base):
         String, nullable=False, default="pending", server_default="pending"
     )
     description: Mapped[str | None] = mapped_column(String, nullable=True)
-    dynamic_attributes_secrets: Mapped[dict[str, uuid.UUID]] = mapped_column(
+    dynamic_attributes_secrets: Mapped[dict[str, uuid6.UUID]] = mapped_column(
         postgresql.JSONB, nullable=False, default=dict, server_default="{}"
     )
-    env_variables_secrets: Mapped[dict[str, uuid.UUID]] = mapped_column(
+    env_variables_secrets: Mapped[dict[str, uuid6.UUID]] = mapped_column(
         postgresql.JSONB, nullable=False, default=dict, server_default="{}"
     )
     env_variables: Mapped[dict[str, str]] = mapped_column(
