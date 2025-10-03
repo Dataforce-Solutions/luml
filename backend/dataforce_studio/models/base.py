@@ -9,7 +9,6 @@ class Base(DeclarativeBase):
     pass
 
 
-# TODO Конечно лучше чтобы у нас и created at и uuid в одном месте создавались
 class TimestampMixin:
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),

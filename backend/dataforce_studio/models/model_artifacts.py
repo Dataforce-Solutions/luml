@@ -1,6 +1,6 @@
-import uuid6
 from typing import Any
 
+import uuid6
 from sqlalchemy import UUID, BigInteger, ForeignKey, String
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -12,9 +12,13 @@ from dataforce_studio.schemas import ModelArtifact, ModelArtifactStatus
 class ModelArtifactOrm(TimestampMixin, Base):
     __tablename__ = "model_artifacts"
 
-    id: Mapped[uuid6.UUID] = mapped_column(UUID(as_uuid=False), primary_key=True, default=uuid6.uuid7)
+    id: Mapped[uuid6.UUID] = mapped_column(
+        UUID(as_uuid=False), primary_key=True, default=uuid6.uuid7
+    )
     collection_id: Mapped[uuid6.UUID] = mapped_column(
-        UUID(as_uuid=False), ForeignKey("collections.id", ondelete="CASCADE"), nullable=False
+        UUID(as_uuid=False),
+        ForeignKey("collections.id", ondelete="CASCADE"),
+        nullable=False,
     )
     file_name: Mapped[str] = mapped_column(String, nullable=False)
     model_name: Mapped[str] = mapped_column(String, nullable=False)

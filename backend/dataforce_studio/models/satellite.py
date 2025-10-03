@@ -1,7 +1,7 @@
-import uuid6
 from datetime import datetime
 from typing import Any
 
+import uuid6
 from sqlalchemy import UUID, Boolean, CheckConstraint, ForeignKey, String
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.dialects.postgresql.json import JSONB
@@ -28,7 +28,9 @@ class SatelliteOrm(TimestampMixin, Base):
         ),
     )
 
-    id: Mapped[uuid6.UUID] = mapped_column(UUID(as_uuid=False), primary_key=True, default=uuid6.uuid7)
+    id: Mapped[uuid6.UUID] = mapped_column(
+        UUID(as_uuid=False), primary_key=True, default=uuid6.uuid7
+    )
     orbit_id: Mapped[uuid6.UUID] = mapped_column(
         UUID(as_uuid=False), ForeignKey("orbits.id", ondelete="CASCADE"), nullable=False
     )
@@ -68,9 +70,13 @@ class SatelliteQueueOrm(TimestampMixin, Base):
     __tablename__ = "satellite_queue"
     __table_args__ = ()
 
-    id: Mapped[uuid6.UUID] = mapped_column(UUID(as_uuid=False), primary_key=True, default=uuid6.uuid7)
+    id: Mapped[uuid6.UUID] = mapped_column(
+        UUID(as_uuid=False), primary_key=True, default=uuid6.uuid7
+    )
     satellite_id: Mapped[uuid6.UUID] = mapped_column(
-        UUID(as_uuid=False), ForeignKey("satellites.id", ondelete="CASCADE"), nullable=False
+        UUID(as_uuid=False),
+        ForeignKey("satellites.id", ondelete="CASCADE"),
+        nullable=False,
     )
     orbit_id: Mapped[uuid6.UUID] = mapped_column(
         UUID(as_uuid=False), ForeignKey("orbits.id", ondelete="CASCADE"), nullable=False

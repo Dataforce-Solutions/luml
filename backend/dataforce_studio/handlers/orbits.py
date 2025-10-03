@@ -73,9 +73,7 @@ class OrbitHandler:
             )
         return orbits
 
-    async def _check_organization_orbits_limit(
-        self, organization_id: str
-    ) -> None:
+    async def _check_organization_orbits_limit(self, organization_id: str) -> None:
         organization = await self.__user_repository.get_organization_details(
             organization_id
         )

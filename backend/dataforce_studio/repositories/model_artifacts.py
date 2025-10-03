@@ -58,9 +58,7 @@ class ModelArtifactRepository(RepositoryBase, CrudMixin):
             db_versions = result.scalars().all()
             return [v.to_model_artifact() for v in db_versions]
 
-    async def get_model_artifact(
-        self, model_artifact_id: str
-    ) -> ModelArtifact | None:
+    async def get_model_artifact(self, model_artifact_id: str) -> ModelArtifact | None:
         async with self._get_session() as session:
             db_model = await self.get_model(
                 session, ModelArtifactOrm, model_artifact_id
@@ -84,9 +82,7 @@ class ModelArtifactRepository(RepositoryBase, CrudMixin):
             )
             return db_model.to_model_artifact() if db_model else None
 
-    async def get_collection_model_artifacts_count(
-        self, collection_id: str
-    ) -> int:
+    async def get_collection_model_artifacts_count(self, collection_id: str) -> int:
         async with self._get_session() as session:
             result = await session.execute(
                 select(func.count())

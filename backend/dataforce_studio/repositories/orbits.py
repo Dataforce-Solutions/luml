@@ -124,9 +124,7 @@ class OrbitRepository(RepositoryBase, CrudMixin):
 
             return await self.get_orbit(str(db_orbit.id), organization_id)
 
-    async def update_orbit(
-        self, orbit_id: str, orbit: OrbitUpdate
-    ) -> Orbit | None:
+    async def update_orbit(self, orbit_id: str, orbit: OrbitUpdate) -> Orbit | None:
         orbit.id = orbit_id
 
         async with self._get_session() as session:
@@ -207,9 +205,7 @@ class OrbitRepository(RepositoryBase, CrudMixin):
                 session, OrbitMembersOrm, OrbitMembersOrm.orbit_id == orbit_id
             )
 
-    async def get_orbit_member_role(
-        self, orbit_id: str, user_id: str
-    ) -> str | None:
+    async def get_orbit_member_role(self, orbit_id: str, user_id: str) -> str | None:
         member = await self.get_orbit_member_where(
             OrbitMembersOrm.orbit_id == orbit_id, OrbitMembersOrm.user_id == user_id
         )

@@ -118,9 +118,7 @@ class OrganizationHandler:
 
         return organization_details
 
-    async def delete_organization(
-        self, user_id: str, organization_id: str
-    ) -> None:
+    async def delete_organization(self, user_id: str, organization_id: str) -> None:
         await self.__permissions_handler.check_organization_permission(
             organization_id,
             user_id,
@@ -141,9 +139,7 @@ class OrganizationHandler:
 
         return await self.__user_repository.delete_organization(organization_id)
 
-    async def leave_from_organization(
-        self, user_id: str, organization_id: str
-    ) -> None:
+    async def leave_from_organization(self, user_id: str, organization_id: str) -> None:
         await self.__permissions_handler.check_organization_permission(
             organization_id,
             user_id,
@@ -155,9 +151,7 @@ class OrganizationHandler:
             user_id, organization_id
         )
 
-    async def get_user_organizations(
-        self, user_id: str
-    ) -> list[OrganizationSwitcher]:
+    async def get_user_organizations(self, user_id: str) -> list[OrganizationSwitcher]:
         organizations = await self.__user_repository.get_user_organizations(user_id)
         return self._set_organizations_permissions(organizations)
 

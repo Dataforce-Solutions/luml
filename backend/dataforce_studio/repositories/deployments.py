@@ -52,9 +52,7 @@ class DeploymentRepository(RepositoryBase, CrudMixin):
             dep = result.scalar_one_or_none()
             return dep.to_deployment() if dep else None
 
-    async def list_satellite_deployments(
-        self, satellite_id: str
-    ) -> list[Deployment]:
+    async def list_satellite_deployments(self, satellite_id: str) -> list[Deployment]:
         async with self._get_session() as session:
             result = await session.execute(
                 select(DeploymentOrm).where(DeploymentOrm.satellite_id == satellite_id)

@@ -1,6 +1,6 @@
-import uuid6
 from collections.abc import Sequence
 
+import uuid6
 from sqlalchemy import UUID, ForeignKey, String, UniqueConstraint, func, select
 from sqlalchemy.orm import Mapped, column_property, mapped_column, relationship
 
@@ -18,7 +18,9 @@ class OrbitMembersOrm(TimestampMixin, Base):
     __tablename__ = "orbit_members"
     __table_args__ = (UniqueConstraint("orbit_id", "user_id", name="orbit_member"),)
 
-    id: Mapped[uuid6.UUID] = mapped_column(UUID(as_uuid=False), primary_key=True, default=uuid6.uuid7)
+    id: Mapped[uuid6.UUID] = mapped_column(
+        UUID(as_uuid=False), primary_key=True, default=uuid6.uuid7
+    )
     user_id: Mapped[uuid6.UUID] = mapped_column(
         UUID(as_uuid=False), ForeignKey("users.id", ondelete="CASCADE"), nullable=False
     )
@@ -49,10 +51,14 @@ class OrbitMembersOrm(TimestampMixin, Base):
 class OrbitOrm(TimestampMixin, Base):
     __tablename__ = "orbits"
 
-    id: Mapped[uuid6.UUID] = mapped_column(UUID(as_uuid=False), primary_key=True, default=uuid6.uuid7)
+    id: Mapped[uuid6.UUID] = mapped_column(
+        UUID(as_uuid=False), primary_key=True, default=uuid6.uuid7
+    )
     name: Mapped[str] = mapped_column(String, nullable=False)
     organization_id: Mapped[uuid6.UUID] = mapped_column(
-        UUID(as_uuid=False), ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False
+        UUID(as_uuid=False),
+        ForeignKey("organizations.id", ondelete="CASCADE"),
+        nullable=False,
     )
     bucket_secret_id: Mapped[uuid6.UUID] = mapped_column(
         UUID(as_uuid=False),

@@ -120,9 +120,7 @@ class DeploymentHandler:
             raise NotFoundError("Deployment not found")
         return deployment
 
-    async def list_worker_deployments(
-        self, satellite_id: str
-    ) -> list[Deployment]:
+    async def list_worker_deployments(self, satellite_id: str) -> list[Deployment]:
         return await self.__repo.list_satellite_deployments(satellite_id)
 
     async def get_worker_deployment(
@@ -171,9 +169,7 @@ class DeploymentHandler:
             raise NotFoundError("Deployment not found")
         return updated
 
-    async def verify_user_inference_access(
-        self, orbit_id: str, api_key: str
-    ) -> bool:
+    async def verify_user_inference_access(self, orbit_id: str, api_key: str) -> bool:
         user = await self.__api_key_handler.authenticate_api_key(api_key)
         if not user:
             return False

@@ -37,8 +37,6 @@ class OrbitSecretHandler:
     async def get_orbit_secrets(
         self, user_id: str, organization_id: str, orbit_id: str
     ) -> list[OrbitSecretOut]:
-        print(f'[OrbitSecretHandler.get_orbit_secrets] orbit_id {orbit_id} type {type(orbit_id)}')
-
         await self.__permissions_handler.check_orbit_action_access(
             organization_id, orbit_id, user_id, Resource.ORBIT_SECRET, Action.LIST
         )

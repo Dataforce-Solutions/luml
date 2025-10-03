@@ -31,6 +31,7 @@ from dataforce_studio.schemas import (
     SatelliteModelArtifactResponse,
 )
 from dataforce_studio.services.s3_service import S3Service
+from dataforce_studio.utils.uuid_converter import UUIDConverter
 
 
 class ModelArtifactHandler:
@@ -92,8 +93,12 @@ class ModelArtifactHandler:
         )
         unique_id = uuid4().hex
         object_name = f"{unique_id}-{model_artifact.file_name}"
-        # TODO тут должен быть шорт для юезра
-        bucket_location = f"orbit-{orbit_id}/collection-{collection_id}/{object_name}"
+
+        short_orbit_id = UUIDConverter.uuid_to_short(orbit_id)
+        short_collection_id = UUIDConverter.uuid_to_short(collection_id)
+        bucket_location = (
+            f"orbit-{short_orbit_id}/collection-{short_collection_id}/{object_name}"
+        )
 
         created_model_artifact = await self.__repository.create_model_artifact(
             ModelArtifactCreate(

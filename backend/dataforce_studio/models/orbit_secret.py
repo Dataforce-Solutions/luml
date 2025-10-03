@@ -1,5 +1,4 @@
 import uuid6
-
 from sqlalchemy import UUID, ForeignKey, String, UniqueConstraint
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -16,7 +15,9 @@ class OrbitSecretOrm(TimestampMixin, Base):
     __tablename__ = "orbit_secrets"
     __table_args__ = (UniqueConstraint("orbit_id", "name", name="orbit_secret_name"),)
 
-    id: Mapped[uuid6.UUID] = mapped_column(UUID(as_uuid=False), primary_key=True, default=uuid6.uuid7)
+    id: Mapped[uuid6.UUID] = mapped_column(
+        UUID(as_uuid=False), primary_key=True, default=uuid6.uuid7
+    )
     orbit_id: Mapped[uuid6.UUID] = mapped_column(
         UUID(as_uuid=False), ForeignKey("orbits.id", ondelete="CASCADE"), nullable=False
     )

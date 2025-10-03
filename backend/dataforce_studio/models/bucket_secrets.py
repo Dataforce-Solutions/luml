@@ -1,5 +1,4 @@
 import uuid6
-
 from sqlalchemy import UUID, Boolean, ForeignKey, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -11,9 +10,13 @@ from dataforce_studio.schemas import BucketSecret, BucketSecretCreate
 class BucketSecretOrm(TimestampMixin, Base):
     __tablename__ = "bucket_secrets"
 
-    id: Mapped[uuid6.UUID] = mapped_column(UUID(as_uuid=False), primary_key=True, default=uuid6.uuid7)
+    id: Mapped[uuid6.UUID] = mapped_column(
+        UUID(as_uuid=False), primary_key=True, default=uuid6.uuid7
+    )
     organization_id: Mapped[uuid6.UUID] = mapped_column(
-        UUID(as_uuid=False), ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False
+        UUID(as_uuid=False),
+        ForeignKey("organizations.id", ondelete="CASCADE"),
+        nullable=False,
     )
     endpoint: Mapped[str] = mapped_column(String, nullable=False)
     bucket_name: Mapped[str] = mapped_column(String, nullable=False)

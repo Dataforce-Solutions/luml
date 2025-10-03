@@ -184,9 +184,7 @@ class UserRepository(RepositoryBase, CrudMixin):
             )
             return db_member.to_organization_member()
 
-    async def get_user_organizations(
-        self, user_id: str
-    ) -> list[OrganizationSwitcher]:
+    async def get_user_organizations(self, user_id: str) -> list[OrganizationSwitcher]:
         async with self._get_session() as session:
             db_organizations = await self.get_models_where(
                 session,

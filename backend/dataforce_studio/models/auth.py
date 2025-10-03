@@ -1,8 +1,6 @@
 from pydantic import EmailStr
 from starlette.authentication import BaseUser
 
-from dataforce_studio.schemas.base import ShortUUID
-
 
 class AuthUser(BaseUser):
     def __init__(

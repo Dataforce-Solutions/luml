@@ -2,21 +2,35 @@
 
 Revision ID: 018
 Revises: 017
-Create Date: 2025-09-30 19:22:09.949015
+Create Date: 2025-10-03 22:41:37.498397
 
 """
 # ruff: noqa: E501, W291
 
+import contextlib
+import secrets
 from collections.abc import Sequence
+from datetime import datetime
 
 import sqlalchemy as sa
+import uuid6
 from alembic import op
-from shortuuid import uuid
 
 revision: str = "018"
 down_revision: str | None = "017"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
+
+
+def uuid7_from_datetime(dt: datetime | None = None) -> uuid6.UUID:
+    if dt is None:
+        dt = datetime.now()
+
+    timestamp_ms = int(dt.timestamp() * 1000)
+    uuid_int = (timestamp_ms & 0xFFFFFFFFFFFF) << 80
+    uuid_int |= secrets.randbits(76)
+
+    return uuid6.UUID(int=uuid_int, version=7)
 
 
 def upgrade() -> None:
@@ -56,113 +70,66 @@ def upgrade() -> None:
     op.execute("UPDATE token_black_list SET old_id = id")
     op.execute("UPDATE users SET old_id = id")
 
-    op.alter_column(
-        "organizations",
-        "id",
-        existing_type=sa.INTEGER(),
-        type_=sa.String(),
-        existing_nullable=False,
-    )
-    op.alter_column(
-        "users",
-        "id",
-        existing_type=sa.INTEGER(),
-        type_=sa.String(),
-        existing_nullable=False,
-    )
-    op.alter_column(
-        "bucket_secrets",
-        "id",
-        existing_type=sa.INTEGER(),
-        type_=sa.String(),
-        existing_nullable=False,
-    )
-    op.alter_column(
-        "orbits",
-        "id",
-        existing_type=sa.INTEGER(),
-        type_=sa.String(),
-        existing_nullable=False,
-    )
-    op.alter_column(
-        "satellites",
-        "id",
-        existing_type=sa.INTEGER(),
-        type_=sa.String(),
-        existing_nullable=False,
-    )
-    op.alter_column(
-        "collections",
-        "id",
-        existing_type=sa.INTEGER(),
-        type_=sa.String(),
-        existing_nullable=False,
-    )
-    op.alter_column(
-        "model_artifacts",
-        "id",
-        existing_type=sa.INTEGER(),
-        type_=sa.String(),
-        existing_nullable=False,
-    )
-    op.alter_column(
-        "deployments",
-        "id",
-        existing_type=sa.INTEGER(),
-        type_=sa.String(),
-        existing_nullable=False,
-    )
-    op.alter_column(
-        "orbit_members",
-        "id",
-        existing_type=sa.INTEGER(),
-        type_=sa.String(),
-        existing_nullable=False,
-    )
-    op.alter_column(
-        "orbit_secrets",
-        "id",
-        existing_type=sa.INTEGER(),
-        type_=sa.String(),
-        existing_nullable=False,
-    )
-    op.alter_column(
-        "organization_invites",
-        "id",
-        existing_type=sa.INTEGER(),
-        type_=sa.String(),
-        existing_nullable=False,
-    )
-    op.alter_column(
-        "organization_members",
-        "id",
-        existing_type=sa.INTEGER(),
-        type_=sa.String(),
-        existing_nullable=False,
-    )
-    op.alter_column(
-        "satellite_queue",
-        "id",
-        existing_type=sa.INTEGER(),
-        type_=sa.String(),
-        existing_nullable=False,
-    )
-    op.alter_column(
-        "stats_emails",
-        "id",
-        existing_type=sa.INTEGER(),
-        type_=sa.String(),
-        existing_nullable=False,
-    )
-    op.alter_column(
-        "token_black_list",
-        "id",
-        existing_type=sa.INTEGER(),
-        type_=sa.String(),
-        existing_nullable=False,
-    )
-
     connection = op.get_bind()
+
+    tables_with_fks = [
+        "satellites",
+        "satellite_queue",
+        "organization_members",
+        "organization_invites",
+        "orbits",
+        "orbit_secrets",
+        "orbit_members",
+        "model_artifacts",
+        "deployments",
+        "collections",
+        "bucket_secrets",
+    ]
+
+    for table in tables_with_fks:
+        result = connection.execute(
+            sa.text(f"""
+            SELECT conname 
+            FROM pg_constraint 
+            WHERE conrelid = '{table}'::regclass 
+            AND contype = 'f'
+        """)
+        )
+        constraints = result.fetchall()
+
+        for constraint in constraints:
+            constraint_name = constraint[0]
+            with contextlib.suppress(Exception):
+                connection.execute(
+                    sa.text(f"ALTER TABLE {table} DROP CONSTRAINT {constraint_name}")
+                )
+
+    tables_with_ids = [
+        "organizations",
+        "users",
+        "bucket_secrets",
+        "orbits",
+        "satellites",
+        "collections",
+        "model_artifacts",
+        "deployments",
+        "orbit_members",
+        "orbit_secrets",
+        "organization_invites",
+        "organization_members",
+        "satellite_queue",
+        "stats_emails",
+        "token_black_list",
+    ]
+
+    for table in tables_with_ids:
+        op.alter_column(
+            table,
+            "id",
+            existing_type=sa.INTEGER(),
+            type_=sa.Text(),
+            existing_nullable=False,
+        )
 
     tables = [
         "organizations",
@@ -183,143 +150,36 @@ def upgrade() -> None:
     ]
 
     for table in tables:
-        result = connection.execute(sa.text(f"SELECT old_id FROM {table}"))
-        records = result.fetchall()
+        if table == "token_black_list":
+            result = connection.execute(sa.text(f"SELECT old_id FROM {table}"))
+            records = result.fetchall()
 
-        for record in records:
-            new_id = uuid()
-            connection.execute(
-                sa.text(f"UPDATE {table} SET id = :new_id WHERE old_id = :old_id"),
-                {"new_id": new_id, "old_id": record[0]},
+            for record in records:
+                new_uuid7 = uuid7_from_datetime()
+                connection.execute(
+                    sa.text(f"UPDATE {table} SET id = :new_id WHERE old_id = :old_id"),
+                    {"new_id": str(new_uuid7), "old_id": record[0]},
+                )
+        else:
+            result = connection.execute(
+                sa.text(f"SELECT old_id, created_at FROM {table}")
             )
+            records = result.fetchall()
+
+            for record in records:
+                new_uuid7 = uuid7_from_datetime(record[1])
+                connection.execute(
+                    sa.text(f"UPDATE {table} SET id = :new_id WHERE old_id = :old_id"),
+                    {"new_id": str(new_uuid7), "old_id": record[0]},
+                )
 
     op.alter_column(
         "bucket_secrets",
         "organization_id",
         existing_type=sa.INTEGER(),
-        type_=sa.String(),
+        type_=sa.Text(),
         existing_nullable=False,
     )
-    op.alter_column(
-        "collections",
-        "orbit_id",
-        existing_type=sa.INTEGER(),
-        type_=sa.String(),
-        existing_nullable=False,
-    )
-    op.alter_column(
-        "deployments",
-        "orbit_id",
-        existing_type=sa.INTEGER(),
-        type_=sa.String(),
-        existing_nullable=False,
-    )
-    op.alter_column(
-        "deployments",
-        "satellite_id",
-        existing_type=sa.INTEGER(),
-        type_=sa.String(),
-        existing_nullable=False,
-    )
-    op.alter_column(
-        "deployments",
-        "model_id",
-        existing_type=sa.INTEGER(),
-        type_=sa.String(),
-        existing_nullable=False,
-    )
-    op.alter_column(
-        "model_artifacts",
-        "collection_id",
-        existing_type=sa.INTEGER(),
-        type_=sa.String(),
-        existing_nullable=False,
-    )
-    op.alter_column(
-        "orbit_members",
-        "user_id",
-        existing_type=sa.INTEGER(),
-        type_=sa.String(),
-        existing_nullable=False,
-    )
-    op.alter_column(
-        "orbit_members",
-        "orbit_id",
-        existing_type=sa.INTEGER(),
-        type_=sa.String(),
-        existing_nullable=False,
-    )
-    op.alter_column(
-        "orbit_secrets",
-        "orbit_id",
-        existing_type=sa.INTEGER(),
-        type_=sa.String(),
-        existing_nullable=False,
-    )
-    op.alter_column(
-        "orbits",
-        "organization_id",
-        existing_type=sa.INTEGER(),
-        type_=sa.String(),
-        existing_nullable=False,
-    )
-    op.alter_column(
-        "orbits",
-        "bucket_secret_id",
-        existing_type=sa.INTEGER(),
-        type_=sa.String(),
-        existing_nullable=False,
-    )
-    op.alter_column(
-        "organization_invites",
-        "organization_id",
-        existing_type=sa.INTEGER(),
-        type_=sa.String(),
-        existing_nullable=False,
-    )
-    op.alter_column(
-        "organization_invites",
-        "invited_by",
-        existing_type=sa.INTEGER(),
-        type_=sa.String(),
-        existing_nullable=False,
-    )
-    op.alter_column(
-        "organization_members",
-        "user_id",
-        existing_type=sa.INTEGER(),
-        type_=sa.String(),
-        existing_nullable=False,
-    )
-    op.alter_column(
-        "organization_members",
-        "organization_id",
-        existing_type=sa.INTEGER(),
-        type_=sa.String(),
-        existing_nullable=False,
-    )
-    op.alter_column(
-        "satellite_queue",
-        "satellite_id",
-        existing_type=sa.INTEGER(),
-        type_=sa.String(),
-        existing_nullable=False,
-    )
-    op.alter_column(
-        "satellite_queue",
-        "orbit_id",
-        existing_type=sa.INTEGER(),
-        type_=sa.String(),
-        existing_nullable=False,
-    )
-    op.alter_column(
-        "satellites",
-        "orbit_id",
-        existing_type=sa.INTEGER(),
-        type_=sa.String(),
-        existing_nullable=False,
-    )
-
     connection.execute(
         sa.text("""
         UPDATE bucket_secrets 
@@ -328,7 +188,21 @@ def upgrade() -> None:
         WHERE bucket_secrets.organization_id::integer = organizations.old_id
     """)
     )
-
+    op.alter_column(
+        "bucket_secrets",
+        "organization_id",
+        existing_type=sa.Text(),
+        type_=sa.UUID(as_uuid=False),
+        existing_nullable=False,
+        postgresql_using="organization_id::uuid",
+    )
+    op.alter_column(
+        "collections",
+        "orbit_id",
+        existing_type=sa.INTEGER(),
+        type_=sa.Text(),
+        existing_nullable=False,
+    )
     connection.execute(
         sa.text("""
         UPDATE collections 
@@ -337,7 +211,21 @@ def upgrade() -> None:
         WHERE collections.orbit_id::integer = orbits.old_id
     """)
     )
-
+    op.alter_column(
+        "collections",
+        "orbit_id",
+        existing_type=sa.Text(),
+        type_=sa.UUID(as_uuid=False),
+        existing_nullable=False,
+        postgresql_using="orbit_id::uuid",
+    )
+    op.alter_column(
+        "deployments",
+        "orbit_id",
+        existing_type=sa.INTEGER(),
+        type_=sa.Text(),
+        existing_nullable=False,
+    )
     connection.execute(
         sa.text("""
         UPDATE deployments 
@@ -346,7 +234,21 @@ def upgrade() -> None:
         WHERE deployments.orbit_id::integer = orbits.old_id
     """)
     )
-
+    op.alter_column(
+        "deployments",
+        "orbit_id",
+        existing_type=sa.Text(),
+        type_=sa.UUID(as_uuid=False),
+        existing_nullable=False,
+        postgresql_using="orbit_id::uuid",
+    )
+    op.alter_column(
+        "deployments",
+        "satellite_id",
+        existing_type=sa.INTEGER(),
+        type_=sa.Text(),
+        existing_nullable=False,
+    )
     connection.execute(
         sa.text("""
         UPDATE deployments 
@@ -355,7 +257,21 @@ def upgrade() -> None:
         WHERE deployments.satellite_id::integer = satellites.old_id
     """)
     )
-
+    op.alter_column(
+        "deployments",
+        "satellite_id",
+        existing_type=sa.Text(),
+        type_=sa.UUID(as_uuid=False),
+        existing_nullable=False,
+        postgresql_using="satellite_id::uuid",
+    )
+    op.alter_column(
+        "deployments",
+        "model_id",
+        existing_type=sa.INTEGER(),
+        type_=sa.Text(),
+        existing_nullable=False,
+    )
     connection.execute(
         sa.text("""
         UPDATE deployments 
@@ -364,7 +280,21 @@ def upgrade() -> None:
         WHERE deployments.model_id::integer = model_artifacts.old_id
     """)
     )
-
+    op.alter_column(
+        "deployments",
+        "model_id",
+        existing_type=sa.Text(),
+        type_=sa.UUID(as_uuid=False),
+        existing_nullable=False,
+        postgresql_using="model_id::uuid",
+    )
+    op.alter_column(
+        "model_artifacts",
+        "collection_id",
+        existing_type=sa.INTEGER(),
+        type_=sa.Text(),
+        existing_nullable=False,
+    )
     connection.execute(
         sa.text("""
         UPDATE model_artifacts 
@@ -373,7 +303,21 @@ def upgrade() -> None:
         WHERE model_artifacts.collection_id::integer = collections.old_id
     """)
     )
-
+    op.alter_column(
+        "model_artifacts",
+        "collection_id",
+        existing_type=sa.Text(),
+        type_=sa.UUID(as_uuid=False),
+        existing_nullable=False,
+        postgresql_using="collection_id::uuid",
+    )
+    op.alter_column(
+        "orbit_members",
+        "user_id",
+        existing_type=sa.INTEGER(),
+        type_=sa.Text(),
+        existing_nullable=False,
+    )
     connection.execute(
         sa.text("""
         UPDATE orbit_members 
@@ -382,7 +326,21 @@ def upgrade() -> None:
         WHERE orbit_members.user_id::integer = users.old_id
     """)
     )
-
+    op.alter_column(
+        "orbit_members",
+        "user_id",
+        existing_type=sa.Text(),
+        type_=sa.UUID(as_uuid=False),
+        existing_nullable=False,
+        postgresql_using="user_id::uuid",
+    )
+    op.alter_column(
+        "orbit_members",
+        "orbit_id",
+        existing_type=sa.INTEGER(),
+        type_=sa.Text(),
+        existing_nullable=False,
+    )
     connection.execute(
         sa.text("""
         UPDATE orbit_members 
@@ -391,7 +349,21 @@ def upgrade() -> None:
         WHERE orbit_members.orbit_id::integer = orbits.old_id
     """)
     )
-
+    op.alter_column(
+        "orbit_members",
+        "orbit_id",
+        existing_type=sa.Text(),
+        type_=sa.UUID(as_uuid=False),
+        existing_nullable=False,
+        postgresql_using="orbit_id::uuid",
+    )
+    op.alter_column(
+        "orbit_secrets",
+        "orbit_id",
+        existing_type=sa.INTEGER(),
+        type_=sa.Text(),
+        existing_nullable=False,
+    )
     connection.execute(
         sa.text("""
         UPDATE orbit_secrets 
@@ -400,7 +372,21 @@ def upgrade() -> None:
         WHERE orbit_secrets.orbit_id::integer = orbits.old_id
     """)
     )
-
+    op.alter_column(
+        "orbit_secrets",
+        "orbit_id",
+        existing_type=sa.Text(),
+        type_=sa.UUID(as_uuid=False),
+        existing_nullable=False,
+        postgresql_using="orbit_id::uuid",
+    )
+    op.alter_column(
+        "orbits",
+        "organization_id",
+        existing_type=sa.INTEGER(),
+        type_=sa.Text(),
+        existing_nullable=False,
+    )
     connection.execute(
         sa.text("""
         UPDATE orbits 
@@ -409,7 +395,21 @@ def upgrade() -> None:
         WHERE orbits.organization_id::integer = organizations.old_id
     """)
     )
-
+    op.alter_column(
+        "orbits",
+        "organization_id",
+        existing_type=sa.Text(),
+        type_=sa.UUID(as_uuid=False),
+        existing_nullable=False,
+        postgresql_using="organization_id::uuid",
+    )
+    op.alter_column(
+        "orbits",
+        "bucket_secret_id",
+        existing_type=sa.INTEGER(),
+        type_=sa.Text(),
+        existing_nullable=False,
+    )
     connection.execute(
         sa.text("""
         UPDATE orbits 
@@ -418,7 +418,21 @@ def upgrade() -> None:
         WHERE orbits.bucket_secret_id::integer = bucket_secrets.old_id
     """)
     )
-
+    op.alter_column(
+        "orbits",
+        "bucket_secret_id",
+        existing_type=sa.Text(),
+        type_=sa.UUID(as_uuid=False),
+        existing_nullable=False,
+        postgresql_using="bucket_secret_id::uuid",
+    )
+    op.alter_column(
+        "organization_invites",
+        "organization_id",
+        existing_type=sa.INTEGER(),
+        type_=sa.Text(),
+        existing_nullable=False,
+    )
     connection.execute(
         sa.text("""
         UPDATE organization_invites 
@@ -427,7 +441,21 @@ def upgrade() -> None:
         WHERE organization_invites.organization_id::integer = organizations.old_id
     """)
     )
-
+    op.alter_column(
+        "organization_invites",
+        "organization_id",
+        existing_type=sa.Text(),
+        type_=sa.UUID(as_uuid=False),
+        existing_nullable=False,
+        postgresql_using="organization_id::uuid",
+    )
+    op.alter_column(
+        "organization_invites",
+        "invited_by",
+        existing_type=sa.INTEGER(),
+        type_=sa.Text(),
+        existing_nullable=False,
+    )
     connection.execute(
         sa.text("""
         UPDATE organization_invites 
@@ -436,7 +464,21 @@ def upgrade() -> None:
         WHERE organization_invites.invited_by::integer = users.old_id
     """)
     )
-
+    op.alter_column(
+        "organization_invites",
+        "invited_by",
+        existing_type=sa.Text(),
+        type_=sa.UUID(as_uuid=False),
+        existing_nullable=False,
+        postgresql_using="invited_by::uuid",
+    )
+    op.alter_column(
+        "organization_members",
+        "user_id",
+        existing_type=sa.INTEGER(),
+        type_=sa.Text(),
+        existing_nullable=False,
+    )
     connection.execute(
         sa.text("""
         UPDATE organization_members 
@@ -445,7 +487,21 @@ def upgrade() -> None:
         WHERE organization_members.user_id::integer = users.old_id
     """)
     )
-
+    op.alter_column(
+        "organization_members",
+        "user_id",
+        existing_type=sa.Text(),
+        type_=sa.UUID(as_uuid=False),
+        existing_nullable=False,
+        postgresql_using="user_id::uuid",
+    )
+    op.alter_column(
+        "organization_members",
+        "organization_id",
+        existing_type=sa.INTEGER(),
+        type_=sa.Text(),
+        existing_nullable=False,
+    )
     connection.execute(
         sa.text("""
         UPDATE organization_members 
@@ -454,7 +510,21 @@ def upgrade() -> None:
         WHERE organization_members.organization_id::integer = organizations.old_id
     """)
     )
-
+    op.alter_column(
+        "organization_members",
+        "organization_id",
+        existing_type=sa.Text(),
+        type_=sa.UUID(as_uuid=False),
+        existing_nullable=False,
+        postgresql_using="organization_id::uuid",
+    )
+    op.alter_column(
+        "satellite_queue",
+        "satellite_id",
+        existing_type=sa.INTEGER(),
+        type_=sa.Text(),
+        existing_nullable=False,
+    )
     connection.execute(
         sa.text("""
         UPDATE satellite_queue 
@@ -463,7 +533,21 @@ def upgrade() -> None:
         WHERE satellite_queue.satellite_id::integer = satellites.old_id
     """)
     )
-
+    op.alter_column(
+        "satellite_queue",
+        "satellite_id",
+        existing_type=sa.Text(),
+        type_=sa.UUID(as_uuid=False),
+        existing_nullable=False,
+        postgresql_using="satellite_id::uuid",
+    )
+    op.alter_column(
+        "satellite_queue",
+        "orbit_id",
+        existing_type=sa.INTEGER(),
+        type_=sa.Text(),
+        existing_nullable=False,
+    )
     connection.execute(
         sa.text("""
         UPDATE satellite_queue 
@@ -472,7 +556,21 @@ def upgrade() -> None:
         WHERE satellite_queue.orbit_id::integer = orbits.old_id
     """)
     )
-
+    op.alter_column(
+        "satellite_queue",
+        "orbit_id",
+        existing_type=sa.Text(),
+        type_=sa.UUID(as_uuid=False),
+        existing_nullable=False,
+        postgresql_using="orbit_id::uuid",
+    )
+    op.alter_column(
+        "satellites",
+        "orbit_id",
+        existing_type=sa.INTEGER(),
+        type_=sa.Text(),
+        existing_nullable=False,
+    )
     connection.execute(
         sa.text("""
         UPDATE satellites 
@@ -481,6 +579,24 @@ def upgrade() -> None:
         WHERE satellites.orbit_id::integer = orbits.old_id
     """)
     )
+    op.alter_column(
+        "satellites",
+        "orbit_id",
+        existing_type=sa.Text(),
+        type_=sa.UUID(as_uuid=False),
+        existing_nullable=False,
+        postgresql_using="orbit_id::uuid",
+    )
+
+    for table in tables_with_ids:
+        op.alter_column(
+            table,
+            "id",
+            existing_type=sa.Text(),
+            type_=sa.UUID(as_uuid=False),
+            existing_nullable=False,
+            postgresql_using="id::uuid",
+        )
 
     op.create_foreign_key(
         None,
@@ -630,12 +746,6 @@ def downgrade() -> None:
         "bucket_secrets",
     ]
 
-    for table in tables:
-        connection.execute(sa.text(f"UPDATE {table} SET id = old_id"))
-        connection.execute(
-            sa.text(f"ALTER TABLE {table} ALTER COLUMN id TYPE INTEGER USING old_id")
-        )
-
     foreign_key_updates = [
         ("bucket_secrets", "organization_id", "organizations"),
         ("collections", "orbit_id", "orbits"),
@@ -663,7 +773,7 @@ def downgrade() -> None:
             UPDATE {table} 
             SET {fk_column} = {ref_table}.old_id::text 
             FROM {ref_table} 
-            WHERE {table}.{fk_column} = {ref_table}.id::text
+            WHERE {table}.{fk_column} = {ref_table}.id
         """)
         )
 
@@ -671,6 +781,12 @@ def downgrade() -> None:
             sa.text(
                 f"ALTER TABLE {table} ALTER COLUMN {fk_column} TYPE INTEGER USING {fk_column}::integer"
             )
+        )
+
+    for table in tables:
+        connection.execute(sa.text(f"UPDATE {table} SET id = old_id"))
+        connection.execute(
+            sa.text(f"ALTER TABLE {table} ALTER COLUMN id TYPE INTEGER USING old_id")
         )
 
     op.drop_column("bucket_secrets", "old_id")
@@ -688,3 +804,98 @@ def downgrade() -> None:
     op.drop_column("stats_emails", "old_id")
     op.drop_column("token_black_list", "old_id")
     op.drop_column("users", "old_id")
+
+    op.create_foreign_key(
+        None,
+        "bucket_secrets",
+        "organizations",
+        ["organization_id"],
+        ["id"],
+        ondelete="CASCADE",
+    )
+    op.create_foreign_key(
+        None, "collections", "orbits", ["orbit_id"], ["id"], ondelete="CASCADE"
+    )
+    op.create_foreign_key(
+        None,
+        "deployments",
+        "model_artifacts",
+        ["model_id"],
+        ["id"],
+        ondelete="RESTRICT",
+    )
+    op.create_foreign_key(
+        None, "deployments", "orbits", ["orbit_id"], ["id"], ondelete="CASCADE"
+    )
+    op.create_foreign_key(
+        None, "deployments", "satellites", ["satellite_id"], ["id"], ondelete="CASCADE"
+    )
+    op.create_foreign_key(
+        None,
+        "model_artifacts",
+        "collections",
+        ["collection_id"],
+        ["id"],
+        ondelete="CASCADE",
+    )
+    op.create_foreign_key(
+        None, "orbit_members", "orbits", ["orbit_id"], ["id"], ondelete="CASCADE"
+    )
+    op.create_foreign_key(
+        None, "orbit_members", "users", ["user_id"], ["id"], ondelete="CASCADE"
+    )
+    op.create_foreign_key(
+        None, "orbit_secrets", "orbits", ["orbit_id"], ["id"], ondelete="CASCADE"
+    )
+    op.create_foreign_key(
+        None, "orbits", "organizations", ["organization_id"], ["id"], ondelete="CASCADE"
+    )
+    op.create_foreign_key(
+        None,
+        "orbits",
+        "bucket_secrets",
+        ["bucket_secret_id"],
+        ["id"],
+        ondelete="CASCADE",
+    )
+    op.create_foreign_key(
+        None,
+        "organization_invites",
+        "organizations",
+        ["organization_id"],
+        ["id"],
+        ondelete="CASCADE",
+    )
+    op.create_foreign_key(
+        None,
+        "organization_invites",
+        "users",
+        ["invited_by"],
+        ["id"],
+        ondelete="CASCADE",
+    )
+    op.create_foreign_key(
+        None,
+        "organization_members",
+        "organizations",
+        ["organization_id"],
+        ["id"],
+        ondelete="CASCADE",
+    )
+    op.create_foreign_key(
+        None, "organization_members", "users", ["user_id"], ["id"], ondelete="CASCADE"
+    )
+    op.create_foreign_key(
+        None, "satellite_queue", "orbits", ["orbit_id"], ["id"], ondelete="CASCADE"
+    )
+    op.create_foreign_key(
+        None,
+        "satellite_queue",
+        "satellites",
+        ["satellite_id"],
+        ["id"],
+        ondelete="CASCADE",
+    )
+    op.create_foreign_key(
+        None, "satellites", "orbits", ["orbit_id"], ["id"], ondelete="CASCADE"
+    )

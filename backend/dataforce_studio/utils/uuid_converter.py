@@ -13,6 +13,10 @@ class UUIDConverter:
     def uuid_to_short(full_uuid: str | UUID) -> str:
         if isinstance(full_uuid, UUID):
             full_uuid = str(full_uuid)
+
+        if UUIDConverter.is_valid_short_uuid(full_uuid):
+            return full_uuid
+
         return shortuuid.encode(UUID(full_uuid))
 
     @staticmethod

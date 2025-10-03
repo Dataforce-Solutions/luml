@@ -1,5 +1,4 @@
 import uuid6
-
 from pydantic import EmailStr, HttpUrl
 from sqlalchemy import UUID, Boolean, String, case
 from sqlalchemy.orm import Mapped, column_property, mapped_column, relationship
@@ -11,7 +10,9 @@ from dataforce_studio.schemas import CreateUser, User, UserOut
 class UserOrm(TimestampMixin, Base):
     __tablename__ = "users"
 
-    id: Mapped[uuid6.UUID] = mapped_column(UUID(as_uuid=False), primary_key=True, default=uuid6.uuid7)
+    id: Mapped[uuid6.UUID] = mapped_column(
+        UUID(as_uuid=False), primary_key=True, default=uuid6.uuid7
+    )
     email: Mapped[EmailStr] = mapped_column(String, unique=True, nullable=False)
     full_name: Mapped[str | None] = mapped_column(String, nullable=True)
     disabled: Mapped[bool] = mapped_column(Boolean, default=False)

@@ -1,5 +1,4 @@
 import uuid6
-
 from sqlalchemy import UUID, ForeignKey, String, func, select
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, column_property, mapped_column, relationship
@@ -12,7 +11,9 @@ from dataforce_studio.schemas import Collection
 class CollectionOrm(TimestampMixin, Base):
     __tablename__ = "collections"
 
-    id: Mapped[uuid6.UUID] = mapped_column(UUID(as_uuid=False), primary_key=True, default=uuid6.uuid7)
+    id: Mapped[uuid6.UUID] = mapped_column(
+        UUID(as_uuid=False), primary_key=True, default=uuid6.uuid7
+    )
     orbit_id: Mapped[uuid6.UUID] = mapped_column(
         UUID(as_uuid=False), ForeignKey("orbits.id", ondelete="CASCADE"), nullable=False
     )

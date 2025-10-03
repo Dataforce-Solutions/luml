@@ -6,9 +6,7 @@ from pydantic import BeforeValidator, ConfigDict, Field, PlainSerializer
 from dataforce_studio.utils.uuid_converter import UUIDConverter
 
 
-
 def validate_short_uuid(value: str | UUID) -> str:
-    print(f'[validate_short_uuid] value {value} type {type(value)}')
     if hasattr(value, "__str__") and not isinstance(value, str):
         value = str(value)
 
@@ -23,7 +21,6 @@ def validate_short_uuid(value: str | UUID) -> str:
 
 
 def serialize_to_short_uuid(value: str | UUID) -> str:
-    print(f'[serialize_to_short_uuid] value {value} type {type(value)}')
     if hasattr(value, "__str__") and not isinstance(value, str):
         value = str(value)
 
