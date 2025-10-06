@@ -40,7 +40,7 @@
 import type { BucketSecret, BucketSecretCreator } from '@/lib/api/bucket-secrets/interfaces'
 import { computed, ref } from 'vue'
 import { Button, Dialog, useConfirm, useToast } from 'primevue'
-import { useBucketsStore } from '@/stores/buckets'
+import { BucketValidationError, useBucketsStore } from '@/stores/buckets'
 import { Bolt } from 'lucide-vue-next'
 import { simpleErrorToast, simpleSuccessToast } from '@/lib/primevue/data/toasts'
 import { deleteBucketConfirmOptions } from '@/lib/primevue/data/confirm'
@@ -84,14 +84,16 @@ async function onFormSubmit(formData: BucketSecretCreator) {
 
     toast.add(simpleSuccessToast('Bucket has been updated.'))
     visible.value = false
-  } catch (e: any) {
-    const rangeErrorMessage = 'Range requests are not supported. Please ensure "Range" is added to "AllowedHeaders" in your bucket\'s CORS configuration.';
-    
-    toast.add(simpleErrorToast(
-      e.message === rangeErrorMessage 
-        ? e.message 
-        : e?.response?.data?.detail || e.message || 'Failed to update bucket'
-    ));
+  } catch (err: any) {
+    if (err instanceof BucketValidationError) {
+      toast.add(simpleErrorToast(err.getMessage()))
+    } else {
+      toast.add(
+        simpleErrorToast(
+          err?.response?.data?.detail || err.message || 'Failed to update bucket',
+        ),
+      )
+    }
   } finally {
     loading.value = false
   }

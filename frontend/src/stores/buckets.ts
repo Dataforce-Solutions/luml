@@ -4,6 +4,32 @@ import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import axios from 'axios'
 
+export enum BucketValidationErrorCode {
+  INVALID_STATUS = 'INVALID_STATUS',
+  RANGE_NOT_SUPPORTED = 'RANGE_NOT_SUPPORTED',
+  UNKNOWN = 'UNKNOWN',
+}
+
+export class BucketValidationError extends Error {
+  constructor(public code: BucketValidationErrorCode) {
+    super(code)
+    this.name = 'BucketValidationError'
+  }
+
+  getMessage(): string {
+    switch (this.code) {
+      case BucketValidationErrorCode.RANGE_NOT_SUPPORTED:
+        return 'Range requests are not supported. Please ensure "Range" is added to "AllowedHeaders" in your bucket\'s CORS configuration.'
+      case BucketValidationErrorCode.INVALID_STATUS:
+        return 'Bucket validation failed: invalid status'
+      case BucketValidationErrorCode.UNKNOWN:
+        return 'Bucket validation failed'
+      default:
+        return 'Bucket validation failed'
+    }
+  }
+}
+
 export const useBucketsStore = defineStore('buckets', () => {
   const buckets = ref<BucketSecret[]>([])
 
@@ -42,7 +68,7 @@ export const useBucketsStore = defineStore('buckets', () => {
     try {
       const fullResponse = await axios.get(downloadUrl, { validateStatus: () => true })
       if (fullResponse.status !== 200) {
-        throw new Error('Bucket validation failed: invalid status')
+        throw new BucketValidationError(BucketValidationErrorCode.INVALID_STATUS)
       }
 
       let rangeResponse: Response
@@ -53,19 +79,17 @@ export const useBucketsStore = defineStore('buckets', () => {
           mode: 'cors',
         })
       } catch (fetchErr) {
-        throw new Error(
-          'Range requests are not supported.  Please ensure "Range" is added to "AllowedHeaders" in your bucket\'s CORS configuration',
-        )
+        throw new BucketValidationError(BucketValidationErrorCode.RANGE_NOT_SUPPORTED)
       }
 
       if (rangeResponse.status !== 206) {
-        throw new Error(
-          'Range requests are not supported. Please ensure "Range" is added to "AllowedHeaders" in your bucket\'s CORS configuration.',
-        )
+        throw new BucketValidationError(BucketValidationErrorCode.RANGE_NOT_SUPPORTED)
       }
-
     } catch (err) {
-      throw err instanceof Error ? err : new Error('Bucket validation failed')
+      if (err instanceof BucketValidationError) {
+        throw err
+      }
+      throw new BucketValidationError(BucketValidationErrorCode.UNKNOWN)
     }
   }
 
