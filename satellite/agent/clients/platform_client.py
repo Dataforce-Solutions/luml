@@ -2,11 +2,18 @@ import logging
 from typing import Any, Self
 
 import httpx
+from cashews import cache
 
 from agent.schemas import SatelliteTaskStatus
 from agent.schemas.deployments import Deployment
 
 logger = logging.getLogger("satellite")
+
+
+cache.setup("mem://")
+
+_AUTHORIZATION_CACHE_TTL_SECONDS = 60
+_SECRETS_CACHE_TTL_SECONDS = 60
 
 
 class PlatformClient:
@@ -77,6 +84,7 @@ class PlatformClient:
         r.raise_for_status()
         return r.json()
 
+    @cache(ttl=_AUTHORIZATION_CACHE_TTL_SECONDS, key="authorize_inference_access:{api_key}")
     async def authorize_inference_access(self, api_key: str) -> bool:
         assert self._session is not None
         r = await self._session.post(
@@ -103,12 +111,14 @@ class PlatformClient:
         data = r.json()
         return data.get("model"), str(data.get("url", ""))
 
+    @cache(ttl=_SECRETS_CACHE_TTL_SECONDS, key="get_orbit_secret:{secret_id}")
     async def get_orbit_secret(self, secret_id: str) -> dict[str, Any]:
         assert self._session is not None
         r = await self._session.get(self._url(f"/satellites/secrets/{secret_id}"))
         r.raise_for_status()
         return r.json()
 
+    @cache(ttl=_SECRETS_CACHE_TTL_SECONDS, key="get_orbit_secrets")
     async def get_orbit_secrets(self) -> list[dict[str, Any]]:
         assert self._session is not None
         r = await self._session.get(self._url("/satellites/secrets"))
@@ -126,3 +136,20 @@ class PlatformClient:
         r = await self._session.get(self._url(f"/satellites/deployments/{deployment_id}"))
         r.raise_for_status()
         return Deployment.model_validate(r.json())
+
+
+@cache.key_builder(PlatformClient.authorize_inference_access)  # type: ignore[arg-type]
+def _authorize_inference_access_key_builder(
+    _: object, self: PlatformClient, api_key: str
+) -> str:
+    return f"authorize_inference_access:{self.base_url}:{api_key}"
+
+
+@cache.key_builder(PlatformClient.get_orbit_secret)  # type: ignore[arg-type]
+def _get_orbit_secret_key_builder(_: object, self: PlatformClient, secret_id: int) -> str:
+    return f"get_orbit_secret:{self.base_url}:{secret_id}"
+
+
+@cache.key_builder(PlatformClient.get_orbit_secrets)  # type: ignore[arg-type]
+def _get_orbit_secrets_key_builder(_: object, self: PlatformClient) -> str:
+    return f"get_orbit_secrets:{self.base_url}"

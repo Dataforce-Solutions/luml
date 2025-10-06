@@ -7,7 +7,7 @@ from fastapi import Depends, FastAPI, HTTPException
 from fastapi.openapi.utils import get_openapi
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
-from agent.handlers.handler_instances import ms_handler, secrets_handler
+from agent.handlers.handler_instances import ms_handler
 from agent.schemas.deployments import (
     DeploymentInfo,
     Healthz,
@@ -48,7 +48,6 @@ class OpenAPISchemaBuilder:
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, Any]:
     asyncio.create_task(ms_handler.sync_deployments())
-    asyncio.create_task(secrets_handler.initialize())
 
     yield
 

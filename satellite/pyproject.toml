@@ -11,6 +11,7 @@ dependencies = [
     "pydantic-settings==2.5.2",
     "fastapi==0.115.4",
     "uvicorn==0.30.6",
+    "cashews==7.4.2",
 ]
 
 [dependency-groups]

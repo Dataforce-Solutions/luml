@@ -3,6 +3,7 @@ from contextlib import suppress
 
 from agent.clients import ModelServerClient, PlatformClient
 from agent.schemas import Deployment, LocalDeployment
+from agent.schemas.deployments import Secret
 from agent.settings import config
 
 logger = logging.getLogger(__name__)
@@ -79,17 +80,38 @@ class ModelServerHandler:
     async def get_compute_missing_secrets(
         deployment: LocalDeployment, compute_dynamic_atr: dict
     ) -> dict:
-        from agent.handlers.handler_instances import secrets_handler
+        missing_secrets: dict[str, str] = {}
+        deployment_secrets = deployment.dynamic_attributes_secrets or {}
 
-        missing_secrets = {}
-        deployment_secrets = deployment.dynamic_attributes_secrets
+        secrets_to_fetch: list[tuple[str, int]] = []
+        for attr_name, secret_id in deployment_secrets.items():
+            if attr_name in compute_dynamic_atr:
+                continue
+            try:
+                normalized_id = int(secret_id)
+            except (TypeError, ValueError):
+                logger.warning("Skipping secret %s due to invalid id: %s", attr_name, secret_id)
+                continue
+            secrets_to_fetch.append((attr_name, normalized_id))
 
-        if deployment_secrets:
-            for attr_name, secret_id in deployment_secrets.items():
-                if attr_name not in compute_dynamic_atr:
-                    secret = await secrets_handler.get_secret(secret_id)
-                    if secret:
+        if not secrets_to_fetch:
+            return compute_dynamic_atr
+
+        try:
+            async with PlatformClient(
+                str(config.PLATFORM_URL), config.SATELLITE_TOKEN
+            ) as platform_client:
+                for attr_name, secret_id in secrets_to_fetch:
+                    try:
+                        secret_data = await platform_client.get_orbit_secret(secret_id)
+                    except Exception:
+                        secret_data = None
+
+                    if secret_data:
+                        secret = Secret.model_validate(secret_data)
                         missing_secrets[attr_name] = secret.value
+        except Exception as error:
+            logger.error("Failed to fetch secrets for compute: %s", error)
 
         return compute_dynamic_atr | missing_secrets
 
