@@ -11,7 +11,7 @@ class UserOrm(TimestampMixin, Base):
     __tablename__ = "users"
 
     id: Mapped[uuid6.UUID] = mapped_column(
-        UUID(as_uuid=False), primary_key=True, default=uuid6.uuid7
+        UUID(as_uuid=True), primary_key=True, default=uuid6.uuid7
     )
     email: Mapped[EmailStr] = mapped_column(String, unique=True, nullable=False)
     full_name: Mapped[str | None] = mapped_column(String, nullable=True)

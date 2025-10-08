@@ -21,7 +21,7 @@ class OrganizationOrm(TimestampMixin, Base):
     __tablename__ = "organizations"
 
     id: Mapped[uuid6.UUID] = mapped_column(
-        UUID(as_uuid=False), primary_key=True, default=uuid6.uuid7
+        UUID(as_uuid=True), primary_key=True, default=uuid6.uuid7
     )
     name: Mapped[str] = mapped_column(String, nullable=False)
     logo: Mapped[str | None] = mapped_column(String, nullable=True)
@@ -62,13 +62,13 @@ class OrganizationMemberOrm(TimestampMixin, Base):
     )
 
     id: Mapped[uuid6.UUID] = mapped_column(
-        UUID(as_uuid=False), primary_key=True, default=uuid6.uuid7
+        UUID(as_uuid=True), primary_key=True, default=uuid6.uuid7
     )
     user_id: Mapped[uuid6.UUID] = mapped_column(
-        UUID(as_uuid=False), ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False
     )
     organization_id: Mapped[uuid6.UUID] = mapped_column(
-        UUID(as_uuid=False),
+        UUID(as_uuid=True),
         ForeignKey("organizations.id", ondelete="CASCADE"),
         nullable=False,
     )

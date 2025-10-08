@@ -192,7 +192,7 @@ def upgrade() -> None:
         "bucket_secrets",
         "organization_id",
         existing_type=sa.Text(),
-        type_=sa.UUID(as_uuid=False),
+        type_=sa.UUID(as_uuid=True),
         existing_nullable=False,
         postgresql_using="organization_id::uuid",
     )
@@ -215,7 +215,7 @@ def upgrade() -> None:
         "collections",
         "orbit_id",
         existing_type=sa.Text(),
-        type_=sa.UUID(as_uuid=False),
+        type_=sa.UUID(as_uuid=True),
         existing_nullable=False,
         postgresql_using="orbit_id::uuid",
     )
@@ -238,7 +238,7 @@ def upgrade() -> None:
         "deployments",
         "orbit_id",
         existing_type=sa.Text(),
-        type_=sa.UUID(as_uuid=False),
+        type_=sa.UUID(as_uuid=True),
         existing_nullable=False,
         postgresql_using="orbit_id::uuid",
     )
@@ -261,7 +261,7 @@ def upgrade() -> None:
         "deployments",
         "satellite_id",
         existing_type=sa.Text(),
-        type_=sa.UUID(as_uuid=False),
+        type_=sa.UUID(as_uuid=True),
         existing_nullable=False,
         postgresql_using="satellite_id::uuid",
     )
@@ -284,7 +284,7 @@ def upgrade() -> None:
         "deployments",
         "model_id",
         existing_type=sa.Text(),
-        type_=sa.UUID(as_uuid=False),
+        type_=sa.UUID(as_uuid=True),
         existing_nullable=False,
         postgresql_using="model_id::uuid",
     )
@@ -307,7 +307,7 @@ def upgrade() -> None:
         "model_artifacts",
         "collection_id",
         existing_type=sa.Text(),
-        type_=sa.UUID(as_uuid=False),
+        type_=sa.UUID(as_uuid=True),
         existing_nullable=False,
         postgresql_using="collection_id::uuid",
     )
@@ -330,7 +330,7 @@ def upgrade() -> None:
         "orbit_members",
         "user_id",
         existing_type=sa.Text(),
-        type_=sa.UUID(as_uuid=False),
+        type_=sa.UUID(as_uuid=True),
         existing_nullable=False,
         postgresql_using="user_id::uuid",
     )
@@ -353,7 +353,7 @@ def upgrade() -> None:
         "orbit_members",
         "orbit_id",
         existing_type=sa.Text(),
-        type_=sa.UUID(as_uuid=False),
+        type_=sa.UUID(as_uuid=True),
         existing_nullable=False,
         postgresql_using="orbit_id::uuid",
     )
@@ -376,7 +376,7 @@ def upgrade() -> None:
         "orbit_secrets",
         "orbit_id",
         existing_type=sa.Text(),
-        type_=sa.UUID(as_uuid=False),
+        type_=sa.UUID(as_uuid=True),
         existing_nullable=False,
         postgresql_using="orbit_id::uuid",
     )
@@ -399,7 +399,7 @@ def upgrade() -> None:
         "orbits",
         "organization_id",
         existing_type=sa.Text(),
-        type_=sa.UUID(as_uuid=False),
+        type_=sa.UUID(as_uuid=True),
         existing_nullable=False,
         postgresql_using="organization_id::uuid",
     )
@@ -422,7 +422,7 @@ def upgrade() -> None:
         "orbits",
         "bucket_secret_id",
         existing_type=sa.Text(),
-        type_=sa.UUID(as_uuid=False),
+        type_=sa.UUID(as_uuid=True),
         existing_nullable=False,
         postgresql_using="bucket_secret_id::uuid",
     )
@@ -445,7 +445,7 @@ def upgrade() -> None:
         "organization_invites",
         "organization_id",
         existing_type=sa.Text(),
-        type_=sa.UUID(as_uuid=False),
+        type_=sa.UUID(as_uuid=True),
         existing_nullable=False,
         postgresql_using="organization_id::uuid",
     )
@@ -468,7 +468,7 @@ def upgrade() -> None:
         "organization_invites",
         "invited_by",
         existing_type=sa.Text(),
-        type_=sa.UUID(as_uuid=False),
+        type_=sa.UUID(as_uuid=True),
         existing_nullable=False,
         postgresql_using="invited_by::uuid",
     )
@@ -491,7 +491,7 @@ def upgrade() -> None:
         "organization_members",
         "user_id",
         existing_type=sa.Text(),
-        type_=sa.UUID(as_uuid=False),
+        type_=sa.UUID(as_uuid=True),
         existing_nullable=False,
         postgresql_using="user_id::uuid",
     )
@@ -514,7 +514,7 @@ def upgrade() -> None:
         "organization_members",
         "organization_id",
         existing_type=sa.Text(),
-        type_=sa.UUID(as_uuid=False),
+        type_=sa.UUID(as_uuid=True),
         existing_nullable=False,
         postgresql_using="organization_id::uuid",
     )
@@ -537,7 +537,7 @@ def upgrade() -> None:
         "satellite_queue",
         "satellite_id",
         existing_type=sa.Text(),
-        type_=sa.UUID(as_uuid=False),
+        type_=sa.UUID(as_uuid=True),
         existing_nullable=False,
         postgresql_using="satellite_id::uuid",
     )
@@ -560,7 +560,7 @@ def upgrade() -> None:
         "satellite_queue",
         "orbit_id",
         existing_type=sa.Text(),
-        type_=sa.UUID(as_uuid=False),
+        type_=sa.UUID(as_uuid=True),
         existing_nullable=False,
         postgresql_using="orbit_id::uuid",
     )
@@ -583,7 +583,7 @@ def upgrade() -> None:
         "satellites",
         "orbit_id",
         existing_type=sa.Text(),
-        type_=sa.UUID(as_uuid=False),
+        type_=sa.UUID(as_uuid=True),
         existing_nullable=False,
         postgresql_using="orbit_id::uuid",
     )
@@ -593,7 +593,7 @@ def upgrade() -> None:
             table,
             "id",
             existing_type=sa.Text(),
-            type_=sa.UUID(as_uuid=False),
+            type_=sa.UUID(as_uuid=True),
             existing_nullable=False,
             postgresql_using="id::uuid",
         )
@@ -769,11 +769,17 @@ def downgrade() -> None:
 
     for table, fk_column, ref_table in foreign_key_updates:
         connection.execute(
+            sa.text(
+                f"ALTER TABLE {table} ALTER COLUMN {fk_column} TYPE TEXT USING {fk_column}::text"
+            )
+        )
+
+        connection.execute(
             sa.text(f"""
             UPDATE {table} 
             SET {fk_column} = {ref_table}.old_id::text 
             FROM {ref_table} 
-            WHERE {table}.{fk_column} = {ref_table}.id
+            WHERE {table}.{fk_column}::uuid = {ref_table}.id
         """)
         )
 

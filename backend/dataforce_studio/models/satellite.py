@@ -29,10 +29,10 @@ class SatelliteOrm(TimestampMixin, Base):
     )
 
     id: Mapped[uuid6.UUID] = mapped_column(
-        UUID(as_uuid=False), primary_key=True, default=uuid6.uuid7
+        UUID(as_uuid=True), primary_key=True, default=uuid6.uuid7
     )
     orbit_id: Mapped[uuid6.UUID] = mapped_column(
-        UUID(as_uuid=False), ForeignKey("orbits.id", ondelete="CASCADE"), nullable=False
+        UUID(as_uuid=True), ForeignKey("orbits.id", ondelete="CASCADE"), nullable=False
     )
     api_key_hash: Mapped[str] = mapped_column(String, nullable=False, unique=True)
     paired: Mapped[bool] = mapped_column(

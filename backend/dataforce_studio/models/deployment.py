@@ -19,14 +19,14 @@ class DeploymentOrm(TimestampMixin, Base):
     )
 
     id: Mapped[uuid6.UUID] = mapped_column(
-        UUID(as_uuid=False), primary_key=True, default=uuid6.uuid7
+        UUID(as_uuid=True), primary_key=True, default=uuid6.uuid7
     )
     orbit_id: Mapped[uuid6.UUID] = mapped_column(
-        UUID(as_uuid=False), ForeignKey("orbits.id", ondelete="CASCADE"), nullable=False
+        UUID(as_uuid=True), ForeignKey("orbits.id", ondelete="CASCADE"), nullable=False
     )
     name: Mapped[str] = mapped_column(String, nullable=False)
     satellite_id: Mapped[uuid6.UUID] = mapped_column(
-        UUID(as_uuid=False),
+        UUID(as_uuid=True),
         ForeignKey("satellites.id", ondelete="CASCADE"),
         nullable=False,
     )
@@ -36,7 +36,7 @@ class DeploymentOrm(TimestampMixin, Base):
         .scalar_subquery()
     )
     model_id: Mapped[uuid6.UUID] = mapped_column(
-        UUID(as_uuid=False),
+        UUID(as_uuid=True),
         ForeignKey("model_artifacts.id", ondelete="RESTRICT"),
         nullable=False,
     )
