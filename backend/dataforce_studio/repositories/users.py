@@ -8,6 +8,7 @@ from sqlalchemy.orm import joinedload, selectinload
 
 from dataforce_studio.infra.exceptions import DatabaseConstraintError
 from dataforce_studio.models import (
+    OrganizationInviteOrm,
     OrganizationMemberOrm,
     OrganizationOrm,
     StatsEmailSendOrm,
@@ -223,7 +224,9 @@ class UserRepository(RepositoryBase, CrudMixin):
                     joinedload(OrganizationOrm.members).joinedload(
                         OrganizationMemberOrm.user
                     ),
-                    joinedload(OrganizationOrm.invites),
+                    joinedload(OrganizationOrm.invites).joinedload(
+                        OrganizationInviteOrm.organization
+                    ),
                     joinedload(OrganizationOrm.orbits),
                 )
                 .where(OrganizationOrm.id == organization_id)

@@ -7,7 +7,7 @@ from dataforce_studio.repositories.base import CrudMixin, RepositoryBase
 from dataforce_studio.schemas.deployment import (
     Deployment,
     DeploymentCreate,
-    DeploymentDetailsUpdateIn,
+    DeploymentDetailsUpdate,
     DeploymentStatus,
     DeploymentUpdate,
 )
@@ -125,7 +125,7 @@ class DeploymentRepository(RepositoryBase, CrudMixin):
         self,
         orbit_id: UUID,
         deployment_id: UUID,
-        update: DeploymentDetailsUpdateIn,
+        update: DeploymentDetailsUpdate,
     ) -> Deployment | None:
         async with self._get_session() as session:
             db_dep = await self.update_model_where(

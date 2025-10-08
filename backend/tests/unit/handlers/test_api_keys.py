@@ -1,4 +1,5 @@
 from unittest.mock import AsyncMock, patch
+from uuid import UUID
 
 import pytest
 
@@ -17,7 +18,7 @@ handler = APIKeyHandler()
 async def test_create_user_api_key(
     mock_create_user_api_key: AsyncMock,
 ) -> None:
-    user_id = "cLZHBYAXuzDCWTTQ9ouoXa"
+    user_id = UUID("0199c337-09f1-7d8f-b0c4-b68349bbe24b")
     mock_create_user_api_key.return_value = True
 
     result = await handler.create_user_api_key(user_id)
@@ -36,7 +37,7 @@ async def test_create_user_api_key(
 async def test_create_user_api_key_failed(
     mock_create_user_api_key: AsyncMock,
 ) -> None:
-    user_id = "cLZHBYAXuzDCWTTQ9ouoXa"
+    user_id = UUID("0199c337-09f1-7d8f-b0c4-b68349bbe24b")
     mock_create_user_api_key.return_value = False
 
     with pytest.raises(UserAPIKeyCreateError):
@@ -51,8 +52,9 @@ async def test_create_user_api_key_failed(
 async def test_authenticate_api_key(
     mock_get_user_by_api_key_hash: AsyncMock,
 ) -> None:
+    user_id = UUID("0199c337-09f1-7d8f-b0c4-b68349bbe24b")
     expected_user = UserOut(
-        id="cLZHBYAXuzDCWTTQ9ouoXa",
+        id=user_id,
         email="test@example.com",
         full_name="Test User",
         disabled=False,
@@ -91,7 +93,7 @@ async def test_authenticate_api_key_not_found(
 async def test_delete_user_api_key(
     mock_delete_api_key_by_user_id: AsyncMock,
 ) -> None:
-    user_id = "cLZHBYAXuzDCWTTQ9ouoXa"
+    user_id = UUID("0199c337-09f1-7d8f-b0c4-b68349bbe24b")
 
     await handler.delete_user_api_key(user_id)
 

@@ -1,11 +1,12 @@
 import uuid
 
 import pytest
+import uuid6
 
 from dataforce_studio.repositories.deployments import DeploymentRepository
 from dataforce_studio.schemas.deployment import (
     DeploymentCreate,
-    DeploymentDetailsUpdateIn,
+    DeploymentDetailsUpdate,
     DeploymentStatus,
     DeploymentUpdate,
 )
@@ -48,7 +49,7 @@ async def test_create_deployment(create_satellite: SatelliteFixtureData) -> None
     assert task.satellite_id == deployment_data.satellite_id
     assert task.orbit_id == deployment_data.orbit_id
     assert task.type == SatelliteTaskType.DEPLOY
-    assert task.payload["deployment_id"] == deployment.id
+    assert task.payload["deployment_id"] == str(deployment.id)
 
 
 @pytest.mark.asyncio
@@ -215,10 +216,10 @@ async def test_update_deployment_details(
         )
     )
 
-    details = DeploymentDetailsUpdateIn(
+    details = DeploymentDetailsUpdate(
         name="my-deployment",
         description="some desc",
-        dynamic_attributes_secrets={"token": "f9vuZHPxtVaQeAeCZYjdDv"},
+        dynamic_attributes_secrets={"token": str(uuid6.uuid7())},
         tags=["one", "two"],
     )
 
@@ -265,7 +266,7 @@ async def test_request_deployment_deletion(
     assert dep.collection_id == model.collection_id
     assert task is not None
     assert task.type == SatelliteTaskType.UNDEPLOY
-    assert task.payload["deployment_id"] == created.id
+    assert task.payload["deployment_id"] == str(created.id)
 
     result2 = await repo.request_deployment_deletion(orbit.id, created.id)
     assert result2 is not None

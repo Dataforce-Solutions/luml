@@ -1,8 +1,8 @@
 from typing import Any
+from uuid import UUID
 
 from pydantic import EmailStr
 
-from dataforce_studio.schemas.base import ShortUUID
 from dataforce_studio.schemas.orbit import OrbitMemberCreate, OrbitMemberCreateSimple
 from dataforce_studio.schemas.organization import OrganizationInvite, OrgRole
 
@@ -28,7 +28,7 @@ def get_members_roles_count(members: list[Any]) -> dict[str, int]:
 
 
 def convert_orbit_simple_members(
-    orbit_id: ShortUUID, members: list[OrbitMemberCreateSimple]
+    orbit_id: UUID, members: list[OrbitMemberCreateSimple]
 ) -> list[OrbitMemberCreate]:
     return [
         OrbitMemberCreate(orbit_id=orbit_id, user_id=m.user_id, role=m.role)

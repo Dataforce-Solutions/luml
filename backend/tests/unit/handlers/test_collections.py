@@ -1,7 +1,9 @@
 from datetime import datetime
 from unittest.mock import AsyncMock, Mock, patch
+from uuid import UUID
 
 import pytest
+import uuid6
 
 from dataforce_studio.handlers.collections import CollectionHandler
 from dataforce_studio.infra.exceptions import CollectionDeleteError, NotFoundError
@@ -42,9 +44,11 @@ async def test_create_collection(
     mock_get_orbit_role: AsyncMock,
     mock_get_org_role: AsyncMock,
 ) -> None:
-    user_id = "iAQ56YpR2n2KyQ6xc49Zcb"
-    organization_id = "iAQ56YpR2n2KyQ6xc49Zcb"
-    orbit_id = "iAQ56YpR2n2KyQ6xc49Zcb"
+    user_id = UUID("0199c337-09f1-7d8f-b0c4-b68349bbe24b")
+    organization_id = UUID("0199c337-09f2-7af1-af5e-83fd7a5b51a0")
+    orbit_id = UUID("0199c337-09f3-753e-9def-b27745e69be6")
+    collection_id = UUID("0199c337-09f4-7a01-9f5f-5f68db62cf70")
+
     data = CollectionCreateIn(
         description="d",
         name="n",
@@ -52,7 +56,7 @@ async def test_create_collection(
         tags=["t1"],
     )
     expected = Collection(
-        id="iAQ56YpR2n2KyQ6xc49Zcb",
+        id=collection_id,
         created_at=datetime.now(),
         orbit_id=orbit_id,
         total_models=0,
@@ -98,9 +102,10 @@ async def test_create_collection_orbit_not_found(
     mock_get_orbit_role: AsyncMock,
     mock_get_org_role: AsyncMock,
 ) -> None:
-    user_id = "iAQ56YpR2n2KyQ6xc49Zcb"
-    organization_id = "iAQ56YpR2n2KyQ6xc49Zcb"
-    orbit_id = "iAQ56YpR2n2KyQ6xc49Zcb"
+    user_id = UUID("0199c337-09f1-7d8f-b0c4-b68349bbe24b")
+    organization_id = UUID("0199c337-09f2-7af1-af5e-83fd7a5b51a0")
+    orbit_id = UUID("0199c337-09f3-753e-9def-b27745e69be6")
+
     data = CollectionCreateIn(
         description="d",
         name="n",
@@ -143,9 +148,9 @@ async def test_get_orbit_collections_orbit_not_found(
     mock_get_orbit_role: AsyncMock,
     mock_get_org_role: AsyncMock,
 ) -> None:
-    user_id = "iAQ56YpR2n2KyQ6xc49Zcb"
-    organization_id = "iAQ56YpR2n2KyQ6xc49Zcb"
-    orbit_id = "iAQ56YpR2n2KyQ6xc49Zcb"
+    user_id = UUID("0199c337-09f1-7d8f-b0c4-b68349bbe24b")
+    organization_id = UUID("0199c337-09f2-7af1-af5e-83fd7a5b51a0")
+    orbit_id = UUID("0199c337-09f3-753e-9def-b27745e69be6")
 
     mock_get_orbit_simple.return_value = None
     mock_get_org_role.return_value = OrgRole.OWNER
@@ -182,9 +187,9 @@ async def test_get_orbit_collections_orbit_wrong_org(
     mock_get_orbit_role: AsyncMock,
     mock_get_org_role: AsyncMock,
 ) -> None:
-    user_id = "hLYTU8qrDjXFCEEFwV26WG"
-    organization_id = "iAQ56YpR2n2KyQ6xc49Zcb"
-    orbit_id = "VavAeC4uPqFYgyDf9PjZHM"
+    user_id = UUID("0199c337-09f1-7d8f-b0c4-b68349bbe24b")
+    organization_id = UUID("0199c337-09f2-7af1-af5e-83fd7a5b51a0")
+    orbit_id = UUID("0199c337-09f3-753e-9def-b27745e69be6")
 
     mock_get_orbit_simple.return_value = Mock(organization_id="ATHXk3sZjCWvrFYwGzb6ZY")
     mock_get_org_role.return_value = OrgRole.OWNER
@@ -221,9 +226,10 @@ async def test_create_collection_orbit_wrong_org(
     mock_get_orbit_role: AsyncMock,
     mock_get_org_role: AsyncMock,
 ) -> None:
-    user_id = "LnYZunR6VryWbC2yijxxPk"
-    organization_id = "iAQ56YpR2n2KyQ6xc49Zcb"
-    orbit_id = "iAQ56YpR2n2KyQ6xc49Zcb"
+    user_id = UUID("0199c337-09f1-7d8f-b0c4-b68349bbe24b")
+    organization_id = UUID("0199c337-09f2-7af1-af5e-83fd7a5b51a0")
+    orbit_id = UUID("0199c337-09f3-753e-9def-b27745e69be6")
+
     data = CollectionCreateIn(
         description="d",
         name="n",
@@ -266,10 +272,10 @@ async def test_update_collection(
     mock_get_orbit_role: AsyncMock,
     mock_get_org_role: AsyncMock,
 ) -> None:
-    user_id = "MoPjabjncfhuPzY8bR2JQs"
-    organization_id = "iAQ56YpR2n2KyQ6xc49Zcb"
-    orbit_id = "iAQ56YpR2n2KyQ6xc49Zcb"
-    collection_id = "iAQ56YpR2n2KyQ6xc49Zcb"
+    user_id = UUID("0199c337-09f1-7d8f-b0c4-b68349bbe24b")
+    organization_id = UUID("0199c337-09f2-7af1-af5e-83fd7a5b51a0")
+    orbit_id = UUID("0199c337-09f3-753e-9def-b27745e69be6")
+    collection_id = UUID("0199c337-09f4-7a01-9f5f-5f68db62cf70")
 
     data_in = CollectionUpdateIn(name="new")
     expected = Collection(
@@ -326,10 +332,11 @@ async def test_update_collection_not_found(
     mock_get_orbit_role: AsyncMock,
     mock_get_org_role: AsyncMock,
 ) -> None:
-    user_id = "YTXv7GRmhu7m6MT8aaACxz"
-    organization_id = "iAQ56YpR2n2KyQ6xc49Zcb"
-    orbit_id = "iAQ56YpR2n2KyQ6xc49Zcb"
-    collection_id = "iAQ56YpR2n2KyQ6xc49Zcb"
+    user_id = UUID("0199c337-09f1-7d8f-b0c4-b68349bbe24b")
+    organization_id = UUID("0199c337-09f2-7af1-af5e-83fd7a5b51a0")
+    orbit_id = UUID("0199c337-09f3-753e-9def-b27745e69be6")
+    collection_id = UUID("0199c337-09f4-7a01-9f5f-5f68db62cf70")
+
     data_in = CollectionUpdateIn(name="new")
 
     mock_update.return_value = None
@@ -374,10 +381,10 @@ async def test_update_collection_orbit_wrong_org(
     mock_get_orbit_role: AsyncMock,
     mock_get_org_role: AsyncMock,
 ) -> None:
-    user_id = "mhXWzDTmHcd5dba2AWQnhf"
-    organization_id = "iAQ56YpR2n2KyQ6xc49Zcb"
-    orbit_id = "iAQ56YpR2n2KyQ6xc49Zcb"
-    collection_id = "iAQ56YpR2n2KyQ6xc49Zcb"
+    user_id = UUID("0199c337-09f1-7d8f-b0c4-b68349bbe24b")
+    organization_id = UUID("0199c337-09f2-7af1-af5e-83fd7a5b51a0")
+    orbit_id = UUID("0199c337-09f3-753e-9def-b27745e69be6")
+    collection_id = UUID("0199c337-09f4-7a01-9f5f-5f68db62cf70")
 
     data_in = CollectionUpdateIn(name="new")
 
@@ -428,10 +435,10 @@ async def test_delete_collection_empty(
     mock_get_orbit_role: AsyncMock,
     mock_get_org_role: AsyncMock,
 ) -> None:
-    user_id = "iAQ56YpR2n2KyQ6xc49Zcb"
-    organization_id = "iAQ56YpR2n2KyQ6xc49Zcb"
-    orbit_id = "iAQ56YpR2n2KyQ6xc49Zcb"
-    collection_id = "iAQ56YpR2n2KyQ6xc49Zcb"
+    user_id = UUID("0199c337-09f1-7d8f-b0c4-b68349bbe24b")
+    organization_id = UUID("0199c337-09f2-7af1-af5e-83fd7a5b51a0")
+    orbit_id = UUID("0199c337-09f3-753e-9def-b27745e69be6")
+    collection_id = UUID("0199c337-09f4-7a01-9f5f-5f68db62cf70")
 
     mock_get_collection.return_value = Collection(
         id=collection_id,
@@ -488,10 +495,10 @@ async def test_delete_collection_not_empty(
     mock_get_orbit_role: AsyncMock,
     mock_get_org_role: AsyncMock,
 ) -> None:
-    user_id = "iAQ56YpR2n2KyQ6xc49Zcb"
-    organization_id = "iAQ56YpR2n2KyQ6xc49Zcb"
-    orbit_id = "iAQ56YpR2n2KyQ6xc49Zcb"
-    collection_id = "iAQ56YpR2n2KyQ6xc49Zcb"
+    user_id = UUID("0199c337-09f1-7d8f-b0c4-b68349bbe24b")
+    organization_id = UUID("0199c337-09f2-7af1-af5e-83fd7a5b51a0")
+    orbit_id = UUID("0199c337-09f3-753e-9def-b27745e69be6")
+    collection_id = UUID("0199c337-09f4-7a01-9f5f-5f68db62cf70")
 
     mock_get_collection.return_value = Collection(
         id=collection_id,
@@ -552,10 +559,10 @@ async def test_delete_collection_not_found(
     mock_get_orbit_role: AsyncMock,
     mock_get_org_role: AsyncMock,
 ) -> None:
-    user_id = "iAQ56YpR2n2KyQ6xc49Zcb"
-    organization_id = "iAQ56YpR2n2KyQ6xc49Zcb"
-    orbit_id = "iAQ56YpR2n2KyQ6xc49Zcb"
-    collection_id = "iAQ56YpR2n2KyQ6xc49Zcb"
+    user_id = UUID("0199c337-09f1-7d8f-b0c4-b68349bbe24b")
+    organization_id = UUID("0199c337-09f2-7af1-af5e-83fd7a5b51a0")
+    orbit_id = UUID("0199c337-09f3-753e-9def-b27745e69be6")
+    collection_id = UUID("0199c337-09f4-7a01-9f5f-5f68db62cf70")
 
     mock_get_collection.return_value = None
     mock_get_orbit_simple.return_value = Mock(organization_id=organization_id)
@@ -603,10 +610,10 @@ async def test_delete_collection_orbit_wrong_org(
     mock_get_orbit_role: AsyncMock,
     mock_get_org_role: AsyncMock,
 ) -> None:
-    user_id = "iAQ56YpR2n2KyQ6xc49Zcb"
-    organization_id = "iAQ56YpR2n2KyQ6xc49Zcb"
-    orbit_id = "iAQ56YpR2n2KyQ6xc49Zcb"
-    collection_id = "iAQ56YpR2n2KyQ6xc49Zcb"
+    user_id = UUID("0199c337-09f1-7d8f-b0c4-b68349bbe24b")
+    organization_id = UUID("0199c337-09f2-7af1-af5e-83fd7a5b51a0")
+    orbit_id = UUID("0199c337-09f3-753e-9def-b27745e69be6")
+    collection_id = UUID("0199c337-09f4-7a01-9f5f-5f68db62cf70")
 
     mock_get_collection.return_value = Collection(
         id=collection_id,
@@ -621,7 +628,7 @@ async def test_delete_collection_orbit_wrong_org(
     )
     mock_get_count.return_value = 0
 
-    mock_get_orbit_simple.return_value = Mock(organization_id="ATHXk3sZjCWvrFYwGzb6ZY")
+    mock_get_orbit_simple.return_value = Mock(organization_id=uuid6.uuid7())
     mock_get_org_role.return_value = OrgRole.OWNER
     mock_get_orbit_role.return_value = OrbitRole.MEMBER
 
@@ -653,13 +660,14 @@ async def test_get_orbit_collections_success(
     mock_get_orbit_simple: AsyncMock,
     mock_check_orbit_action_access: AsyncMock,
 ) -> None:
-    user_id = "iAQ56YpR2n2KyQ6xc49Zcb"
-    organization_id = "iAQ56YpR2n2KyQ6xc49Zcb"
-    orbit_id = "THQgUS3sMRd4WZhSdeCVyR"
+    user_id = UUID("0199c337-09f1-7d8f-b0c4-b68349bbe24b")
+    organization_id = UUID("0199c337-09f2-7af1-af5e-83fd7a5b51a0")
+    orbit_id = UUID("0199c337-09f3-753e-9def-b27745e69be6")
+    collection_id = UUID("0199c337-09f4-7a01-9f5f-5f68db62cf70")
 
     expected_collections = [
         Collection(
-            id="iAQ56YpR2n2KyQ6xc49Zcb",
+            id=collection_id,
             orbit_id=orbit_id,
             description="Test collection 1",
             name="Collection 1",

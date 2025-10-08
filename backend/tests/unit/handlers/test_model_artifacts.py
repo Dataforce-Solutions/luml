@@ -1,5 +1,6 @@
 from datetime import datetime
 from unittest.mock import AsyncMock, Mock, patch
+from uuid import UUID
 
 import pytest
 
@@ -51,7 +52,8 @@ async def test_get_secret_or_raise(
 )
 @pytest.mark.asyncio
 async def test_get_secret_or_raise_not_found(mock_get_bucket_secret: AsyncMock) -> None:
-    secret_id = "6JCyzSABJtgY5q4WwkJ6Yz"
+    secret_id = UUID("0199c3f7-f040-7f63-9bef-a1f380ae9eeb")
+
     mock_get_bucket_secret.return_value = None
 
     with pytest.raises(BucketSecretNotFoundError) as error:
@@ -73,9 +75,10 @@ async def test_get_secret_or_raise_not_found(mock_get_bucket_secret: AsyncMock) 
 async def test_check_orbit_and_collection_access(
     mock_get_orbit_simple: AsyncMock, mock_get_collection: AsyncMock
 ) -> None:
-    organization_id = "UoAqoUkAaZQsra6KGoDMmy"
-    orbit_id = "SKY7Lqo6oiewTcU8DKFJmY"
-    collection_id = "mVE7ff8LgqAa3svKmdjCt6"
+    organization_id = UUID("0199c337-09f2-7af1-af5e-83fd7a5b51a0")
+    orbit_id = UUID("0199c337-09f3-753e-9def-b27745e69be6")
+    collection_id = UUID("0199c337-09f4-7a01-9f5f-5f68db62cf70")
+
     orbit = Mock(organization_id=organization_id)
     collection = Mock(orbit_id=orbit_id)
 
@@ -99,9 +102,9 @@ async def test_check_orbit_and_collection_access(
 async def test_check_orbit_and_collection_access_orbit_not_found(
     mock_get_orbit_simple: AsyncMock,
 ) -> None:
-    organization_id = "UoAqoUkAaZQsra6KGoDMmy"
-    orbit_id = "SKY7Lqo6oiewTcU8DKFJmY"
-    collection_id = "mVE7ff8LgqAa3svKmdjCt6"
+    organization_id = UUID("0199c337-09f2-7af1-af5e-83fd7a5b51a0")
+    orbit_id = UUID("0199c337-09f3-753e-9def-b27745e69be6")
+    collection_id = UUID("0199c337-09f4-7a01-9f5f-5f68db62cf70")
 
     mock_get_orbit_simple.return_value = None
 
@@ -126,9 +129,10 @@ async def test_check_orbit_and_collection_access_orbit_not_found(
 async def test_check_orbit_and_collection_access_collection_not_found(
     mock_get_orbit_simple: AsyncMock, mock_get_collection: AsyncMock
 ) -> None:
-    organization_id = "UoAqoUkAaZQsra6KGoDMmy"
-    orbit_id = "SKY7Lqo6oiewTcU8DKFJmY"
-    collection_id = "mVE7ff8LgqAa3svKmdjCt6"
+    organization_id = UUID("0199c337-09f2-7af1-af5e-83fd7a5b51a0")
+    orbit_id = UUID("0199c337-09f3-753e-9def-b27745e69be6")
+    collection_id = UUID("0199c337-09f4-7a01-9f5f-5f68db62cf70")
+
     orbit = Mock(organization_id=organization_id)
 
     mock_get_orbit_simple.return_value = orbit
@@ -163,11 +167,11 @@ async def test_get_collection_model_artifact(
     mock_get_collection_model_artifact: AsyncMock,
     manifest_example: Manifest,
 ) -> None:
-    user_id = "hHXb8bTcAvoY5gMtzj3zeW"
-    organization_id = "UoAqoUkAaZQsra6KGoDMmy"
-    orbit_id = "SKY7Lqo6oiewTcU8DKFJmY"
-    collection_id = "mVE7ff8LgqAa3svKmdjCt6"
-    model_artifact_id = "FugvnKxyMVwEX3Ho7c5Z7o"
+    user_id = UUID("0199c337-09f1-7d8f-b0c4-b68349bbe24b")
+    organization_id = UUID("0199c337-09f2-7af1-af5e-83fd7a5b51a0")
+    orbit_id = UUID("0199c337-09f3-753e-9def-b27745e69be6")
+    collection_id = UUID("0199c337-09f4-7a01-9f5f-5f68db62cf70")
+    model_artifact_id = UUID("0199c337-09fa-7ff6-b1e7-fc89a65f8622")
 
     expected = [
         ModelArtifact(
@@ -230,11 +234,11 @@ async def test_create_model_artifact(
     test_bucket: BucketSecret,
     manifest_example: Manifest,
 ) -> None:
-    user_id = "hHXb8bTcAvoY5gMtzj3zeW"
-    organization_id = "UoAqoUkAaZQsra6KGoDMmy"
-    orbit_id = "SKY7Lqo6oiewTcU8DKFJmY"
-    collection_id = "mVE7ff8LgqAa3svKmdjCt6"
-    model_artifact_id = "FugvnKxyMVwEX3Ho7c5Z7o"
+    user_id = UUID("0199c337-09f1-7d8f-b0c4-b68349bbe24b")
+    organization_id = UUID("0199c337-09f2-7af1-af5e-83fd7a5b51a0")
+    orbit_id = UUID("0199c337-09f3-753e-9def-b27745e69be6")
+    collection_id = UUID("0199c337-09f4-7a01-9f5f-5f68db62cf70")
+    model_artifact_id = UUID("0199c337-09fa-7ff6-b1e7-fc89a65f8622")
 
     model_artifact = ModelArtifact(
         id=model_artifact_id,
@@ -338,11 +342,11 @@ async def test_get_model_artifact(
     test_bucket: BucketSecret,
     manifest_example: Manifest,
 ) -> None:
-    user_id = "hHXb8bTcAvoY5gMtzj3zeW"
-    organization_id = "UoAqoUkAaZQsra6KGoDMmy"
-    orbit_id = "SKY7Lqo6oiewTcU8DKFJmY"
-    collection_id = "mVE7ff8LgqAa3svKmdjCt6"
-    model_artifact_id = "FugvnKxyMVwEX3Ho7c5Z7o"
+    user_id = UUID("0199c337-09f1-7d8f-b0c4-b68349bbe24b")
+    organization_id = UUID("0199c337-09f2-7af1-af5e-83fd7a5b51a0")
+    orbit_id = UUID("0199c337-09f3-753e-9def-b27745e69be6")
+    collection_id = UUID("0199c337-09f4-7a01-9f5f-5f68db62cf70")
+    model_artifact_id = UUID("0199c337-09fa-7ff6-b1e7-fc89a65f8622")
 
     model_artifact = ModelArtifact(
         id=model_artifact_id,
@@ -419,11 +423,11 @@ async def test_get_model_artifact_not_found(
     mock_get_collection: AsyncMock,
     mock_check_orbit_action_access: AsyncMock,
 ) -> None:
-    user_id = "hHXb8bTcAvoY5gMtzj3zeW"
-    organization_id = "UoAqoUkAaZQsra6KGoDMmy"
-    orbit_id = "SKY7Lqo6oiewTcU8DKFJmY"
-    collection_id = "mVE7ff8LgqAa3svKmdjCt6"
-    model_artifact_id = "FugvnKxyMVwEX3Ho7c5Z7o"
+    user_id = UUID("0199c337-09f1-7d8f-b0c4-b68349bbe24b")
+    organization_id = UUID("0199c337-09f2-7af1-af5e-83fd7a5b51a0")
+    orbit_id = UUID("0199c337-09f3-753e-9def-b27745e69be6")
+    collection_id = UUID("0199c337-09f4-7a01-9f5f-5f68db62cf70")
+    model_artifact_id = UUID("0199c337-09fa-7ff6-b1e7-fc89a65f8622")
 
     mock_get_model_artifact.return_value = None
     mock_get_orbit_simple.return_value = Mock(
@@ -480,11 +484,11 @@ async def test_request_download_url(
     test_bucket: BucketSecret,
     manifest_example: Manifest,
 ) -> None:
-    user_id = "hHXb8bTcAvoY5gMtzj3zeW"
-    organization_id = "UoAqoUkAaZQsra6KGoDMmy"
-    orbit_id = "SKY7Lqo6oiewTcU8DKFJmY"
-    collection_id = "mVE7ff8LgqAa3svKmdjCt6"
-    model_artifact_id = "FugvnKxyMVwEX3Ho7c5Z7o"
+    user_id = UUID("0199c337-09f1-7d8f-b0c4-b68349bbe24b")
+    organization_id = UUID("0199c337-09f2-7af1-af5e-83fd7a5b51a0")
+    orbit_id = UUID("0199c337-09f3-753e-9def-b27745e69be6")
+    collection_id = UUID("0199c337-09f4-7a01-9f5f-5f68db62cf70")
+    model_artifact_id = UUID("0199c337-09fa-7ff6-b1e7-fc89a65f8622")
 
     model_artifact = ModelArtifact(
         id=model_artifact_id,
@@ -569,11 +573,11 @@ async def test_request_delete_url(
     test_bucket: BucketSecret,
     manifest_example: Manifest,
 ) -> None:
-    user_id = "hHXb8bTcAvoY5gMtzj3zeW"
-    organization_id = "UoAqoUkAaZQsra6KGoDMmy"
-    orbit_id = "SKY7Lqo6oiewTcU8DKFJmY"
-    collection_id = "mVE7ff8LgqAa3svKmdjCt6"
-    model_artifact_id = "FugvnKxyMVwEX3Ho7c5Z7o"
+    user_id = UUID("0199c337-09f1-7d8f-b0c4-b68349bbe24b")
+    organization_id = UUID("0199c337-09f2-7af1-af5e-83fd7a5b51a0")
+    orbit_id = UUID("0199c337-09f3-753e-9def-b27745e69be6")
+    collection_id = UUID("0199c337-09f4-7a01-9f5f-5f68db62cf70")
+    model_artifact_id = UUID("0199c337-09fa-7ff6-b1e7-fc89a65f8622")
 
     model_artifact = ModelArtifact(
         id=model_artifact_id,
@@ -650,11 +654,11 @@ async def test_confirm_deletion_pending(
     mock_check_orbit_action_access: AsyncMock,
     manifest_example: Manifest,
 ) -> None:
-    user_id = "hHXb8bTcAvoY5gMtzj3zeW"
-    organization_id = "UoAqoUkAaZQsra6KGoDMmy"
-    orbit_id = "SKY7Lqo6oiewTcU8DKFJmY"
-    collection_id = "mVE7ff8LgqAa3svKmdjCt6"
-    model_artifact_id = "FugvnKxyMVwEX3Ho7c5Z7o"
+    user_id = UUID("0199c337-09f1-7d8f-b0c4-b68349bbe24b")
+    organization_id = UUID("0199c337-09f2-7af1-af5e-83fd7a5b51a0")
+    orbit_id = UUID("0199c337-09f3-753e-9def-b27745e69be6")
+    collection_id = UUID("0199c337-09f4-7a01-9f5f-5f68db62cf70")
+    model_artifact_id = UUID("0199c337-09fa-7ff6-b1e7-fc89a65f8622")
 
     model_artifact = ModelArtifact(
         id=model_artifact_id,
@@ -719,11 +723,11 @@ async def test_confirm_deletion_not_pending(
     mock_check_orbit_action_access: AsyncMock,
     manifest_example: Manifest,
 ) -> None:
-    user_id = "hHXb8bTcAvoY5gMtzj3zeW"
-    organization_id = "UoAqoUkAaZQsra6KGoDMmy"
-    orbit_id = "SKY7Lqo6oiewTcU8DKFJmY"
-    collection_id = "mVE7ff8LgqAa3svKmdjCt6"
-    model_artifact_id = "FugvnKxyMVwEX3Ho7c5Z7o"
+    user_id = UUID("0199c337-09f1-7d8f-b0c4-b68349bbe24b")
+    organization_id = UUID("0199c337-09f2-7af1-af5e-83fd7a5b51a0")
+    orbit_id = UUID("0199c337-09f3-753e-9def-b27745e69be6")
+    collection_id = UUID("0199c337-09f4-7a01-9f5f-5f68db62cf70")
+    model_artifact_id = UUID("0199c337-09fa-7ff6-b1e7-fc89a65f8622")
 
     model_artifact = ModelArtifact(
         id=model_artifact_id,
@@ -793,11 +797,11 @@ async def test_update_model_artifact(
     mock_check_orbit_action_access: AsyncMock,
     manifest_example: Manifest,
 ) -> None:
-    user_id = "hHXb8bTcAvoY5gMtzj3zeW"
-    organization_id = "UoAqoUkAaZQsra6KGoDMmy"
-    orbit_id = "SKY7Lqo6oiewTcU8DKFJmY"
-    collection_id = "mVE7ff8LgqAa3svKmdjCt6"
-    model_artifact_id = "FugvnKxyMVwEX3Ho7c5Z7o"
+    user_id = UUID("0199c337-09f1-7d8f-b0c4-b68349bbe24b")
+    organization_id = UUID("0199c337-09f2-7af1-af5e-83fd7a5b51a0")
+    orbit_id = UUID("0199c337-09f3-753e-9def-b27745e69be6")
+    collection_id = UUID("0199c337-09f4-7a01-9f5f-5f68db62cf70")
+    model_artifact_id = UUID("0199c337-09fa-7ff6-b1e7-fc89a65f8622")
 
     model_artifact = ModelArtifact(
         id=model_artifact_id,
@@ -890,11 +894,11 @@ async def test_update_model_artifact_not_found(
     mock_get_model_artifact: AsyncMock,
     mock_check_orbit_action_access: AsyncMock,
 ) -> None:
-    user_id = "hHXb8bTcAvoY5gMtzj3zeW"
-    organization_id = "UoAqoUkAaZQsra6KGoDMmy"
-    orbit_id = "SKY7Lqo6oiewTcU8DKFJmY"
-    collection_id = "mVE7ff8LgqAa3svKmdjCt6"
-    model_artifact_id = "FugvnKxyMVwEX3Ho7c5Z7o"
+    user_id = UUID("0199c337-09f1-7d8f-b0c4-b68349bbe24b")
+    organization_id = UUID("0199c337-09f2-7af1-af5e-83fd7a5b51a0")
+    orbit_id = UUID("0199c337-09f3-753e-9def-b27745e69be6")
+    collection_id = UUID("0199c337-09f4-7a01-9f5f-5f68db62cf70")
+    model_artifact_id = UUID("0199c337-09fa-7ff6-b1e7-fc89a65f8622")
 
     mock_update_model_artifact.return_value = None
     mock_get_orbit_simple.return_value = Mock(
@@ -929,7 +933,8 @@ async def test_update_model_artifact_not_found(
 async def test_get_s3_service(
     mock_get_bucket_secret: AsyncMock, mock_s3_service: Mock, test_bucket: BucketSecret
 ) -> None:
-    secret_id = "6JCyzSABJtgY5q4WwkJ6Yz"
+    secret_id = UUID("0199c3f7-f040-7f63-9bef-a1f380ae9eeb")
+
     mock_get_bucket_secret.return_value = test_bucket
 
     result = await handler._get_s3_service(secret_id)
@@ -963,11 +968,11 @@ async def test_update_model_artifact_invalid_status_transition(
     mock_update_model_artifact: AsyncMock,
     manifest_example: Manifest,
 ) -> None:
-    user_id = "hHXb8bTcAvoY5gMtzj3zeW"
-    organization_id = "UoAqoUkAaZQsra6KGoDMmy"
-    orbit_id = "SKY7Lqo6oiewTcU8DKFJmY"
-    collection_id = "mVE7ff8LgqAa3svKmdjCt6"
-    model_artifact_id = "FugvnKxyMVwEX3Ho7c5Z7o"
+    user_id = UUID("0199c337-09f1-7d8f-b0c4-b68349bbe24b")
+    organization_id = UUID("0199c337-09f2-7af1-af5e-83fd7a5b51a0")
+    orbit_id = UUID("0199c337-09f3-753e-9def-b27745e69be6")
+    collection_id = UUID("0199c337-09f4-7a01-9f5f-5f68db62cf70")
+    model_artifact_id = UUID("0199c337-09fa-7ff6-b1e7-fc89a65f8622")
 
     existing_artifact = ModelArtifact(
         id=model_artifact_id,
@@ -1033,11 +1038,12 @@ async def test_update_model_artifact_update_failed(
     mock_update_model_artifact: AsyncMock,
     manifest_example: Manifest,
 ) -> None:
-    user_id = "hHXb8bTcAvoY5gMtzj3zeW"
-    organization_id = "UoAqoUkAaZQsra6KGoDMmy"
-    orbit_id = "SKY7Lqo6oiewTcU8DKFJmY"
-    collection_id = "mVE7ff8LgqAa3svKmdjCt6"
-    model_artifact_id = "FugvnKxyMVwEX3Ho7c5Z7o"
+    user_id = UUID("0199c337-09f1-7d8f-b0c4-b68349bbe24b")
+    organization_id = UUID("0199c337-09f2-7af1-af5e-83fd7a5b51a0")
+    orbit_id = UUID("0199c337-09f3-753e-9def-b27745e69be6")
+    collection_id = UUID("0199c337-09f4-7a01-9f5f-5f68db62cf70")
+
+    model_artifact_id = UUID("0199c337-09fa-7ff6-b1e7-fc89a65f8622")
 
     existing_artifact = ModelArtifact(
         id=model_artifact_id,
@@ -1098,11 +1104,12 @@ async def test_request_download_url_model_artifact_not_found(
     mock_check_orbit_and_collection_access: AsyncMock,
     mock_get_model_artifact: AsyncMock,
 ) -> None:
-    user_id = "hHXb8bTcAvoY5gMtzj3zeW"
-    organization_id = "UoAqoUkAaZQsra6KGoDMmy"
-    orbit_id = "SKY7Lqo6oiewTcU8DKFJmY"
-    collection_id = "mVE7ff8LgqAa3svKmdjCt6"
-    model_artifact_id = "FugvnKxyMVwEX3Ho7c5Z7o"
+    user_id = UUID("0199c337-09f1-7d8f-b0c4-b68349bbe24b")
+    organization_id = UUID("0199c337-09f2-7af1-af5e-83fd7a5b51a0")
+    orbit_id = UUID("0199c337-09f3-753e-9def-b27745e69be6")
+    collection_id = UUID("0199c337-09f4-7a01-9f5f-5f68db62cf70")
+
+    model_artifact_id = UUID("0199c337-09fa-7ff6-b1e7-fc89a65f8622")
 
     mock_check_orbit_and_collection_access.return_value = (
         Mock(id=orbit_id),
@@ -1138,11 +1145,12 @@ async def test_request_delete_url_model_artifact_not_found(
     mock_check_orbit_and_collection_access: AsyncMock,
     mock_get_model_artifact: AsyncMock,
 ) -> None:
-    user_id = "hHXb8bTcAvoY5gMtzj3zeW"
-    organization_id = "UoAqoUkAaZQsra6KGoDMmy"
-    orbit_id = "SKY7Lqo6oiewTcU8DKFJmY"
-    collection_id = "mVE7ff8LgqAa3svKmdjCt6"
-    model_artifact_id = "FugvnKxyMVwEX3Ho7c5Z7o"
+    user_id = UUID("0199c337-09f1-7d8f-b0c4-b68349bbe24b")
+    organization_id = UUID("0199c337-09f2-7af1-af5e-83fd7a5b51a0")
+    orbit_id = UUID("0199c337-09f3-753e-9def-b27745e69be6")
+    collection_id = UUID("0199c337-09f4-7a01-9f5f-5f68db62cf70")
+
+    model_artifact_id = UUID("0199c337-09fa-7ff6-b1e7-fc89a65f8622")
 
     mock_check_orbit_and_collection_access.return_value = (
         Mock(id=orbit_id),
@@ -1185,11 +1193,12 @@ async def test_request_delete_url_orbit_not_found(
     test_bucket: BucketSecret,
     manifest_example: Manifest,
 ) -> None:
-    user_id = "hHXb8bTcAvoY5gMtzj3zeW"
-    organization_id = "UoAqoUkAaZQsra6KGoDMmy"
-    orbit_id = "SKY7Lqo6oiewTcU8DKFJmY"
-    collection_id = "mVE7ff8LgqAa3svKmdjCt6"
-    model_artifact_id = "FugvnKxyMVwEX3Ho7c5Z7o"
+    user_id = UUID("0199c337-09f1-7d8f-b0c4-b68349bbe24b")
+    organization_id = UUID("0199c337-09f2-7af1-af5e-83fd7a5b51a0")
+    orbit_id = UUID("0199c337-09f3-753e-9def-b27745e69be6")
+    collection_id = UUID("0199c337-09f4-7a01-9f5f-5f68db62cf70")
+
+    model_artifact_id = UUID("0199c337-09fa-7ff6-b1e7-fc89a65f8622")
 
     model_artifact = ModelArtifact(
         id=model_artifact_id,

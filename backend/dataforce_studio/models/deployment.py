@@ -57,10 +57,10 @@ class DeploymentOrm(TimestampMixin, Base):
         String, nullable=False, default="pending", server_default="pending"
     )
     description: Mapped[str | None] = mapped_column(String, nullable=True)
-    dynamic_attributes_secrets: Mapped[dict[str, uuid6.UUID]] = mapped_column(
+    dynamic_attributes_secrets: Mapped[dict[str, str]] = mapped_column(
         postgresql.JSONB, nullable=False, default=dict, server_default="{}"
     )
-    env_variables_secrets: Mapped[dict[str, uuid6.UUID]] = mapped_column(
+    env_variables_secrets: Mapped[dict[str, str]] = mapped_column(
         postgresql.JSONB, nullable=False, default=dict, server_default="{}"
     )
     env_variables: Mapped[dict[str, str]] = mapped_column(

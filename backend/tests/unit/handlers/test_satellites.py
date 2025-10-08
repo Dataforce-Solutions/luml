@@ -1,7 +1,7 @@
 import datetime
-import uuid
 from typing import Any
 from unittest.mock import AsyncMock, Mock, patch
+from uuid import UUID, uuid4
 
 import pytest
 
@@ -35,10 +35,11 @@ async def test_list_satellites(
     mock_check_orbit_action_access: AsyncMock,
     mock_list_satellites: AsyncMock,
 ) -> None:
-    user_id = "hHXb8bTcAvoY5gMtzj3zeW"
-    organization_id = "UoAqoUkAaZQsra6KGoDMmy"
-    orbit_id = "SKY7Lqo6oiewTcU8DKFJmY"
-    satellite_id = "bWpD6n3MLNQBgez5FTkvqW"
+    user_id = UUID("0199c337-09f1-7d8f-b0c4-b68349bbe24b")
+    organization_id = UUID("0199c337-09f2-7af1-af5e-83fd7a5b51a0")
+    orbit_id = UUID("0199c337-09f3-753e-9def-b27745e69be6")
+    satellite_id = UUID("0199c418-8be4-737c-a5e4-997685950d42")
+
     capabilities: dict[SatelliteCapability, dict[str, Any] | None] = {
         SatelliteCapability.DEPLOY: {"key": "test"}
     }
@@ -81,13 +82,14 @@ async def test_get_satellite(
     mock_check_orbit_action_access: AsyncMock,
     mock_get_satellite: AsyncMock,
 ) -> None:
-    user_id = "hHXb8bTcAvoY5gMtzj3zeW"
-    organization_id = "UoAqoUkAaZQsra6KGoDMmy"
-    orbit_id = "SKY7Lqo6oiewTcU8DKFJmY"
-    satellite_id = "bWpD6n3MLNQBgez5FTkvqW"
+    user_id = UUID("0199c337-09f1-7d8f-b0c4-b68349bbe24b")
+    organization_id = UUID("0199c337-09f2-7af1-af5e-83fd7a5b51a0")
+    orbit_id = UUID("0199c337-09f3-753e-9def-b27745e69be6")
+    satellite_id = UUID("0199c418-8be4-737c-a5e4-997685950d42")
+
     expected = Satellite(
         id=satellite_id,
-        orbit_id="889e9c67-8ad5-4737-962f-ccbafdd46f69",
+        orbit_id=orbit_id,
         name="test",
         description=None,
         base_url="https://url.com",
@@ -123,10 +125,10 @@ async def test_get_satellite_not_found(
     mock_check_orbit_action_access: AsyncMock,
     mock_get_satellite: AsyncMock,
 ) -> None:
-    user_id = "hHXb8bTcAvoY5gMtzj3zeW"
-    organization_id = "UoAqoUkAaZQsra6KGoDMmy"
-    orbit_id = "SKY7Lqo6oiewTcU8DKFJmY"
-    satellite_id = "bWpD6n3MLNQBgez5FTkvqW"
+    user_id = UUID("0199c337-09f1-7d8f-b0c4-b68349bbe24b")
+    organization_id = UUID("0199c337-09f2-7af1-af5e-83fd7a5b51a0")
+    orbit_id = UUID("0199c337-09f3-753e-9def-b27745e69be6")
+    satellite_id = UUID("0199c418-8be4-737c-a5e4-997685950d42")
 
     mock_get_satellite.return_value = None
 
@@ -168,10 +170,11 @@ async def test_create_satellite(
     mock_get_key_hash: Mock,
 ) -> None:
     user_name = "John Doe"
-    user_id = "hHXb8bTcAvoY5gMtzj3zeW"
-    organization_id = "UoAqoUkAaZQsra6KGoDMmy"
-    orbit_id = "SKY7Lqo6oiewTcU8DKFJmY"
-    satellite_id = "bWpD6n3MLNQBgez5FTkvqW"
+    user_id = UUID("0199c337-09f1-7d8f-b0c4-b68349bbe24b")
+    organization_id = UUID("0199c337-09f2-7af1-af5e-83fd7a5b51a0")
+    orbit_id = UUID("0199c337-09f3-753e-9def-b27745e69be6")
+    satellite_id = UUID("0199c418-8be4-737c-a5e4-997685950d42")
+    task_id = UUID("0199c419-b7c1-71d6-8382-5697010cee46")
 
     payload = {"created_by_user": user_name}
     satellite_create_in = SatelliteCreateIn(name="test-satellite")
@@ -187,7 +190,7 @@ async def test_create_satellite(
         last_seen_at=None,
     )
     mock_task = SatelliteQueueTask(
-        id="67mnhKnwHRMHwtARmoqvfQ",
+        id=task_id,
         satellite_id=mock_satellite.id,
         orbit_id=orbit_id,
         type=SatelliteTaskType.PAIRING,
@@ -204,7 +207,7 @@ async def test_create_satellite(
     mock_get_orbit_simple.return_value = Mock()
     mock_get_public_user.return_value = Mock(full_name=user_name)
     mock_create_satellite.return_value = mock_satellite, mock_task
-    mock_get_key_hash.return_value = str(uuid.uuid4())
+    mock_get_key_hash.return_value = str(uuid4())
 
     result = await handler.create_satellite(
         user_id, organization_id, orbit_id, satellite_create_in
@@ -234,9 +237,10 @@ async def test_create_satellite_orbit_not_found(
     mock_check_orbit_action_access: AsyncMock,
     mock_get_orbit_simple: AsyncMock,
 ) -> None:
-    user_id = "hHXb8bTcAvoY5gMtzj3zeW"
-    organization_id = "UoAqoUkAaZQsra6KGoDMmy"
-    orbit_id = "SKY7Lqo6oiewTcU8DKFJmY"
+    user_id = UUID("0199c337-09f1-7d8f-b0c4-b68349bbe24b")
+    organization_id = UUID("0199c337-09f2-7af1-af5e-83fd7a5b51a0")
+    orbit_id = UUID("0199c337-09f3-753e-9def-b27745e69be6")
+
     satellite_create_in = SatelliteCreateIn(name="test-satellite")
 
     mock_get_orbit_simple.return_value = None
@@ -271,9 +275,9 @@ async def test_create_satellite_user_not_found(
     mock_get_orbit_simple: AsyncMock,
     mock_get_public_user: AsyncMock,
 ) -> None:
-    user_id = "hHXb8bTcAvoY5gMtzj3zeW"
-    organization_id = "UoAqoUkAaZQsra6KGoDMmy"
-    orbit_id = "SKY7Lqo6oiewTcU8DKFJmY"
+    user_id = UUID("0199c337-09f1-7d8f-b0c4-b68349bbe24b")
+    organization_id = UUID("0199c337-09f2-7af1-af5e-83fd7a5b51a0")
+    orbit_id = UUID("0199c337-09f3-753e-9def-b27745e69be6")
 
     satellite_create_in = SatelliteCreateIn(name="test-satellite")
 
@@ -306,8 +310,9 @@ async def test_pair_satellite(
     mock_get_satellite: AsyncMock,
     mock_pair_satellite: AsyncMock,
 ) -> None:
-    orbit_id = "SKY7Lqo6oiewTcU8DKFJmY"
-    satellite_id = "bWpD6n3MLNQBgez5FTkvqW"
+    orbit_id = UUID("0199c337-09f3-753e-9def-b27745e69be6")
+    satellite_id = UUID("0199c418-8be4-737c-a5e4-997685950d42")
+
     base_url = "https://satellite.example.com"
     capabilities: dict[SatelliteCapability, dict[str, Any] | None] = {
         SatelliteCapability.DEPLOY: {"key": "kdhfkgjhdkfghk"}
@@ -350,7 +355,8 @@ async def test_pair_satellite(
 
 @pytest.mark.asyncio
 async def test_pair_satellite_empty_capabilities() -> None:
-    satellite_id = "bWpD6n3MLNQBgez5FTkvqW"
+    satellite_id = UUID("0199c418-8be4-737c-a5e4-997685950d42")
+
     base_url = "https://satellite.example.com"
     capabilities: dict[SatelliteCapability, dict[str, Any] | None] = {}
 
@@ -368,7 +374,8 @@ async def test_pair_satellite_empty_capabilities() -> None:
 async def test_pair_satellite_satellite_not_found(
     mock_get_satellite: AsyncMock,
 ) -> None:
-    satellite_id = "bWpD6n3MLNQBgez5FTkvqW"
+    satellite_id = UUID("0199c418-8be4-737c-a5e4-997685950d42")
+
     base_url = "https://satellite.example.com"
     capabilities: dict[SatelliteCapability, dict[str, Any] | None] = {
         SatelliteCapability.DEPLOY: {"key": "kdhfkgjhdkfghk"}
@@ -391,8 +398,9 @@ async def test_pair_satellite_satellite_not_found(
 async def test_pair_satellite_capabilities_error(
     mock_get_satellite: AsyncMock,
 ) -> None:
-    orbit_id = "SKY7Lqo6oiewTcU8DKFJmY"
-    satellite_id = "bWpD6n3MLNQBgez5FTkvqW"
+    orbit_id = UUID("0199c337-09f3-753e-9def-b27745e69be6")
+    satellite_id = UUID("0199c418-8be4-737c-a5e4-997685950d42")
+
     base_url = "https://satellite.example.com"
     capabilities: dict[SatelliteCapability, dict[str, Any] | None] = {
         SatelliteCapability.DEPLOY: None
@@ -435,8 +443,9 @@ async def test_pair_satellite_already_paired(
     mock_get_satellite: AsyncMock,
     mock_pair_satellite: AsyncMock,
 ) -> None:
-    orbit_id = "SKY7Lqo6oiewTcU8DKFJmY"
-    satellite_id = "bWpD6n3MLNQBgez5FTkvqW"
+    orbit_id = UUID("0199c337-09f3-753e-9def-b27745e69be6")
+    satellite_id = UUID("0199c418-8be4-737c-a5e4-997685950d42")
+
     base_url = "https://satellite.example.com"
     capabilities: dict[SatelliteCapability, dict[str, Any] | None] = {
         SatelliteCapability.DEPLOY: {"key": "kdhfkgjhdkfghk"}
@@ -477,8 +486,9 @@ async def test_pair_satellite_update_error(
     mock_get_satellite: AsyncMock,
     mock_pair_satellite: AsyncMock,
 ) -> None:
-    orbit_id = "SKY7Lqo6oiewTcU8DKFJmY"
-    satellite_id = "bWpD6n3MLNQBgez5FTkvqW"
+    orbit_id = UUID("0199c337-09f3-753e-9def-b27745e69be6")
+    satellite_id = UUID("0199c418-8be4-737c-a5e4-997685950d42")
+
     base_url = "https://satellite.example.com"
     capabilities: dict[SatelliteCapability, dict[str, Any] | None] = {
         SatelliteCapability.DEPLOY: {"key": "kdhfkgjhdkfghk"}
@@ -514,7 +524,7 @@ async def test_pair_satellite_update_error(
 )
 @pytest.mark.asyncio
 async def test_touch_last_seen(mock_touch_last_seen: AsyncMock) -> None:
-    satellite_id = "bWpD6n3MLNQBgez5FTkvqW"
+    satellite_id = UUID("0199c418-8be4-737c-a5e4-997685950d42")
 
     await handler.touch_last_seen(satellite_id)
 
@@ -527,11 +537,13 @@ async def test_touch_last_seen(mock_touch_last_seen: AsyncMock) -> None:
 )
 @pytest.mark.asyncio
 async def test_list_tasks(mock_list_tasks: AsyncMock) -> None:
-    orbit_id = "SKY7Lqo6oiewTcU8DKFJmY"
-    satellite_id = "bWpD6n3MLNQBgez5FTkvqW"
+    orbit_id = UUID("0199c337-09f3-753e-9def-b27745e69be6")
+    satellite_id = UUID("0199c418-8be4-737c-a5e4-997685950d42")
+    task_id = UUID("0199c419-b7c1-71d6-8382-5697010cee46")
+
     expected = [
         SatelliteQueueTask(
-            id="SbNnwf4fjhEkemiwzmZUBo",
+            id=task_id,
             satellite_id=satellite_id,
             orbit_id=orbit_id,
             type=SatelliteTaskType.PAIRING,
@@ -560,7 +572,8 @@ async def test_list_tasks(mock_list_tasks: AsyncMock) -> None:
 )
 @pytest.mark.asyncio
 async def test_list_tasks_with_status(mock_list_tasks: AsyncMock) -> None:
-    satellite_id = "bWpD6n3MLNQBgez5FTkvqW"
+    satellite_id = UUID("0199c418-8be4-737c-a5e4-997685950d42")
+
     status = SatelliteTaskStatus.PENDING
 
     expected = [Mock(status=status), Mock(status=status)]
@@ -580,9 +593,9 @@ async def test_list_tasks_with_status(mock_list_tasks: AsyncMock) -> None:
 )
 @pytest.mark.asyncio
 async def test_update_task_status_success(mock_update_task_status: AsyncMock) -> None:
-    orbit_id = "SKY7Lqo6oiewTcU8DKFJmY"
-    satellite_id = "bWpD6n3MLNQBgez5FTkvqW"
-    task_id = "78A4ZUBLPexdN6FDTorkL3"
+    orbit_id = UUID("0199c337-09f3-753e-9def-b27745e69be6")
+    satellite_id = UUID("0199c418-8be4-737c-a5e4-997685950d42")
+    task_id = UUID("0199c419-b7c1-71d6-8382-5697010cee46")
 
     status = SatelliteTaskStatus.DONE
     result = {"success": True}
@@ -620,8 +633,8 @@ async def test_update_task_status_success(mock_update_task_status: AsyncMock) ->
 )
 @pytest.mark.asyncio
 async def test_update_task_status_not_found(mock_update_task_status: AsyncMock) -> None:
-    satellite_id = "bWpD6n3MLNQBgez5FTkvqW"
-    task_id = "78A4ZUBLPexdN6FDTorkL3"
+    satellite_id = UUID("0199c418-8be4-737c-a5e4-997685950d42")
+    task_id = UUID("0199c419-b7c1-71d6-8382-5697010cee46")
 
     status = SatelliteTaskStatus.DONE
 
@@ -658,10 +671,10 @@ async def test_regenerate_satellite_api_key(
     mock_update_satellite: AsyncMock,
     mock_get_key_hash: Mock,
 ) -> None:
-    user_id = "hHXb8bTcAvoY5gMtzj3zeW"
-    organization_id = "UoAqoUkAaZQsra6KGoDMmy"
-    orbit_id = "SKY7Lqo6oiewTcU8DKFJmY"
-    satellite_id = "bWpD6n3MLNQBgez5FTkvqW"
+    user_id = UUID("0199c337-09f1-7d8f-b0c4-b68349bbe24b")
+    organization_id = UUID("0199c337-09f2-7af1-af5e-83fd7a5b51a0")
+    orbit_id = UUID("0199c337-09f3-753e-9def-b27745e69be6")
+    satellite_id = UUID("0199c418-8be4-737c-a5e4-997685950d42")
 
     mock_satellite = Satellite(
         id=satellite_id,
@@ -704,10 +717,10 @@ async def test_regenerate_satellite_api_key_not_found(
     mock_check_orbit_action_access: AsyncMock,
     mock_get_satellite: AsyncMock,
 ) -> None:
-    user_id = "hHXb8bTcAvoY5gMtzj3zeW"
-    organization_id = "UoAqoUkAaZQsra6KGoDMmy"
-    orbit_id = "SKY7Lqo6oiewTcU8DKFJmY"
-    satellite_id = "bWpD6n3MLNQBgez5FTkvqW"
+    user_id = UUID("0199c337-09f1-7d8f-b0c4-b68349bbe24b")
+    organization_id = UUID("0199c337-09f2-7af1-af5e-83fd7a5b51a0")
+    orbit_id = UUID("0199c337-09f3-753e-9def-b27745e69be6")
+    satellite_id = UUID("0199c418-8be4-737c-a5e4-997685950d42")
 
     mock_get_satellite.return_value = None
 
@@ -741,10 +754,10 @@ async def test_update_satellite(
     mock_get_satellite: AsyncMock,
     mock_update_satellite: AsyncMock,
 ) -> None:
-    user_id = "hHXb8bTcAvoY5gMtzj3zeW"
-    organization_id = "UoAqoUkAaZQsra6KGoDMmy"
-    orbit_id = "SKY7Lqo6oiewTcU8DKFJmY"
-    satellite_id = "bWpD6n3MLNQBgez5FTkvqW"
+    user_id = UUID("0199c337-09f1-7d8f-b0c4-b68349bbe24b")
+    organization_id = UUID("0199c337-09f2-7af1-af5e-83fd7a5b51a0")
+    orbit_id = UUID("0199c337-09f3-753e-9def-b27745e69be6")
+    satellite_id = UUID("0199c418-8be4-737c-a5e4-997685950d42")
 
     satellite_update_in = SatelliteUpdateIn(
         name="updated-name", description="updated-desc"
@@ -804,10 +817,10 @@ async def test_update_satellite_not_found(
     mock_check_orbit_action_access: AsyncMock,
     mock_get_satellite: AsyncMock,
 ) -> None:
-    user_id = "hHXb8bTcAvoY5gMtzj3zeW"
-    organization_id = "UoAqoUkAaZQsra6KGoDMmy"
-    orbit_id = "SKY7Lqo6oiewTcU8DKFJmY"
-    satellite_id = "bWpD6n3MLNQBgez5FTkvqW"
+    user_id = UUID("0199c337-09f1-7d8f-b0c4-b68349bbe24b")
+    organization_id = UUID("0199c337-09f2-7af1-af5e-83fd7a5b51a0")
+    orbit_id = UUID("0199c337-09f3-753e-9def-b27745e69be6")
+    satellite_id = UUID("0199c418-8be4-737c-a5e4-997685950d42")
 
     satellite_update_in = SatelliteUpdateIn(name="updated-name")
     mock_get_satellite.return_value = None
@@ -842,10 +855,10 @@ async def test_update_satellite_update_failed(
     mock_get_satellite: AsyncMock,
     mock_update_satellite: AsyncMock,
 ) -> None:
-    user_id = "hHXb8bTcAvoY5gMtzj3zeW"
-    organization_id = "UoAqoUkAaZQsra6KGoDMmy"
-    orbit_id = "SKY7Lqo6oiewTcU8DKFJmY"
-    satellite_id = "bWpD6n3MLNQBgez5FTkvqW"
+    user_id = UUID("0199c337-09f1-7d8f-b0c4-b68349bbe24b")
+    organization_id = UUID("0199c337-09f2-7af1-af5e-83fd7a5b51a0")
+    orbit_id = UUID("0199c337-09f3-753e-9def-b27745e69be6")
+    satellite_id = UUID("0199c418-8be4-737c-a5e4-997685950d42")
 
     satellite_update_in = SatelliteUpdateIn(name="updated-name")
 
@@ -891,10 +904,10 @@ async def test_delete_satellite(
     mock_get_satellite: AsyncMock,
     mock_delete_satellite: AsyncMock,
 ) -> None:
-    user_id = "hHXb8bTcAvoY5gMtzj3zeW"
-    organization_id = "UoAqoUkAaZQsra6KGoDMmy"
-    orbit_id = "SKY7Lqo6oiewTcU8DKFJmY"
-    satellite_id = "bWpD6n3MLNQBgez5FTkvqW"
+    user_id = UUID("0199c337-09f1-7d8f-b0c4-b68349bbe24b")
+    organization_id = UUID("0199c337-09f2-7af1-af5e-83fd7a5b51a0")
+    orbit_id = UUID("0199c337-09f3-753e-9def-b27745e69be6")
+    satellite_id = UUID("0199c418-8be4-737c-a5e4-997685950d42")
 
     mock_satellite = Satellite(
         id=satellite_id,
@@ -934,10 +947,10 @@ async def test_delete_satellite_not_found(
     mock_check_orbit_action_access: AsyncMock,
     mock_get_satellite: AsyncMock,
 ) -> None:
-    user_id = "hHXb8bTcAvoY5gMtzj3zeW"
-    organization_id = "UoAqoUkAaZQsra6KGoDMmy"
-    orbit_id = "SKY7Lqo6oiewTcU8DKFJmY"
-    satellite_id = "bWpD6n3MLNQBgez5FTkvqW"
+    user_id = UUID("0199c337-09f1-7d8f-b0c4-b68349bbe24b")
+    organization_id = UUID("0199c337-09f2-7af1-af5e-83fd7a5b51a0")
+    orbit_id = UUID("0199c337-09f3-753e-9def-b27745e69be6")
+    satellite_id = UUID("0199c418-8be4-737c-a5e4-997685950d42")
 
     mock_get_satellite.return_value = None
 

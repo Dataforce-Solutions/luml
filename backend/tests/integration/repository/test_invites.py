@@ -93,7 +93,7 @@ async def test_get_invite_where(
     assert invites
     assert isinstance(invites, list)
     assert len(invites) == 4
-    assert invites[0].organization_id == str(organization.id)
+    assert invites[0].organization_id == organization.id
 
 
 @pytest.mark.asyncio

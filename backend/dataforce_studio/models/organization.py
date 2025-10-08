@@ -109,7 +109,10 @@ class OrganizationInviteOrm(TimestampMixin, Base):
         UUID(as_uuid=False), ForeignKey("users.id", ondelete="CASCADE"), nullable=False
     )
 
-    organization: Mapped["OrganizationOrm"] = relationship(back_populates="invites")
+    organization: Mapped["OrganizationOrm"] = relationship(
+        back_populates="invites",
+        lazy="selectin",
+    )
     invited_by_user: Mapped["UserOrm"] = relationship("UserOrm", lazy="selectin")  # type: ignore[name-defined]  # noqa: F821
 
     def __repr__(self) -> str:

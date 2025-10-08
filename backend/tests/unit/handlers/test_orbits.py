@@ -1,8 +1,8 @@
 import datetime
-import uuid
 from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
 import pytest
+from uuid6 import UUID, uuid7
 
 from dataforce_studio.handlers.orbits import OrbitHandler
 from dataforce_studio.infra.exceptions import (
@@ -30,10 +30,10 @@ handler = OrbitHandler()
 @pytest.fixture
 def test_orbit() -> Orbit:
     return Orbit(
-        id="k83oGCS9HBcCPqopMY9Ls4",
+        id=uuid7(),
         name="test",
-        organization_id="Bgjj3VqbFVm2hkjSfxZkVt",
-        bucket_secret_id="3u29aC8VgDVyDNHC6sSYD7",
+        organization_id=uuid7(),
+        bucket_secret_id=uuid7(),
         total_members=1,
         role=None,
         created_at=datetime.datetime.now(),
@@ -44,12 +44,12 @@ def test_orbit() -> Orbit:
 @pytest.fixture
 def test_orbit_member() -> OrbitMember:
     return OrbitMember(
-        id="Bj9yKtzsGKZRd9j8xhBW8y",
-        orbit_id="k83oGCS9HBcCPqopMY9Ls4",
+        id=uuid7(),
+        orbit_id=uuid7(),
         role=OrbitRole.MEMBER,
         user=UserOut(
-            id="Au8HPfbVBmU6NsJS6pHZfe",
-            email=f"email_{uuid.uuid4()}@example.org",
+            id=uuid7(),
+            email=f"email_{uuid7()}@example.org",
             full_name="Kathy Hall",
             disabled=False,
             photo=None,
@@ -62,10 +62,10 @@ def test_orbit_member() -> OrbitMember:
 @pytest.fixture
 def test_orbit_details(test_orbit_member: OrbitMember) -> OrbitDetails:
     return OrbitDetails(
-        id="2yyncgPyvLEZNekgQsCQBb",
+        id=uuid7(),
         name="test",
-        organization_id="Bgjj3VqbFVm2hkjSfxZkVt",
-        bucket_secret_id="3u29aC8VgDVyDNHC6sSYD7",
+        organization_id=uuid7(),
+        bucket_secret_id=uuid7(),
         members=[test_orbit_member],
         created_at=datetime.datetime.now(),
         updated_at=datetime.datetime.now(),
@@ -101,7 +101,8 @@ async def test_create_organization_orbit(
     mock_get_organization_member_role: AsyncMock,
     test_orbit: Orbit,
 ) -> None:
-    user_id = "hHXb8bTcAvoY5gMtzj3zeW"
+    user_id = UUID("0199c337-09f1-7d8f-b0c4-b68349bbe24b")
+
     mocked_orbit = test_orbit
 
     mock_get_bucket_secret.return_value = Mock(
@@ -159,7 +160,8 @@ async def test_create_organization_orbit_secret_not_found(
     mock_get_org_role: AsyncMock,
     test_orbit: Orbit,
 ) -> None:
-    user_id = "hHXb8bTcAvoY5gMtzj3zeW"
+    user_id = UUID("0199c337-09f1-7d8f-b0c4-b68349bbe24b")
+
     orbit = test_orbit
 
     orbit_to_create = OrbitCreateIn(
@@ -210,7 +212,9 @@ async def test_create_organization_orbit_secret_wrong_org(
     mock_get_org_role: AsyncMock,
     test_orbit: Orbit,
 ) -> None:
-    user_id = "hHXb8bTcAvoY5gMtzj3zeW"
+    user_id = UUID("0199c337-09f1-7d8f-b0c4-b68349bbe24b")
+    organization_id = UUID("0199c337-09f2-7af1-af5e-83fd7a5b51a0")
+
     orbit = test_orbit
     orbit_to_create = OrbitCreateIn(
         name=orbit.name,
@@ -218,7 +222,7 @@ async def test_create_organization_orbit_secret_wrong_org(
     )
 
     mock_get_orbits_count.return_value = 0
-    mock_get_secret.return_value = Mock(organization_id="bRnGbK8enFnkyBRJKWCgdN")
+    mock_get_secret.return_value = Mock(organization_id=organization_id)
     mock_get_org_role.return_value = OrgRole.OWNER
     mock_get_organization_details.return_value = Mock(orbits_limit=10, total_orbits=0)
 
@@ -245,7 +249,8 @@ async def test_get_organization_orbits(
     mock_get_organization_member_role: AsyncMock,
     test_orbit: Orbit,
 ) -> None:
-    user_id = "hHXb8bTcAvoY5gMtzj3zeW"
+    user_id = UUID("0199c337-09f1-7d8f-b0c4-b68349bbe24b")
+
     orbit = test_orbit
     expected = [orbit]
 
@@ -278,7 +283,8 @@ async def test_get_orbit(
     mock_get_organization_member_role: AsyncMock,
     test_orbit_details: OrbitDetails,
 ) -> None:
-    user_id = "hHXb8bTcAvoY5gMtzj3zeW"
+    user_id = UUID("0199c337-09f1-7d8f-b0c4-b68349bbe24b")
+
     expected = test_orbit_details
 
     mock_get_orbit.return_value = expected
@@ -309,9 +315,9 @@ async def test_get_orbit_not_found(
     mock_get_orbit_member_role: AsyncMock,
     mock_get_organization_member_role: AsyncMock,
 ) -> None:
-    user_id = "hHXb8bTcAvoY5gMtzj3zeW"
-    organization_id = "UoAqoUkAaZQsra6KGoDMmy"
-    orbit_id = "SKY7Lqo6oiewTcU8DKFJmY"
+    user_id = UUID("0199c337-09f1-7d8f-b0c4-b68349bbe24b")
+    organization_id = UUID("0199c337-09f2-7af1-af5e-83fd7a5b51a0")
+    orbit_id = UUID("0199c337-09f3-753e-9def-b27745e69be6")
 
     mock_get_orbit.return_value = None
     mock_get_organization_member_role.return_value = OrgRole.OWNER
@@ -343,7 +349,8 @@ async def test_update_orbit(
     mock_get_organization_member_role: AsyncMock,
     test_orbit_details: OrbitDetails,
 ) -> None:
-    user_id = "hHXb8bTcAvoY5gMtzj3zeW"
+    user_id = UUID("0199c337-09f1-7d8f-b0c4-b68349bbe24b")
+
     expected = test_orbit_details
 
     mock_update_orbit.return_value = expected
@@ -377,9 +384,10 @@ async def test_update_orbit_not_found(
     mock_get_orbit_member_role: AsyncMock,
     mock_get_organization_member_role: AsyncMock,
 ) -> None:
-    user_id = "hHXb8bTcAvoY5gMtzj3zeW"
-    organization_id = "UoAqoUkAaZQsra6KGoDMmy"
-    orbit_id = "SKY7Lqo6oiewTcU8DKFJmY"
+    user_id = UUID("0199c337-09f1-7d8f-b0c4-b68349bbe24b")
+    organization_id = UUID("0199c337-09f2-7af1-af5e-83fd7a5b51a0")
+    orbit_id = UUID("0199c337-09f3-753e-9def-b27745e69be6")
+
     update_orbit = OrbitUpdate(name="new_name")
 
     mock_update_orbit.return_value = None
@@ -411,9 +419,9 @@ async def test_delete_orbit(
     mock_get_orbit_member_role: AsyncMock,
     mock_get_organization_member_role: AsyncMock,
 ) -> None:
-    user_id = "hHXb8bTcAvoY5gMtzj3zeW"
-    organization_id = "UoAqoUkAaZQsra6KGoDMmy"
-    orbit_id = "SKY7Lqo6oiewTcU8DKFJmY"
+    user_id = UUID("0199c337-09f1-7d8f-b0c4-b68349bbe24b")
+    organization_id = UUID("0199c337-09f2-7af1-af5e-83fd7a5b51a0")
+    orbit_id = UUID("0199c337-09f3-753e-9def-b27745e69be6")
 
     mock_delete_orbit.return_value = None
     mock_get_organization_member_role.return_value = OrgRole.OWNER
@@ -442,7 +450,9 @@ async def test_get_orbit_members(
     mock_get_organization_member_role: AsyncMock,
     test_orbit_member: OrbitMember,
 ) -> None:
-    organization_id = "UoAqoUkAaZQsra6KGoDMmy"
+    UUID("0199c337-09f1-7d8f-b0c4-b68349bbe24b")
+    organization_id = UUID("0199c337-09f2-7af1-af5e-83fd7a5b51a0")
+
     expected = [test_orbit_member]
 
     mock_get_orbit_members.return_value = expected
@@ -496,8 +506,9 @@ async def test_create_orbit_member(
     mock_get_orbit_simple: AsyncMock,
     test_orbit_member: OrbitMember,
 ) -> None:
-    user_id = "hHXb8bTcAvoY5gMtzj3HeW"
-    organization_id = "UoAqoUkAaZQsra6KGoDMmy"
+    user_id = UUID("0199c337-09f1-7d8f-b0c4-b68349bbe24b")
+    organization_id = UUID("0199c337-09f2-7af1-af5e-83fd7a5b51a0")
+
     expected = test_orbit_member
 
     create_member = OrbitMemberCreate(
@@ -507,8 +518,8 @@ async def test_create_orbit_member(
     )
 
     mock_get_organization_member.return_value = OrganizationMemberOrm(
-        id="3oYRqjPHf5BSovGg6pqAL2",
-        user_id="oC4XyJSGgEdNx3i2g5W9tC",
+        id=uuid7(),
+        user_id=uuid7(),
         organization_id=organization_id,
         role=OrgRole.OWNER,
     )
@@ -552,8 +563,9 @@ async def test_update_orbit_member(
     mock_get_organization_member_role: AsyncMock,
     test_orbit_member: OrbitMember,
 ) -> None:
-    user_id = "hHXb8bTcAvoY5gMtzj3zeW"
-    organization_id = "UoAqoUkAaZQsra6KGoDMmy"
+    user_id = UUID("0199c337-09f1-7d8f-b0c4-b68349bbe24b")
+    organization_id = UUID("0199c337-09f2-7af1-af5e-83fd7a5b51a0")
+
     initial_member = test_orbit_member
     expected = initial_member.model_copy()
     expected.role = OrbitRole.ADMIN
@@ -596,11 +608,11 @@ async def test_update_orbit_member_not_found(
     mock_get_orbit_member_role: AsyncMock,
     mock_get_organization_member_role: AsyncMock,
 ) -> None:
-    user_id = "hHXb8bTcAvoY5gMtzj3zeW"
-    organization_id = "UoAqoUkAaZQsra6KGoDMmy"
-    orbit_id = "SKY7Lqo6oiewTcU8DKFJmY"
+    user_id = UUID("0199c337-09f1-7d8f-b0c4-b68349bbe24b")
+    organization_id = UUID("0199c337-09f2-7af1-af5e-83fd7a5b51a0")
+    orbit_id = UUID("0199c337-09f3-753e-9def-b27745e69be6")
 
-    update_member = UpdateOrbitMember(id="Rt7VuGKWRXQafJMvvbaj39", role=OrbitRole.ADMIN)
+    update_member = UpdateOrbitMember(id=uuid7(), role=OrbitRole.ADMIN)
 
     mock_get_orbit_member.return_value = None
     mock_update_orbit_member.return_value = None
@@ -641,8 +653,8 @@ async def test_delete_orbit_member(
     mock_get_organization_member_role: AsyncMock,
     test_orbit_member: OrbitMember,
 ) -> None:
-    user_id = "hHXb8bTcAvoY5gMtzj3zeW"
-    organization_id = "UoAqoUkAaZQsra6KGoDMmy"
+    user_id = UUID("0199c337-09f1-7d8f-b0c4-b68349bbe24b")
+    organization_id = UUID("0199c337-09f2-7af1-af5e-83fd7a5b51a0")
 
     member = test_orbit_member
 

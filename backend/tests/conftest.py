@@ -7,6 +7,7 @@ from dataclasses import dataclass
 import asyncpg  # type: ignore[import-untyped]
 import pytest_asyncio
 from sqlalchemy.ext.asyncio import AsyncConnection, AsyncEngine, create_async_engine
+from uuid6 import uuid7
 
 from dataforce_studio.models import OrganizationOrm
 from dataforce_studio.repositories.bucket_secrets import BucketSecretRepository
@@ -148,20 +149,20 @@ async def invite_data() -> AsyncGenerator[CreateOrganizationInvite, None]:
     yield CreateOrganizationInvite(
         email="test@example.com",
         role=OrgRole.MEMBER,
-        organization_id="Qhsh2FdDuRiwcdLxaBZGpi",
-        invited_by="Z7DNLnRbA2Qjh63ckyixgY",
+        organization_id=uuid7(),
+        invited_by=uuid7(),
     )
 
 
 @pytest_asyncio.fixture(scope="function")
 async def invite_get_data() -> AsyncGenerator[OrganizationInvite, None]:
     yield OrganizationInvite(
-        id="5rP34PtMkQQQ7FRESfS7zB",
+        id=uuid7(),
         email="test@example.com",
         role=OrgRole.MEMBER,
-        organization_id="Qhsh2FdDuRiwcdLxaBZGpi",
+        organization_id=uuid7(),
         invited_by_user=UserOut(
-            id="Z7DNLnRbA2Qjh63ckyixgY",
+            id=uuid7(),
             email="robertstimothy@example.org",
             full_name="Terry Lewis",
             disabled=False,
@@ -174,12 +175,12 @@ async def invite_get_data() -> AsyncGenerator[OrganizationInvite, None]:
 @pytest_asyncio.fixture(scope="function")
 async def invite_user_get_data() -> AsyncGenerator[UserInvite, None]:
     yield UserInvite(
-        id="5rP34PtMkQQQ7FRESfS7zB",
+        id=uuid7(),
         email="test@example.com",
         role=OrgRole.MEMBER,
-        organization_id="Qhsh2FdDuRiwcdLxaBZGpi",
+        organization_id=uuid7(),
         invited_by_user=UserOut(
-            id="Z7DNLnRbA2Qjh63ckyixgY",
+            id=uuid7(),
             email="robertstimothy@example.org",
             full_name="Terry Lewis",
             disabled=False,
@@ -187,7 +188,7 @@ async def invite_user_get_data() -> AsyncGenerator[UserInvite, None]:
         ),
         created_at=datetime.datetime.now(),
         organization=Organization(
-            id="Qhsh2FdDuRiwcdLxaBZGpi",
+            id=uuid7(),
             name="test",
             logo=None,
             created_at=datetime.datetime.now(),
@@ -201,19 +202,19 @@ async def invite_accept_data() -> AsyncGenerator[CreateOrganizationInvite, None]
     yield CreateOrganizationInvite(
         email="test@example.com",
         role=OrgRole.MEMBER,
-        organization_id="Qhsh2FdDuRiwcdLxaBZGpi",
-        invited_by="Z7DNLnRbA2Qjh63ckyixgY",
+        organization_id=uuid7(),
+        invited_by=uuid7(),
     )
 
 
 @pytest_asyncio.fixture(scope="function")
 async def member_data() -> AsyncGenerator[OrganizationMember, None]:
     yield OrganizationMember(
-        id="5rP34PtMkQQQ7FRESfS7zB",
-        organization_id="Qhsh2FdDuRiwcdLxaBZGpi",
+        id=uuid7(),
+        organization_id=uuid7(),
         role=OrgRole.ADMIN,
         user=UserOut(
-            id="Z7DNLnRbA2Qjh63ckyixgY",
+            id=uuid7(),
             email="test@gmail.com",
             full_name="Full Name",
             disabled=False,
@@ -252,7 +253,7 @@ async def test_user_create_in(
 async def test_user(test_user_create: CreateUser) -> AsyncGenerator[User, None]:
     user = test_user_create.model_copy()
     yield User(
-        id="Xz4x3ALKUnnYQrnSCdhrhs",
+        id=uuid7(),
         email=user.email,
         full_name=user.full_name,
         disabled=user.disabled,
@@ -279,7 +280,7 @@ async def test_user_out(test_user: User) -> AsyncGenerator[UserOut, None]:
 @pytest_asyncio.fixture(scope="function")
 async def test_org() -> AsyncGenerator[Organization, None]:
     yield Organization(
-        id="Qhsh2FdDuRiwcdLxaBZGpi",
+        id=uuid7(),
         name="Test organization",
         logo=None,
         created_at=datetime.datetime.now(),
@@ -291,7 +292,7 @@ async def test_org() -> AsyncGenerator[Organization, None]:
 async def test_org_details(
     invite_get_data: OrganizationInvite, member_data: OrganizationMember
 ) -> AsyncGenerator[OrganizationDetails, None]:
-    test_org_details_id = "Qhsh2FdDuRiwcdLxaBZGpi"
+    test_org_details_id = uuid7()
 
     yield OrganizationDetails(
         id=test_org_details_id,
@@ -303,14 +304,14 @@ async def test_org_details(
         members=[member_data],
         orbits=[
             Orbit(
-                id="ZKXFcWnNz3Pgx5r4guxQuP",
+                id=uuid7(),
                 name="test orbit",
                 organization_id=test_org_details_id,
                 total_members=0,
                 role=None,
                 created_at=datetime.datetime.now(),
                 updated_at=None,
-                bucket_secret_id="bgpdDYVRNdYVTXPw357CVf",
+                bucket_secret_id=uuid7(),
             )
         ],
     )
@@ -352,8 +353,8 @@ async def manifest_example() -> AsyncGenerator[Manifest, None]:
 @pytest_asyncio.fixture
 async def test_bucket() -> AsyncGenerator[BucketSecret, None]:
     yield BucketSecret(
-        id="bgpdDYVRNdYVTXPw357CVf",
-        organization_id="Qhsh2FdDuRiwcdLxaBZGpi",
+        id=uuid7(),
+        organization_id=uuid7(),
         endpoint="url",
         bucket_name="name",
         access_key="access_key",
@@ -371,7 +372,7 @@ async def test_model_artifact(
     manifest_example: Manifest,
 ) -> AsyncGenerator[ModelArtifactCreate, None]:
     yield ModelArtifactCreate(
-        collection_id="TYV8Uq8E25miY6WfwJWHyi",
+        collection_id=uuid7(),
         file_name="model.dfs",
         model_name="Test Model",
         metrics={"accuracy": 0.95, "precision": 0.92},

@@ -18,6 +18,7 @@ from dataforce_studio.schemas.deployment import (
     Deployment,
     DeploymentCreate,
     DeploymentCreateIn,
+    DeploymentDetailsUpdate,
     DeploymentDetailsUpdateIn,
     DeploymentStatus,
     DeploymentUpdate,
@@ -35,6 +36,12 @@ class DeploymentHandler:
     __user_repo = UserRepository(engine)
     __permissions_handler = PermissionsHandler()
     __api_key_handler = APIKeyHandler()
+
+    @staticmethod
+    def _convert_dynamic_attributes_secrets(
+        dynamic_attributes: dict[str, UUID],
+    ) -> dict[str, str]:
+        return {k: str(v) for k, v in (dynamic_attributes or {}).items()}
 
     async def create_deployment(
         self,
@@ -79,8 +86,12 @@ class DeploymentHandler:
                 name=data.name,
                 satellite_parameters=data.satellite_parameters,
                 description=data.description,
-                dynamic_attributes_secrets=data.dynamic_attributes_secrets,
-                env_variables_secrets=data.env_variables_secrets,
+                dynamic_attributes_secrets=self._convert_dynamic_attributes_secrets(
+                    data.dynamic_attributes_secrets
+                ),
+                env_variables_secrets=self._convert_dynamic_attributes_secrets(
+                    data.env_variables_secrets
+                ),
                 env_variables=data.env_variables,
                 created_by_user=user.full_name,
                 tags=data.tags,
@@ -162,7 +173,9 @@ class DeploymentHandler:
             Action.UPDATE,
         )
         updated = await self.__repo.update_deployment_details(
-            orbit_id, deployment_id, data
+            orbit_id,
+            deployment_id,
+            DeploymentDetailsUpdate.model_validate(data.model_dump(mode="json")),
         )
         if not updated:
             raise NotFoundError("Deployment not found")

@@ -28,8 +28,8 @@ class Deployment(BaseModel, BaseOrmConfig):
     status: DeploymentStatus
     satellite_parameters: dict[str, int | str] = Field(default_factory=dict)
     description: str | None = None
-    dynamic_attributes_secrets: dict[str, UUID] = Field(default_factory=dict)
-    env_variables_secrets: dict[str, UUID] = Field(default_factory=dict)
+    dynamic_attributes_secrets: dict[str, str] = Field(default_factory=dict)
+    env_variables_secrets: dict[str, str] = Field(default_factory=dict)
     env_variables: dict[str, str] = Field(default_factory=dict)
     created_by_user: str | None = None
     tags: list[str] | None = None
@@ -44,8 +44,8 @@ class DeploymentCreate(BaseModel, BaseOrmConfig):
     name: str
     satellite_parameters: dict[str, int | str] = Field(default_factory=dict)
     description: str | None = None
-    dynamic_attributes_secrets: dict[str, UUID] = Field(default_factory=dict)
-    env_variables_secrets: dict[str, UUID] = Field(default_factory=dict)
+    dynamic_attributes_secrets: dict[str, str] = Field(default_factory=dict)
+    env_variables_secrets: dict[str, str] = Field(default_factory=dict)
     env_variables: dict[str, str] = Field(default_factory=dict)
     status: DeploymentStatus = DeploymentStatus.PENDING
     created_by_user: str | None = None
@@ -88,6 +88,13 @@ class DeploymentDetailsUpdateIn(BaseModel):
     name: str | None = None
     description: str | None = None
     dynamic_attributes_secrets: dict[str, UUID] | None = None
+    tags: list[str] | None = None
+
+
+class DeploymentDetailsUpdate(BaseModel):
+    name: str | None = None
+    description: str | None = None
+    dynamic_attributes_secrets: dict[str, str] | None = None
     tags: list[str] | None = None
 
 
