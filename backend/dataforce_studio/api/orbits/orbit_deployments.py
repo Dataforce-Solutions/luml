@@ -1,9 +1,10 @@
+from uuid import UUID
+
 from fastapi import APIRouter, Depends, Request
 
 from dataforce_studio.handlers.deployments import DeploymentHandler
 from dataforce_studio.infra.dependencies import UserAuthentication
 from dataforce_studio.infra.endpoint_responses import endpoint_responses
-from dataforce_studio.schemas.base import ShortUUID
 from dataforce_studio.schemas.deployment import (
     Deployment,
     DeploymentCreateIn,
@@ -22,8 +23,8 @@ handler = DeploymentHandler()
 @deployments_router.post("", responses=endpoint_responses, response_model=Deployment)
 async def create_deployment(
     request: Request,
-    organization_id: ShortUUID,
-    orbit_id: ShortUUID,
+    organization_id: UUID,
+    orbit_id: UUID,
     data: DeploymentCreateIn,
 ) -> Deployment:
     return await handler.create_deployment(
@@ -35,7 +36,7 @@ async def create_deployment(
     "", responses=endpoint_responses, response_model=list[Deployment]
 )
 async def list_deployments(
-    request: Request, organization_id: ShortUUID, orbit_id: ShortUUID
+    request: Request, organization_id: UUID, orbit_id: UUID
 ) -> list[Deployment]:
     return await handler.list_deployments(request.user.id, organization_id, orbit_id)
 
@@ -45,9 +46,9 @@ async def list_deployments(
 )
 async def get_deployment(
     request: Request,
-    organization_id: ShortUUID,
-    orbit_id: ShortUUID,
-    deployment_id: ShortUUID,
+    organization_id: UUID,
+    orbit_id: UUID,
+    deployment_id: UUID,
 ) -> Deployment:
     return await handler.get_deployment(
         request.user.id, organization_id, orbit_id, deployment_id
@@ -59,9 +60,9 @@ async def get_deployment(
 )
 async def update_deployment_details(
     request: Request,
-    organization_id: ShortUUID,
-    orbit_id: ShortUUID,
-    deployment_id: ShortUUID,
+    organization_id: UUID,
+    orbit_id: UUID,
+    deployment_id: UUID,
     data: DeploymentDetailsUpdateIn,
 ) -> Deployment:
     return await handler.update_deployment_details(
@@ -74,9 +75,9 @@ async def update_deployment_details(
 )
 async def delete_deployment(
     request: Request,
-    organization_id: ShortUUID,
-    orbit_id: ShortUUID,
-    deployment_id: ShortUUID,
+    organization_id: UUID,
+    orbit_id: UUID,
+    deployment_id: UUID,
 ) -> Deployment:
     return await handler.request_deployment_deletion(
         request.user.id, organization_id, orbit_id, deployment_id

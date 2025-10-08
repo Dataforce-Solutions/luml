@@ -1,9 +1,10 @@
 from enum import Enum
+from uuid import UUID
 
 from pydantic import BaseModel, EmailStr, field_validator
 
 from dataforce_studio.schemas.auth import Token
-from dataforce_studio.schemas.base import BaseOrmConfig, ShortUUID
+from dataforce_studio.schemas.base import BaseOrmConfig
 
 
 class AuthProvider(str, Enum):
@@ -12,7 +13,7 @@ class AuthProvider(str, Enum):
 
 
 class _UserBase(BaseModel):
-    id: ShortUUID | None = None
+    id: UUID | None = None
     email: EmailStr
     full_name: str | None = None
     disabled: bool | None = None
@@ -26,11 +27,11 @@ class CreateUser(_UserBase): ...
 
 
 class User(_UserBase, BaseOrmConfig):
-    id: ShortUUID
+    id: UUID
 
 
 class UserOut(BaseModel, BaseOrmConfig):
-    id: ShortUUID
+    id: UUID
     email: EmailStr
     full_name: str | None = None
     disabled: bool | None = None
@@ -80,7 +81,7 @@ class SignInUser(BaseModel):
 
 class SignInResponse(BaseModel):
     token: Token
-    user_id: ShortUUID
+    user_id: UUID
 
 
 class UpdateUserIn(BaseModel):
@@ -115,7 +116,7 @@ class UpdateUser(UpdateUserIn):
 
 
 class UpdateUserAPIKey(BaseModel):
-    id: ShortUUID
+    id: UUID
     hashed_api_key: str | None = None
 
 

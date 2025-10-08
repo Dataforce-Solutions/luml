@@ -1,9 +1,10 @@
+from uuid import UUID
+
 from fastapi import APIRouter, Depends, Request, status
 
 from dataforce_studio.handlers.organizations import OrganizationHandler
 from dataforce_studio.infra.dependencies import UserAuthentication
 from dataforce_studio.infra.endpoint_responses import endpoint_responses
-from dataforce_studio.schemas.base import ShortUUID
 from dataforce_studio.schemas.organization import (
     Organization,
     OrganizationCreateIn,
@@ -26,7 +27,7 @@ organization_handler = OrganizationHandler()
     response_model=OrganizationDetails,
 )
 async def get_organization_details(
-    request: Request, organization_id: ShortUUID
+    request: Request, organization_id: UUID
 ) -> OrganizationDetails:
     return await organization_handler.get_organization(request.user.id, organization_id)
 
@@ -44,7 +45,7 @@ async def create_organization(
     response_model=OrganizationDetails,
 )
 async def update_organization(
-    request: Request, organization_id: ShortUUID, organization: OrganizationUpdate
+    request: Request, organization_id: UUID, organization: OrganizationUpdate
 ) -> OrganizationDetails:
     return await organization_handler.update_organization(
         request.user.id, organization_id, organization
@@ -56,7 +57,7 @@ async def update_organization(
     responses=endpoint_responses,
     status_code=status.HTTP_204_NO_CONTENT,
 )
-async def delete_organization(request: Request, organization_id: ShortUUID) -> None:
+async def delete_organization(request: Request, organization_id: UUID) -> None:
     return await organization_handler.delete_organization(
         request.user.id, organization_id
     )
@@ -67,7 +68,7 @@ async def delete_organization(request: Request, organization_id: ShortUUID) -> N
     responses=endpoint_responses,
     status_code=status.HTTP_204_NO_CONTENT,
 )
-async def leave_from_organization(request: Request, organization_id: ShortUUID) -> None:
+async def leave_from_organization(request: Request, organization_id: UUID) -> None:
     return await organization_handler.leave_from_organization(
         request.user.id, organization_id
     )

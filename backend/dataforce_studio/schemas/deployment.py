@@ -1,9 +1,10 @@
 from datetime import datetime
 from enum import StrEnum
+from uuid import UUID
 
 from pydantic import BaseModel, Field
 
-from dataforce_studio.schemas.base import BaseOrmConfig, ShortUUID
+from dataforce_studio.schemas.base import BaseOrmConfig
 
 
 class DeploymentStatus(StrEnum):
@@ -15,20 +16,20 @@ class DeploymentStatus(StrEnum):
 
 
 class Deployment(BaseModel, BaseOrmConfig):
-    id: ShortUUID
-    orbit_id: ShortUUID
-    satellite_id: ShortUUID
+    id: UUID
+    orbit_id: UUID
+    satellite_id: UUID
     satellite_name: str
     name: str
-    model_id: ShortUUID
+    model_id: UUID
     model_artifact_name: str
-    collection_id: ShortUUID
+    collection_id: UUID
     inference_url: str | None = None
     status: DeploymentStatus
     satellite_parameters: dict[str, int | str] = Field(default_factory=dict)
     description: str | None = None
-    dynamic_attributes_secrets: dict[str, ShortUUID] = Field(default_factory=dict)
-    env_variables_secrets: dict[str, ShortUUID] = Field(default_factory=dict)
+    dynamic_attributes_secrets: dict[str, UUID] = Field(default_factory=dict)
+    env_variables_secrets: dict[str, UUID] = Field(default_factory=dict)
     env_variables: dict[str, str] = Field(default_factory=dict)
     created_by_user: str | None = None
     tags: list[str] | None = None
@@ -37,14 +38,14 @@ class Deployment(BaseModel, BaseOrmConfig):
 
 
 class DeploymentCreate(BaseModel, BaseOrmConfig):
-    orbit_id: ShortUUID
-    satellite_id: ShortUUID
-    model_id: ShortUUID
+    orbit_id: UUID
+    satellite_id: UUID
+    model_id: UUID
     name: str
     satellite_parameters: dict[str, int | str] = Field(default_factory=dict)
     description: str | None = None
-    dynamic_attributes_secrets: dict[str, ShortUUID] = Field(default_factory=dict)
-    env_variables_secrets: dict[str, ShortUUID] = Field(default_factory=dict)
+    dynamic_attributes_secrets: dict[str, UUID] = Field(default_factory=dict)
+    env_variables_secrets: dict[str, UUID] = Field(default_factory=dict)
     env_variables: dict[str, str] = Field(default_factory=dict)
     status: DeploymentStatus = DeploymentStatus.PENDING
     created_by_user: str | None = None
@@ -52,19 +53,19 @@ class DeploymentCreate(BaseModel, BaseOrmConfig):
 
 
 class DeploymentCreateIn(BaseModel):
-    satellite_id: ShortUUID
-    model_artifact_id: ShortUUID
+    satellite_id: UUID
+    model_artifact_id: UUID
     name: str
     satellite_parameters: dict[str, int | str] = Field(default_factory=dict)
     description: str | None = None
-    dynamic_attributes_secrets: dict[str, ShortUUID] = Field(default_factory=dict)
-    env_variables_secrets: dict[str, ShortUUID] = Field(default_factory=dict)
+    dynamic_attributes_secrets: dict[str, UUID] = Field(default_factory=dict)
+    env_variables_secrets: dict[str, UUID] = Field(default_factory=dict)
     env_variables: dict[str, str] = Field(default_factory=dict)
     tags: list[str] | None = None
 
 
 class DeploymentUpdate(BaseModel, BaseOrmConfig):
-    id: ShortUUID
+    id: UUID
     inference_url: str | None = None
     status: DeploymentStatus | None = None
     tags: list[str] | None = None
@@ -86,7 +87,7 @@ class InferenceAccessOut(BaseModel):
 class DeploymentDetailsUpdateIn(BaseModel):
     name: str | None = None
     description: str | None = None
-    dynamic_attributes_secrets: dict[str, ShortUUID] | None = None
+    dynamic_attributes_secrets: dict[str, UUID] | None = None
     tags: list[str] | None = None
 
 

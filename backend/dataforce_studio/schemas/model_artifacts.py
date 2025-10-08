@@ -1,11 +1,12 @@
 from datetime import datetime
 from enum import StrEnum
 from typing import Annotated, Any, Literal
+from uuid import UUID
 
 from pydantic import BaseModel, Field, field_validator
 
 from dataforce_studio.constants import MAX_FILE_SIZE_BYTES
-from dataforce_studio.schemas.base import BaseOrmConfig, ShortUUID
+from dataforce_studio.schemas.base import BaseOrmConfig
 from dataforce_studio.schemas.s3 import UploadDetails
 
 
@@ -15,7 +16,7 @@ class CollectionType(StrEnum):
 
 
 class CollectionCreate(BaseModel):
-    orbit_id: ShortUUID
+    orbit_id: UUID
     description: str
     name: str
     collection_type: CollectionType
@@ -30,8 +31,8 @@ class CollectionCreateIn(BaseModel):
 
 
 class Collection(BaseModel, BaseOrmConfig):
-    id: ShortUUID
-    orbit_id: ShortUUID
+    id: UUID
+    orbit_id: UUID
     description: str
     name: str
     collection_type: CollectionType
@@ -42,7 +43,7 @@ class Collection(BaseModel, BaseOrmConfig):
 
 
 class CollectionUpdate(BaseModel):
-    id: ShortUUID | None = None
+    id: UUID | None = None
     description: str | None = None
     name: str | None = None
     tags: list[str] | None = None
@@ -118,7 +119,7 @@ class Manifest(BaseModel):
 
 
 class ModelArtifactCreate(BaseModel):
-    collection_id: ShortUUID
+    collection_id: UUID
     file_name: str
     model_name: str | None = None
     description: str | None = None
@@ -164,7 +165,7 @@ class ModelArtifactIn(BaseModel):
 
 
 class ModelArtifactUpdate(BaseModel):
-    id: ShortUUID
+    id: UUID
     file_name: str | None = None
     model_name: str | None = None
     description: str | None = None
@@ -188,8 +189,8 @@ class ModelArtifactUpdateIn(BaseModel):
 
 
 class ModelArtifact(BaseModel, BaseOrmConfig):
-    id: ShortUUID
-    collection_id: ShortUUID
+    id: UUID
+    collection_id: UUID
     file_name: str
     model_name: str | None = None
     description: str | None = None

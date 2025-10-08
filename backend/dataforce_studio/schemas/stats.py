@@ -1,8 +1,9 @@
 from datetime import datetime
+from uuid import UUID
 
 from pydantic import BaseModel, EmailStr
 
-from dataforce_studio.schemas.base import BaseOrmConfig, ShortUUID
+from dataforce_studio.schemas.base import BaseOrmConfig
 
 
 class StatsEmailSendCreate(BaseModel):
@@ -11,7 +12,7 @@ class StatsEmailSendCreate(BaseModel):
 
 
 class StatsEmailSendOut(BaseModel, BaseOrmConfig):
-    id: ShortUUID
+    id: UUID
     email: EmailStr
     description: str
     created_at: datetime

@@ -30,10 +30,10 @@ handler = OrbitSecretHandler()
 async def test_create_orbit_secret(
     mock_check_orbit_action_access: AsyncMock, mock_create_orbit_secret: AsyncMock
 ) -> None:
-    user_id = "hHXb8bTcAvoY5gMtzj3zeW"
-    organization_id = "UoAqoUkAaZQsra6KGoDMmy"
-    orbit_id = "SKY7Lqo6oiewTcU8DKFJmY"
-    orbit_secret = "fFAPQpUihD2mAKcyAS2VxY"
+    user_id = "0199c337-09f1-7d8f-b0c4-b68349bbe24b"
+    organization_id = "0199c337-09f2-7af1-af5e-83fd7a5b51a0"
+    orbit_id = "0199c337-09f3-753e-9def-b27745e69be6"
+    orbit_secret = "0199c337-09f4-7a01-9f5f-5f68db62cf70"
     expected = OrbitSecretOut(
         id=orbit_secret,
         orbit_id=orbit_id,

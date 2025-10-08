@@ -1,9 +1,10 @@
+from uuid import UUID
+
 from fastapi import APIRouter, Depends, Request, status
 
 from dataforce_studio.handlers.collections import CollectionHandler
 from dataforce_studio.infra.dependencies import UserAuthentication
 from dataforce_studio.infra.endpoint_responses import endpoint_responses
-from dataforce_studio.schemas.base import ShortUUID
 from dataforce_studio.schemas.model_artifacts import (
     Collection,
     CollectionCreateIn,
@@ -26,8 +27,8 @@ collection_handler = CollectionHandler()
 )
 async def create_collection(
     request: Request,
-    organization_id: ShortUUID,
-    orbit_id: ShortUUID,
+    organization_id: UUID,
+    orbit_id: UUID,
     collection: CollectionCreateIn,
 ) -> Collection:
     return await collection_handler.create_collection(
@@ -41,7 +42,7 @@ async def create_collection(
     response_model=list[Collection],
 )
 async def get_orbit_collections(
-    request: Request, organization_id: ShortUUID, orbit_id: ShortUUID
+    request: Request, organization_id: UUID, orbit_id: UUID
 ) -> list[Collection]:
     return await collection_handler.get_orbit_collections(
         request.user.id, organization_id, orbit_id
@@ -55,9 +56,9 @@ async def get_orbit_collections(
 )
 async def update_collection(
     request: Request,
-    organization_id: ShortUUID,
-    orbit_id: ShortUUID,
-    collection_id: ShortUUID,
+    organization_id: UUID,
+    orbit_id: UUID,
+    collection_id: UUID,
     collection: CollectionUpdateIn,
 ) -> Collection:
     return await collection_handler.update_collection(
@@ -76,9 +77,9 @@ async def update_collection(
 )
 async def delete_collection(
     request: Request,
-    organization_id: ShortUUID,
-    orbit_id: ShortUUID,
-    collection_id: ShortUUID,
+    organization_id: UUID,
+    orbit_id: UUID,
+    collection_id: UUID,
 ) -> None:
     await collection_handler.delete_collection(
         request.user.id, organization_id, orbit_id, collection_id

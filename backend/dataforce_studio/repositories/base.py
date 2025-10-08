@@ -1,5 +1,6 @@
 from collections.abc import Sequence
 from typing import Any, TypeVar
+from uuid import UUID
 
 from pydantic import BaseModel
 from sqlalchemy import delete, func, select
@@ -88,7 +89,7 @@ class CrudMixin:
     async def delete_model(
         session: AsyncSession,
         orm_class: type[TOrm],
-        obj_id: str,
+        obj_id: UUID,
     ) -> None:
         result = await session.execute(select(orm_class).where(orm_class.id == obj_id))  # type: ignore[attr-defined]
         db_obj = result.scalar_one_or_none()
@@ -136,7 +137,7 @@ class CrudMixin:
     async def get_model(
         session: AsyncSession,
         orm_class: type[TOrm],
-        obj_id: str,
+        obj_id: UUID,
         options: list[Any] | None = None,  # noqa: ANN401
         use_unique: bool = False,
     ) -> TOrm | None:

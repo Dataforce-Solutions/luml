@@ -1,9 +1,10 @@
+from uuid import UUID
+
 from fastapi import APIRouter, Depends, Request, status
 
 from dataforce_studio.handlers.organizations import OrganizationHandler
 from dataforce_studio.infra.dependencies import UserAuthentication
 from dataforce_studio.infra.endpoint_responses import endpoint_responses
-from dataforce_studio.schemas.base import ShortUUID
 from dataforce_studio.schemas.organization import (
     OrganizationMember,
     OrganizationMemberCreate,
@@ -21,7 +22,7 @@ organization_handler = OrganizationHandler()
 
 @members_router.get("", responses=endpoint_responses)
 async def get_organization_members(
-    request: Request, organization_id: ShortUUID
+    request: Request, organization_id: UUID
 ) -> list[OrganizationMember]:
     return await organization_handler.get_organization_members_data(
         request.user.id, organization_id
@@ -31,7 +32,7 @@ async def get_organization_members(
 @members_router.post("", responses=endpoint_responses)
 async def add_member_to_organization(
     request: Request,
-    organization_id: ShortUUID,
+    organization_id: UUID,
     member: OrganizationMemberCreate,
 ) -> OrganizationMember:
     return await organization_handler.add_organization_member(
@@ -42,8 +43,8 @@ async def add_member_to_organization(
 @members_router.patch("/{member_id}", responses=endpoint_responses)
 async def update_organization_member(
     request: Request,
-    organization_id: ShortUUID,
-    member_id: ShortUUID,
+    organization_id: UUID,
+    member_id: UUID,
     member: UpdateOrganizationMember,
 ) -> OrganizationMember | None:
     return await organization_handler.update_organization_member_by_id(
@@ -55,7 +56,7 @@ async def update_organization_member(
     "/{member_id}", responses=endpoint_responses, status_code=status.HTTP_204_NO_CONTENT
 )
 async def remove_organization_member(
-    request: Request, organization_id: ShortUUID, member_id: ShortUUID
+    request: Request, organization_id: UUID, member_id: UUID
 ) -> None:
     return await organization_handler.delete_organization_member_by_id(
         request.user.id, organization_id, member_id

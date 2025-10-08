@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from dataforce_studio.handlers.api_keys import APIKeyHandler
 from dataforce_studio.handlers.permissions import PermissionsHandler
 from dataforce_studio.infra.db import engine
@@ -36,9 +38,9 @@ class DeploymentHandler:
 
     async def create_deployment(
         self,
-        user_id: str,
-        organization_id: str,
-        orbit_id: str,
+        user_id: UUID,
+        organization_id: UUID,
+        orbit_id: UUID,
         data: DeploymentCreateIn,
     ) -> Deployment:
         await self.__permissions_handler.check_orbit_action_access(
@@ -87,7 +89,7 @@ class DeploymentHandler:
         return deployment
 
     async def list_deployments(
-        self, user_id: str, organization_id: str, orbit_id: str
+        self, user_id: UUID, organization_id: UUID, orbit_id: UUID
     ) -> list[Deployment]:
         await self.__permissions_handler.check_orbit_action_access(
             organization_id,
@@ -100,10 +102,10 @@ class DeploymentHandler:
 
     async def get_deployment(
         self,
-        user_id: str,
-        organization_id: str,
-        orbit_id: str,
-        deployment_id: str,
+        user_id: UUID,
+        organization_id: UUID,
+        orbit_id: UUID,
+        deployment_id: UUID,
     ) -> Deployment:
         await self.__permissions_handler.check_orbit_action_access(
             organization_id,
@@ -117,11 +119,11 @@ class DeploymentHandler:
             raise NotFoundError("Deployment not found")
         return deployment
 
-    async def list_worker_deployments(self, satellite_id: str) -> list[Deployment]:
+    async def list_worker_deployments(self, satellite_id: UUID) -> list[Deployment]:
         return await self.__repo.list_satellite_deployments(satellite_id)
 
     async def get_worker_deployment(
-        self, orbit_id: str, deployment_id: str
+        self, orbit_id: UUID, deployment_id: UUID
     ) -> Deployment:
         deployment = await self.__repo.get_deployment(deployment_id, orbit_id)
         if not deployment:
@@ -129,7 +131,7 @@ class DeploymentHandler:
         return deployment
 
     async def update_worker_deployment(
-        self, satellite_id: str, deployment_id: str, inference_url: str
+        self, satellite_id: UUID, deployment_id: UUID, inference_url: str
     ) -> Deployment:
         deployment = await self.__repo.update_deployment(
             deployment_id,
@@ -146,10 +148,10 @@ class DeploymentHandler:
 
     async def update_deployment_details(
         self,
-        user_id: str,
-        organization_id: str,
-        orbit_id: str,
-        deployment_id: str,
+        user_id: UUID,
+        organization_id: UUID,
+        orbit_id: UUID,
+        deployment_id: UUID,
         data: DeploymentDetailsUpdateIn,
     ) -> Deployment:
         await self.__permissions_handler.check_orbit_action_access(
@@ -166,7 +168,7 @@ class DeploymentHandler:
             raise NotFoundError("Deployment not found")
         return updated
 
-    async def verify_user_inference_access(self, orbit_id: str, api_key: str) -> bool:
+    async def verify_user_inference_access(self, orbit_id: UUID, api_key: str) -> bool:
         user = await self.__api_key_handler.authenticate_api_key(api_key)
         if not user:
             return False
@@ -187,10 +189,10 @@ class DeploymentHandler:
 
     async def request_deployment_deletion(
         self,
-        user_id: str,
-        organization_id: str,
-        orbit_id: str,
-        deployment_id: str,
+        user_id: UUID,
+        organization_id: UUID,
+        orbit_id: UUID,
+        deployment_id: UUID,
     ) -> Deployment:
         await self.__permissions_handler.check_orbit_action_access(
             organization_id,
@@ -207,8 +209,8 @@ class DeploymentHandler:
 
     async def update_worker_deployment_status(
         self,
-        satellite_id: str,
-        deployment_id: str,
+        satellite_id: UUID,
+        deployment_id: UUID,
         status: DeploymentStatus,
     ) -> Deployment:
         deployment = await self.__repo.update_deployment(

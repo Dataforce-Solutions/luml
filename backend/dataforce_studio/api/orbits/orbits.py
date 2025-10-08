@@ -1,9 +1,10 @@
+from uuid import UUID
+
 from fastapi import APIRouter, BackgroundTasks, Depends, Request, status
 
 from dataforce_studio.handlers.orbits import OrbitHandler
 from dataforce_studio.infra.dependencies import UserAuthentication
 from dataforce_studio.infra.endpoint_responses import endpoint_responses
-from dataforce_studio.schemas.base import ShortUUID
 from dataforce_studio.schemas.orbit import (
     Orbit,
     OrbitCreateIn,
@@ -22,7 +23,7 @@ orbit_handler = OrbitHandler()
 
 @organization_orbits_router.get("", responses=endpoint_responses)
 async def get_organization_orbits(
-    request: Request, organization_id: ShortUUID
+    request: Request, organization_id: UUID
 ) -> list[Orbit]:
     return await orbit_handler.get_organization_orbits(request.user.id, organization_id)
 
@@ -32,7 +33,7 @@ async def get_organization_orbits(
 )
 async def create_orbit(
     request: Request,
-    organization_id: ShortUUID,
+    organization_id: UUID,
     orbit: OrbitCreateIn,
     background_tasks: BackgroundTasks,
 ) -> OrbitDetails:
@@ -48,7 +49,7 @@ async def create_orbit(
     "/{orbit_id}", responses=endpoint_responses, response_model=OrbitDetails
 )
 async def get_orbit_details(
-    request: Request, organization_id: ShortUUID, orbit_id: ShortUUID
+    request: Request, organization_id: UUID, orbit_id: UUID
 ) -> OrbitDetails:
     return await orbit_handler.get_orbit(request.user.id, organization_id, orbit_id)
 
@@ -58,8 +59,8 @@ async def get_orbit_details(
 )
 async def update_orbit(
     request: Request,
-    organization_id: ShortUUID,
-    orbit_id: ShortUUID,
+    organization_id: UUID,
+    orbit_id: UUID,
     orbit: OrbitUpdate,
 ) -> Orbit:
     return await orbit_handler.update_orbit(
@@ -70,7 +71,5 @@ async def update_orbit(
 @organization_orbits_router.delete(
     "/{orbit_id}", responses=endpoint_responses, status_code=status.HTTP_204_NO_CONTENT
 )
-async def delete_orbit(
-    request: Request, organization_id: ShortUUID, orbit_id: ShortUUID
-) -> None:
+async def delete_orbit(request: Request, organization_id: UUID, orbit_id: UUID) -> None:
     return await orbit_handler.delete_orbit(request.user.id, organization_id, orbit_id)

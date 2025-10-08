@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from dataforce_studio.handlers.permissions import PermissionsHandler
 from dataforce_studio.infra.db import engine
 from dataforce_studio.infra.exceptions import NotFoundError
@@ -10,7 +12,6 @@ from dataforce_studio.schemas.orbit_secret import (
     OrbitSecretUpdate,
 )
 from dataforce_studio.schemas.permissions import Action, Resource
-from dataforce_studio.utils.uuid_converter import UUIDConverter
 
 
 class OrbitSecretHandler:
@@ -19,9 +20,9 @@ class OrbitSecretHandler:
 
     async def create_orbit_secret(
         self,
-        user_id: str,
-        organization_id: str,
-        orbit_id: str,
+        user_id: UUID,
+        organization_id: UUID,
+        orbit_id: UUID,
         secret: OrbitSecretCreateIn,
     ) -> OrbitSecretOut:
         await self.__permissions_handler.check_orbit_action_access(
@@ -34,7 +35,7 @@ class OrbitSecretHandler:
         return OrbitSecretOut.model_validate(created)
 
     async def get_orbit_secrets(
-        self, user_id: str, organization_id: str, orbit_id: str
+        self, user_id: UUID, organization_id: UUID, orbit_id: UUID
     ) -> list[OrbitSecretOut]:
         await self.__permissions_handler.check_orbit_action_access(
             organization_id, orbit_id, user_id, Resource.ORBIT_SECRET, Action.LIST
@@ -56,10 +57,10 @@ class OrbitSecretHandler:
 
     async def get_orbit_secret(
         self,
-        user_id: str,
-        organization_id: str,
-        orbit_id: str,
-        secret_id: str,
+        user_id: UUID,
+        organization_id: UUID,
+        orbit_id: UUID,
+        secret_id: UUID,
     ) -> OrbitSecretOut:
         await self.__permissions_handler.check_orbit_action_access(
             organization_id, orbit_id, user_id, Resource.ORBIT_SECRET, Action.READ
@@ -71,10 +72,10 @@ class OrbitSecretHandler:
 
     async def update_orbit_secret(
         self,
-        user_id: str,
-        organization_id: str,
-        orbit_id: str,
-        secret_id: str,
+        user_id: UUID,
+        organization_id: UUID,
+        orbit_id: UUID,
+        secret_id: UUID,
         secret: OrbitSecretUpdate,
     ) -> OrbitSecretOut:
         await self.__permissions_handler.check_orbit_action_access(
@@ -87,23 +88,23 @@ class OrbitSecretHandler:
 
     async def delete_orbit_secret(
         self,
-        user_id: str,
-        organization_id: str,
-        orbit_id: str,
-        secret_id: str,
+        user_id: UUID,
+        organization_id: UUID,
+        orbit_id: UUID,
+        secret_id: UUID,
     ) -> None:
         await self.__permissions_handler.check_orbit_action_access(
             organization_id, orbit_id, user_id, Resource.ORBIT_SECRET, Action.DELETE
         )
         await self.__secret_repository.delete_orbit_secret(secret_id)
 
-    async def get_worker_orbit_secrets(self, orbit_id: str) -> list[OrbitSecret]:
+    async def get_worker_orbit_secrets(self, orbit_id: UUID) -> list[OrbitSecret]:
         return await self.__secret_repository.get_orbit_secrets(orbit_id)
 
     async def get_worker_orbit_secret(
-        self, orbit_id: str, secret_id: str
+        self, orbit_id: UUID, secret_id: UUID
     ) -> OrbitSecret:
         secret = await self.__secret_repository.get_orbit_secret(secret_id)
-        if not secret or secret.orbit_id != UUIDConverter.short_to_uuid(orbit_id):
+        if not secret or secret.orbit_id != orbit_id:
             raise NotFoundError("Orbit secret not found")
         return secret

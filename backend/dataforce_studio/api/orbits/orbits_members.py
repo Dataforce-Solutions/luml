@@ -1,9 +1,10 @@
+from uuid import UUID
+
 from fastapi import APIRouter, Depends, Request, status
 
 from dataforce_studio.handlers.orbits import OrbitHandler
 from dataforce_studio.infra.dependencies import UserAuthentication
 from dataforce_studio.infra.endpoint_responses import endpoint_responses
-from dataforce_studio.schemas.base import ShortUUID
 from dataforce_studio.schemas.orbit import (
     OrbitMember,
     OrbitMemberCreate,
@@ -24,8 +25,8 @@ orbit_handler = OrbitHandler()
 )
 async def get_orbit_members(
     request: Request,
-    organization_id: ShortUUID,
-    orbit_id: ShortUUID,
+    organization_id: UUID,
+    orbit_id: UUID,
 ) -> list[OrbitMember]:
     return await orbit_handler.get_orbit_members(
         request.user.id, organization_id, orbit_id
@@ -34,7 +35,7 @@ async def get_orbit_members(
 
 @orbit_members_router.post("", responses=endpoint_responses, response_model=OrbitMember)
 async def add_member_to_orbit(
-    request: Request, organization_id: ShortUUID, member: OrbitMemberCreate
+    request: Request, organization_id: UUID, member: OrbitMemberCreate
 ) -> OrbitMember:
     return await orbit_handler.create_orbit_member(
         request.user.id, organization_id, member
@@ -46,8 +47,8 @@ async def add_member_to_orbit(
 )
 async def update_orbit_member(
     request: Request,
-    organization_id: ShortUUID,
-    orbit_id: ShortUUID,
+    organization_id: UUID,
+    orbit_id: UUID,
     member: UpdateOrbitMember,
 ) -> OrbitMember:
     return await orbit_handler.update_orbit_member(
@@ -60,9 +61,9 @@ async def update_orbit_member(
 )
 async def remove_orbit_member(
     request: Request,
-    organization_id: ShortUUID,
-    orbit_id: ShortUUID,
-    member_id: ShortUUID,
+    organization_id: UUID,
+    orbit_id: UUID,
+    member_id: UUID,
 ) -> None:
     return await orbit_handler.delete_orbit_member(
         request.user.id, organization_id, orbit_id, member_id

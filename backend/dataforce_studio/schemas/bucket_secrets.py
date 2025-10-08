@@ -1,8 +1,9 @@
 from datetime import datetime
+from uuid import UUID
 
 from pydantic import BaseModel
 
-from dataforce_studio.schemas.base import BaseOrmConfig, ShortUUID
+from dataforce_studio.schemas.base import BaseOrmConfig
 
 
 class _BucketSecretBase(BaseModel):
@@ -20,12 +21,12 @@ class BucketSecretCreateIn(_BucketSecretBase): ...
 
 
 class BucketSecretCreate(_BucketSecretBase):
-    organization_id: ShortUUID
+    organization_id: UUID
 
 
 class BucketSecret(_BucketSecretBase, BaseOrmConfig):
-    id: ShortUUID
-    organization_id: ShortUUID
+    id: UUID
+    organization_id: UUID
     created_at: datetime
     updated_at: datetime | None = None
 
@@ -38,13 +39,13 @@ class BucketSecret(_BucketSecretBase, BaseOrmConfig):
 
 
 class BucketSecretOut(BaseModel, BaseOrmConfig):
-    id: ShortUUID
+    id: UUID
     endpoint: str
     bucket_name: str
     secure: bool | None = None
     region: str | None = None
     cert_check: bool | None = None
-    organization_id: ShortUUID
+    organization_id: UUID
     created_at: datetime
     updated_at: datetime | None = None
 
@@ -61,7 +62,7 @@ class BucketSecretUpdateIn(BaseModel):
 
 
 class BucketSecretUpdate(BucketSecretUpdateIn):
-    id: ShortUUID
+    id: UUID
 
 
 class BucketSecretUrls(BaseModel, BaseOrmConfig):

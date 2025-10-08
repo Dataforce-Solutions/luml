@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from fastapi import BackgroundTasks
 
 from dataforce_studio.handlers.emails import EmailHandler
@@ -70,7 +72,7 @@ class OrbitHandler:
             )
         return orbits
 
-    async def _check_organization_orbits_limit(self, organization_id: str) -> None:
+    async def _check_organization_orbits_limit(self, organization_id: UUID) -> None:
         organization = await self.__user_repository.get_organization_details(
             organization_id
         )
@@ -84,8 +86,8 @@ class OrbitHandler:
 
     async def _validate_orbit_members(
         self,
-        user_id: str,
-        organization_id: str,
+        user_id: UUID,
+        organization_id: UUID,
         members: list[OrbitMemberCreate] | list[OrbitMemberCreateSimple],
     ) -> None:
         user_ids = [m.user_id for m in members]
@@ -110,7 +112,7 @@ class OrbitHandler:
             )
 
     async def create_organization_orbit(
-        self, user_id: str, organization_id: str, orbit: OrbitCreateIn
+        self, user_id: UUID, organization_id: UUID, orbit: OrbitCreateIn
     ) -> OrbitDetails:
         org_role = await self.__permissions_handler.check_organization_permission(
             organization_id,
@@ -143,7 +145,7 @@ class OrbitHandler:
         return created_orbit
 
     async def get_organization_orbits(
-        self, user_id: str, organization_id: str
+        self, user_id: UUID, organization_id: UUID
     ) -> list[Orbit]:
         org_role = await self.__permissions_handler.check_organization_permission(
             organization_id,
@@ -163,7 +165,7 @@ class OrbitHandler:
         return self._set_user_orbits_permissions(orbits)
 
     async def get_orbit(
-        self, user_id: str, organization_id: str, orbit_id: str
+        self, user_id: UUID, organization_id: UUID, orbit_id: UUID
     ) -> OrbitDetails:
         (
             org_role,
@@ -189,9 +191,9 @@ class OrbitHandler:
 
     async def update_orbit(
         self,
-        user_id: str,
-        organization_id: str,
-        orbit_id: str,
+        user_id: UUID,
+        organization_id: UUID,
+        orbit_id: UUID,
         orbit: OrbitUpdate,
     ) -> Orbit:
         await self.__permissions_handler.check_orbit_action_access(
@@ -210,7 +212,7 @@ class OrbitHandler:
         return orbit_obj
 
     async def delete_orbit(
-        self, user_id: str, organization_id: str, orbit_id: str
+        self, user_id: UUID, organization_id: UUID, orbit_id: UUID
     ) -> None:
         await self.__permissions_handler.check_orbit_action_access(
             organization_id,
@@ -223,7 +225,7 @@ class OrbitHandler:
         return await self.__orbits_repository.delete_orbit(orbit_id)
 
     async def get_orbit_members(
-        self, user_id: str, organization_id: str, orbit_id: str
+        self, user_id: UUID, organization_id: UUID, orbit_id: UUID
     ) -> list[OrbitMember]:
         await self.__permissions_handler.check_orbit_action_access(
             organization_id,
@@ -235,7 +237,7 @@ class OrbitHandler:
         return await self.__orbits_repository.get_orbit_members(orbit_id)
 
     async def create_orbit_member(
-        self, user_id: str, organization_id: str, member: OrbitMemberCreate
+        self, user_id: UUID, organization_id: UUID, member: OrbitMemberCreate
     ) -> OrbitMember:
         await self.__permissions_handler.check_orbit_action_access(
             organization_id,
@@ -280,9 +282,9 @@ class OrbitHandler:
 
     async def update_orbit_member(
         self,
-        user_id: str,
-        organization_id: str,
-        orbit_id: str,
+        user_id: UUID,
+        organization_id: UUID,
+        orbit_id: UUID,
         member: UpdateOrbitMember,
     ) -> OrbitMember:
         member_obj = await self.__orbits_repository.get_orbit_member(member.id)
@@ -309,10 +311,10 @@ class OrbitHandler:
 
     async def delete_orbit_member(
         self,
-        user_id: str,
-        organization_id: str,
-        orbit_id: str,
-        member_id: str,
+        user_id: UUID,
+        organization_id: UUID,
+        orbit_id: UUID,
+        member_id: UUID,
     ) -> None:
         member_obj = await self.__orbits_repository.get_orbit_member(member_id)
 
