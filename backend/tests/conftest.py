@@ -9,36 +9,34 @@ import pytest_asyncio
 from sqlalchemy.ext.asyncio import AsyncConnection, AsyncEngine, create_async_engine
 
 from dataforce_studio.models import OrganizationOrm
-from dataforce_studio.repositories import (
-    BucketSecretRepository,
-    CollectionRepository,
-    InviteRepository,
-    ModelArtifactRepository,
-    OrbitRepository,
-    SatelliteRepository,
-    UserRepository,
-)
-from dataforce_studio.schemas import (
+from dataforce_studio.repositories.bucket_secrets import BucketSecretRepository
+from dataforce_studio.repositories.collections import CollectionRepository
+from dataforce_studio.repositories.invites import InviteRepository
+from dataforce_studio.repositories.model_artifacts import ModelArtifactRepository
+from dataforce_studio.repositories.orbits import OrbitRepository
+from dataforce_studio.repositories.satellites import SatelliteRepository
+from dataforce_studio.repositories.users import UserRepository
+from dataforce_studio.schemas.bucket_secrets import BucketSecret, BucketSecretCreate
+from dataforce_studio.schemas.model_artifacts import (
     NDJSON,
-    AuthProvider,
-    BucketSecret,
-    BucketSecretCreate,
     Collection,
     CollectionCreate,
     CollectionType,
-    CreateOrganizationInvite,
-    CreateUser,
-    CreateUserIn,
     Manifest,
     ModelArtifact,
     ModelArtifactCreate,
     ModelArtifactStatus,
+)
+from dataforce_studio.schemas.orbit import (
     Orbit,
     OrbitCreateIn,
     OrbitDetails,
     OrbitMember,
     OrbitMemberCreate,
     OrbitRole,
+)
+from dataforce_studio.schemas.organization import (
+    CreateOrganizationInvite,
     Organization,
     OrganizationCreateIn,
     OrganizationDetails,
@@ -47,10 +45,14 @@ from dataforce_studio.schemas import (
     OrganizationMember,
     OrganizationMemberCreate,
     OrgRole,
-    Satellite,
-    SatelliteCreate,
-    User,
     UserInvite,
+)
+from dataforce_studio.schemas.satellite import Satellite, SatelliteCreate
+from dataforce_studio.schemas.user import (
+    AuthProvider,
+    CreateUser,
+    CreateUserIn,
+    User,
     UserOut,
 )
 from dataforce_studio.settings import config

@@ -4,14 +4,14 @@ from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
 import pytest
 
-from dataforce_studio.handlers import OrbitHandler
+from dataforce_studio.handlers.orbits import OrbitHandler
 from dataforce_studio.infra.exceptions import (
     NotFoundError,
     OrbitMemberNotFoundError,
     OrbitNotFoundError,
 )
 from dataforce_studio.models import OrganizationMemberOrm
-from dataforce_studio.schemas import (
+from dataforce_studio.schemas.orbit import (
     Orbit,
     OrbitCreateIn,
     OrbitDetails,
@@ -19,10 +19,10 @@ from dataforce_studio.schemas import (
     OrbitMemberCreate,
     OrbitRole,
     OrbitUpdate,
-    OrgRole,
     UpdateOrbitMember,
-    UserOut,
 )
+from dataforce_studio.schemas.organization import OrgRole
+from dataforce_studio.schemas.user import UserOut
 
 handler = OrbitHandler()
 

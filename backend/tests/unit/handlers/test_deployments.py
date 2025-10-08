@@ -3,21 +3,20 @@ from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 
-from dataforce_studio.handlers import DeploymentHandler
+from dataforce_studio.handlers.deployments import DeploymentHandler
 from dataforce_studio.infra.exceptions import (
     InsufficientPermissionsError,
     NotFoundError,
 )
-from dataforce_studio.schemas import (
-    Action,
+from dataforce_studio.schemas.deployment import (
     Deployment,
     DeploymentCreate,
     DeploymentCreateIn,
     DeploymentDetailsUpdateIn,
     DeploymentStatus,
     DeploymentUpdate,
-    Resource,
 )
+from dataforce_studio.schemas.permissions import Action, Resource
 
 handler = DeploymentHandler()
 

@@ -1,7 +1,7 @@
 import pytest
 
-from dataforce_studio.repositories import CollectionRepository
-from dataforce_studio.schemas import (
+from dataforce_studio.repositories.collections import CollectionRepository
+from dataforce_studio.schemas.model_artifacts import (
     Collection,
     CollectionCreate,
     CollectionType,

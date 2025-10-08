@@ -3,7 +3,7 @@ from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 
-from dataforce_studio.handlers import ModelArtifactHandler
+from dataforce_studio.handlers.model_artifacts import ModelArtifactHandler
 from dataforce_studio.infra.exceptions import (
     ApplicationError,
     BucketSecretNotFoundError,
@@ -12,19 +12,17 @@ from dataforce_studio.infra.exceptions import (
     ModelArtifactNotFoundError,
     OrbitNotFoundError,
 )
-from dataforce_studio.schemas import (
-    Action,
-    BucketSecret,
+from dataforce_studio.schemas.bucket_secrets import BucketSecret
+from dataforce_studio.schemas.model_artifacts import (
     Manifest,
     ModelArtifact,
     ModelArtifactIn,
     ModelArtifactStatus,
     ModelArtifactUpdate,
     ModelArtifactUpdateIn,
-    PartDetails,
-    Resource,
-    UploadDetails,
 )
+from dataforce_studio.schemas.permissions import Action, Resource
+from dataforce_studio.schemas.s3 import PartDetails, UploadDetails
 
 handler = ModelArtifactHandler()
 

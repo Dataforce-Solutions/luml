@@ -3,18 +3,18 @@ from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 
-from dataforce_studio.handlers import CollectionHandler
+from dataforce_studio.handlers.collections import CollectionHandler
 from dataforce_studio.infra.exceptions import CollectionDeleteError, NotFoundError
-from dataforce_studio.schemas import (
+from dataforce_studio.schemas.model_artifacts import (
     Collection,
     CollectionCreate,
     CollectionCreateIn,
     CollectionType,
     CollectionUpdate,
     CollectionUpdateIn,
-    OrbitRole,
-    OrgRole,
 )
+from dataforce_studio.schemas.orbit import OrbitRole
+from dataforce_studio.schemas.organization import OrgRole
 
 handler = CollectionHandler()
 

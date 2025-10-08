@@ -4,8 +4,8 @@ from typing import Any
 import pytest
 from sqlalchemy.ext.asyncio import create_async_engine
 
-from dataforce_studio.repositories import SatelliteRepository
-from dataforce_studio.schemas import (
+from dataforce_studio.repositories.satellites import SatelliteRepository
+from dataforce_studio.schemas.satellite import (
     SatelliteCapability,
     SatelliteCreate,
     SatelliteTaskStatus,

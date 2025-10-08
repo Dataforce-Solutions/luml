@@ -1,8 +1,8 @@
 import pytest
 from sqlalchemy.ext.asyncio import create_async_engine
 
-from dataforce_studio.repositories import OrbitSecretRepository
-from dataforce_studio.schemas import (
+from dataforce_studio.repositories.orbit_secrets import OrbitSecretRepository
+from dataforce_studio.schemas.orbit_secret import (
     OrbitSecret,
     OrbitSecretCreate,
     OrbitSecretUpdate,

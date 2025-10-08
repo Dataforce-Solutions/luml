@@ -5,11 +5,10 @@ from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 
-from dataforce_studio.handlers import SatelliteHandler
+from dataforce_studio.handlers.satellites import SatelliteHandler
 from dataforce_studio.infra.exceptions import ApplicationError, NotFoundError
-from dataforce_studio.schemas import (
-    Action,
-    Resource,
+from dataforce_studio.schemas.permissions import Action, Resource
+from dataforce_studio.schemas.satellite import (
     Satellite,
     SatelliteCapability,
     SatelliteCreateIn,

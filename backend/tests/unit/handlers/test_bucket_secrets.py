@@ -3,21 +3,20 @@ from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 
-from dataforce_studio.handlers import BucketSecretHandler
+from dataforce_studio.handlers.bucket_secrets import BucketSecretHandler
 from dataforce_studio.infra.exceptions import (
     BucketSecretInUseError,
     DatabaseConstraintError,
     NotFoundError,
 )
-from dataforce_studio.schemas import (
-    Action,
+from dataforce_studio.schemas.bucket_secrets import (
     BucketSecret,
     BucketSecretCreateIn,
     BucketSecretOut,
     BucketSecretUpdate,
     BucketSecretUrls,
-    Resource,
 )
+from dataforce_studio.schemas.permissions import Action, Resource
 
 handler = BucketSecretHandler()
 

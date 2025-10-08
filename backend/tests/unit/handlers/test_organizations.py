@@ -2,14 +2,14 @@ from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 
-from dataforce_studio.handlers import OrganizationHandler
+from dataforce_studio.handlers.organizations import OrganizationHandler
 from dataforce_studio.infra.exceptions import (
     InsufficientPermissionsError,
     NotFoundError,
     OrganizationLimitReachedError,
 )
 from dataforce_studio.models import OrganizationOrm
-from dataforce_studio.schemas import (
+from dataforce_studio.schemas.organization import (
     Organization,
     OrganizationCreateIn,
     OrganizationDetails,

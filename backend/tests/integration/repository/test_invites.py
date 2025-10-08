@@ -3,8 +3,9 @@ import uuid
 import pytest
 
 from dataforce_studio.models import OrganizationOrm
-from dataforce_studio.repositories import InviteRepository
-from dataforce_studio.schemas import CreateOrganizationInvite, OrgRole, User
+from dataforce_studio.repositories.invites import InviteRepository
+from dataforce_studio.schemas.organization import CreateOrganizationInvite, OrgRole
+from dataforce_studio.schemas.user import User
 from tests.conftest import OrganizationFixtureData
 
 

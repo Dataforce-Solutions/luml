@@ -3,18 +3,17 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 
-from dataforce_studio.handlers import OrbitSecretHandler
+from dataforce_studio.handlers.orbit_secrets import OrbitSecretHandler
 from dataforce_studio.infra.exceptions import NotFoundError
-from dataforce_studio.schemas import (
-    Action,
+from dataforce_studio.schemas.orbit_secret import (
     OrbitSecret,
     OrbitSecretCreate,
     OrbitSecretCreateIn,
     OrbitSecretOut,
     OrbitSecretUpdate,
-    OrgRole,
-    Resource,
 )
+from dataforce_studio.schemas.organization import OrgRole
+from dataforce_studio.schemas.permissions import Action, Resource
 
 handler = OrbitSecretHandler()
 

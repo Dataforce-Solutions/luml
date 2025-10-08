@@ -2,9 +2,9 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 
-from dataforce_studio.handlers import APIKeyHandler
+from dataforce_studio.handlers.api_keys import APIKeyHandler
 from dataforce_studio.infra.exceptions import UserAPIKeyCreateError
-from dataforce_studio.schemas import APIKeyCreateOut, UserOut
+from dataforce_studio.schemas.user import APIKeyCreateOut, UserOut
 
 handler = APIKeyHandler()
 

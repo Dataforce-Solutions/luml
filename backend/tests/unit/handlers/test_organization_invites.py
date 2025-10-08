@@ -3,19 +3,18 @@ from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
 import pytest
 
-from dataforce_studio.handlers import OrganizationHandler
+from dataforce_studio.handlers.organizations import OrganizationHandler
 from dataforce_studio.infra.exceptions import ApplicationError
 from dataforce_studio.models import OrganizationInviteOrm
-from dataforce_studio.schemas import (
+from dataforce_studio.schemas.organization import (
     CreateOrganizationInvite,
     CreateOrganizationInviteIn,
-    CreateUser,
     OrganizationInvite,
     OrganizationMemberCreate,
     OrgRole,
     UserInvite,
-    UserOut,
 )
+from dataforce_studio.schemas.user import CreateUser, UserOut
 
 handler = OrganizationHandler()
 
