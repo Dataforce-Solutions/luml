@@ -73,6 +73,7 @@ def upgrade() -> None:
     connection = op.get_bind()
 
     tables_with_fks = [
+        "deployments",
         "satellites",
         "satellite_queue",
         "organization_members",
@@ -81,7 +82,6 @@ def upgrade() -> None:
         "orbit_secrets",
         "orbit_members",
         "model_artifacts",
-        "deployments",
         "collections",
         "bucket_secrets",
     ]
@@ -109,10 +109,10 @@ def upgrade() -> None:
         "users",
         "bucket_secrets",
         "orbits",
+        "deployments",
         "satellites",
         "collections",
         "model_artifacts",
-        "deployments",
         "orbit_members",
         "orbit_secrets",
         "organization_invites",
@@ -123,6 +123,7 @@ def upgrade() -> None:
     ]
 
     for table in tables_with_ids:
+        connection.execute(sa.text(f"ALTER TABLE {table} ALTER COLUMN id DROP DEFAULT"))
         op.alter_column(
             table,
             "id",
@@ -136,10 +137,10 @@ def upgrade() -> None:
         "users",
         "bucket_secrets",
         "orbits",
+        "deployments",
         "satellites",
         "collections",
         "model_artifacts",
-        "deployments",
         "orbit_members",
         "orbit_secrets",
         "organization_invites",
@@ -705,8 +706,8 @@ def downgrade() -> None:
         "orbits",
         "orbit_secrets",
         "orbit_members",
-        "model_artifacts",
         "deployments",
+        "model_artifacts",
         "collections",
         "bucket_secrets",
     ]
@@ -732,6 +733,7 @@ def downgrade() -> None:
         "users",
         "token_black_list",
         "stats_emails",
+        "deployments",
         "satellites",
         "satellite_queue",
         "organizations",
@@ -741,7 +743,6 @@ def downgrade() -> None:
         "orbit_secrets",
         "orbit_members",
         "model_artifacts",
-        "deployments",
         "collections",
         "bucket_secrets",
     ]
@@ -768,12 +769,6 @@ def downgrade() -> None:
     ]
 
     for table, fk_column, ref_table in foreign_key_updates:
-        connection.execute(
-            sa.text(
-                f"ALTER TABLE {table} ALTER COLUMN {fk_column} TYPE TEXT USING {fk_column}::text"
-            )
-        )
-
         connection.execute(
             sa.text(f"""
             UPDATE {table} 
