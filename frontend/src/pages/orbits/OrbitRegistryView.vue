@@ -18,12 +18,12 @@
       "
     ></CollectionsList>
   </div>
-  <CollectionCreator
-    :visible="collectionsStore.creatorVisible"
-    @update:visible="
-      (val) => (val ? collectionsStore.showCreator() : collectionsStore.hideCreator())
-    "
-  ></CollectionCreator>
+<CollectionCreator
+  :organization-id="orbitsStore.currentOrbitDetails!.organization_id"
+  :orbit-id="orbitsStore.currentOrbitDetails!.id"
+  :visible="collectionsStore.creatorVisible"
+  @update:visible="(val) => (val ? collectionsStore.showCreator() : collectionsStore.hideCreator())"
+/>
 </template>
 
 <script setup lang="ts">

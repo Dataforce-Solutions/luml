@@ -96,7 +96,7 @@ function onCreateClick() {
   isCreateMode.value = true
 }
 
-async function onOrganizationClick(organizationId: number) {
+async function onOrganizationClick(organizationId: string) {
   await organizationStore.setCurrentOrganizationId(organizationId)
 }
 </script>

@@ -19,9 +19,9 @@ import type { ExperimentSnapshotProvider } from '@/modules/experiment-snapshot'
 
 // TODO: Separate interfaces
 interface RequestInfo {
-  organizationId: number
-  orbitId: number
-  collectionId: number
+  organizationId: string
+  orbitId: string
+  collectionId: string
 }
 
 interface ModelStore {
@@ -36,33 +36,33 @@ interface ModelStore {
   initiateCreateModel: (
     data: MlModelCreator,
     requestData?: {
-      organizationId: number
-      orbitId: number
-      collectionId: number
+      organizationId: string
+      orbitId: string
+      collectionId: string
     },
   ) => Promise<CreateModelResponse>
   confirmModelUpload: (payload: UpdateMlModelPayload, requestData?: RequestInfo) => Promise<void>
   getModelsList: (
-    organizationId?: number,
-    orbitId?: number,
-    collectionId?: number,
+    organizationId: string,
+    orbitId: string,
+    collectionId: string,
   ) => Promise<MlModel[]>
   setModelsList: (list: MlModel[]) => void
   cancelModelUpload: (
     payload: UpdateMlModelPayload,
     requestData?: {
-      organizationId: number
-      orbitId: number
-      collectionId: number
+      organizationId: string
+      orbitId: string
+      collectionId: string
     },
   ) => Promise<void>
   resetList: () => void
-  deleteModels: (modelsIds: number[]) => Promise<{
-    deleted: number[]
-    failed: number[]
+  deleteModels: (modelsIds: string[]) => Promise<{
+  deleted: string[]
+  failed: string[]
   }>
-  downloadModel: (modelId: number, name: string) => Promise<void>
-  getDownloadUrl: (modelId: number) => Promise<string>
+  downloadModel: (modelId: string, name: string) => Promise<void>
+  getDownloadUrl: (modelId: string) => Promise<string>
   setCurrentModelTag: (tag: FNNX_PRODUCER_TAGS_MANIFEST_ENUM) => void
   resetCurrentModelTag: () => void
   setCurrentModelMetadata: (
@@ -94,13 +94,13 @@ export const useModelsStore = defineStore('models', (): ModelStore => {
     if (typeof route.params.collectionId !== 'string') throw new Error('Collection was not found')
 
     return {
-      organizationId: +route.params.organizationId,
-      orbitId: +route.params.id,
-      collectionId: +route.params.collectionId,
+      organizationId: route.params.organizationId,
+      orbitId: route.params.id,
+      collectionId: route.params.collectionId,
     }
   })
 
-  function getModelsList(organizationId?: number, orbitId?: number, collectionId?: number) {
+  function getModelsList(organizationId: string, orbitId: string, collectionId: string) {
     return dataforceApi.mlModels.getModelsList(
       organizationId ?? requestInfo.value.organizationId,
       orbitId ?? requestInfo.value.orbitId,
@@ -155,22 +155,22 @@ export const useModelsStore = defineStore('models', (): ModelStore => {
     modelsList.value = []
   }
 
-  async function deleteModels(modelsIds: number[]) {
-    const results = await Promise.allSettled(modelsIds.map((id) => deleteModel(id).then(() => id)))
-    const deleted: number[] = []
-    const failed: number[] = []
-    results.forEach((result, index) => {
-      if (result.status === 'fulfilled') {
-        deleted.push(result.value)
-      } else {
-        failed.push(modelsIds[index])
-      }
-    })
-    modelsList.value = modelsList.value.filter((model) => !deleted.includes(model.id))
-    return { deleted, failed }
-  }
+async function deleteModels(modelsIds: string[]) {
+  const results = await Promise.allSettled(modelsIds.map((id) => deleteModel(id).then(() => id)))
+  const deleted: string[] = []
+  const failed: string[] = []
+  results.forEach((result, index) => {
+    if (result.status === 'fulfilled') {
+      deleted.push(result.value)
+    } else {
+      failed.push(modelsIds[index])
+    }
+  })
+  modelsList.value = modelsList.value.filter((model) => !deleted.includes(model.id))
+  return { deleted, failed }
+}
 
-  async function deleteModel(modelId: number) {
+  async function deleteModel(modelId: string) {
     const { url } = await dataforceApi.mlModels.getModelDeleteUrl(
       requestInfo.value.organizationId,
       requestInfo.value.orbitId,
@@ -186,14 +186,14 @@ export const useModelsStore = defineStore('models', (): ModelStore => {
     )
   }
 
-  async function downloadModel(modelId: number, name: string) {
+  async function downloadModel(modelId: string, name: string) {
     const url = await getDownloadUrl(modelId)
     const response = await fetch(url)
     const blob = await response.blob()
     downloadFileFromBlob(blob, name)
   }
 
-  async function getDownloadUrl(modelId: number) {
+  async function getDownloadUrl(modelId: string) {
     const { url } = await dataforceApi.mlModels.getModelDownloadUrl(
       requestInfo.value.organizationId,
       requestInfo.value.orbitId,

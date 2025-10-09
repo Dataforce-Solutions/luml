@@ -8,8 +8,8 @@ export const useSatellitesStore = defineStore('satellites', () => {
   const creatorVisible = ref(false)
 
   async function createSatellite(
-    organizationId: number,
-    orbitId: number,
+    organizationId: string,
+    orbitId: string,
     payload: CreateSatellitePayload,
   ) {
     const data = await dataforceApi.satellites.create(organizationId, orbitId, payload)
@@ -17,7 +17,7 @@ export const useSatellitesStore = defineStore('satellites', () => {
     return data
   }
 
-  async function loadSatellites(organizationId: number, orbitId: number) {
+  async function loadSatellites(organizationId: string, orbitId: string) {
     return dataforceApi.satellites.getList(organizationId, orbitId)
   }
 
@@ -25,15 +25,15 @@ export const useSatellitesStore = defineStore('satellites', () => {
     satellitesList.value = list
   }
 
-  async function deleteSatellite(organizationId: number, orbitId: number, satelliteId: number) {
+  async function deleteSatellite(organizationId: string, orbitId: string, satelliteId: string) {
     await dataforceApi.satellites.delete(organizationId, orbitId, satelliteId)
     setList(satellitesList.value.filter((satellite) => satellite.id !== satelliteId))
   }
 
   async function updateSatellite(
-    organizationId: number,
-    orbitId: number,
-    satelliteId: number,
+    organizationId: string,
+    orbitId: string,
+    satelliteId: string,
     payload: CreateSatellitePayload,
   ) {
     const newData = await dataforceApi.satellites.update(
@@ -49,7 +49,7 @@ export const useSatellitesStore = defineStore('satellites', () => {
     setList(newList)
   }
 
-  async function regenerateApiKey(organizationId: number, orbitId: number, satelliteId: number) {
+  async function regenerateApiKey(organizationId: string, orbitId: string, satelliteId: string) {
     return dataforceApi.satellites.regenerateApiKye(organizationId, orbitId, satelliteId)
   }
 

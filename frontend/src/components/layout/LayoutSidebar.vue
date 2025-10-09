@@ -43,7 +43,7 @@
                 name: item.route,
                 params:
                   item.route === 'orbits'
-                    ? { organizationId: organizationsStore.currentOrganization?.id || 0 }
+                    ? { organizationId: organizationsStore.currentOrganization?.id || '' }
                     : {},
               }"
               class="menu-link"

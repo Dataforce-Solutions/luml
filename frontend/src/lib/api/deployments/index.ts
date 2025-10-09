@@ -8,7 +8,7 @@ export class DeploymentsApi {
     this.api = api
   }
 
-  async create(organizationId: number, orbitId: number, payload: CreateDeploymentPayload) {
+  async create(organizationId: string, orbitId: string, payload: CreateDeploymentPayload) {
     const { data: responseData } = await this.api.post<Deployment>(
       `/organizations/${organizationId}/orbits/${orbitId}/deployments`,
       payload,
@@ -16,21 +16,21 @@ export class DeploymentsApi {
     return responseData
   }
 
-  async getList(organizationId: number, orbitId: number) {
+  async getList(organizationId: string, orbitId: string) {
     const { data: responseData } = await this.api.get<Deployment[]>(
       `/organizations/${organizationId}/orbits/${orbitId}/deployments`,
     )
     return responseData
   }
 
-  async getDeployment(organizationId: number, orbitId: number, deploymentId: number) {
+  async getDeployment(organizationId: string, orbitId: string, deploymentId: string) {
     const { data: responseData } = await this.api.get<Deployment>(
       `/organizations/${organizationId}/orbits/${orbitId}/deployments/${deploymentId}`,
     )
     return responseData
   }
 
-  async deleteDeployment(organizationId: number, orbitId: number, deploymentId: number) {
+  async deleteDeployment(organizationId: string, orbitId: string, deploymentId: string) {
     const { data: responseData } = await this.api.delete<Deployment>(
       `/organizations/${organizationId}/orbits/${orbitId}/deployments/${deploymentId}`,
     )
@@ -38,9 +38,9 @@ export class DeploymentsApi {
   }
 
   async update(
-    organizationId: number,
-    orbitId: number,
-    deploymentId: number,
+    organizationId: string,
+    orbitId: string,
+    deploymentId: string,
     payload: UpdateDeploymentPayload,
   ) {
     const { data: responseData } = await this.api.patch<Deployment>(

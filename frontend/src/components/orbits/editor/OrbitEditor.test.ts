@@ -7,7 +7,7 @@ import { PermissionEnum } from '@/lib/api/DataforceApi.interfaces'
 
 vi.mock('@/stores/buckets', () => ({
   useBucketsStore: () => ({
-    buckets: [{ id: 'bucket1', bucket_name: 'Bucket One' }],
+    buckets: [{ id: 'bucket-1111-aaaa-bbbb-cccc-000000000001', bucket_name: 'Bucket One' }],
   }),
 }))
 
@@ -62,13 +62,13 @@ describe('OrbitSettingsDialog', () => {
   const pinia = createPinia()
 
   const orbit = {
-    id: 1,
+    id: 'orbit-aaaa-bbbb-cccc-dddd-000000000001',
     name: 'Test Orbit',
-    organization_id: 1,
+    organization_id: 'org-1111-aaaa-bbbb-cccc-000000000001',
     total_members: 10,
     created_at: new Date(),
     updated_at: null,
-    bucket_secret_id: 0,
+    bucket_secret_id: 'bucket-1111-aaaa-bbbb-cccc-000000000001',
     total_collections: 5,
     role: OrbitRoleEnum.member,
     permissions: {
@@ -87,7 +87,7 @@ describe('OrbitSettingsDialog', () => {
         plugins: [pinia],
 
         stubs: {
-          Dialog: {
+          Dialog: { 
             template:
               '<div v-if="visible"><slot name="header"></slot><slot></slot><slot name="footer"></slot></div>',
             props: ['visible', 'position', 'draggable', 'pt'],
@@ -95,7 +95,7 @@ describe('OrbitSettingsDialog', () => {
 
           Form: {
             template:
-              '<form :id="id" @submit="$emit(\'submit\', { valid: true })"><slot></slot></form>',
+              '<form id="orbit-edit-form" @submit="$emit(\'submit\', { valid: true })"><slot></slot></form>',
             props: ['id', 'initialValues', 'resolver'],
           },
 

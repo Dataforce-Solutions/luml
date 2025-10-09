@@ -13,7 +13,7 @@ export class SatellitesApi {
     this.api = api
   }
 
-  async create(organizationId: number, orbitId: number, payload: CreateSatellitePayload) {
+  async create(organizationId: string, orbitId: string, payload: CreateSatellitePayload) {
     const { data: responseData } = await this.api.post<CreateSatelliteResponse>(
       `/organizations/${organizationId}/orbits/${orbitId}/satellites`,
       payload,
@@ -22,9 +22,9 @@ export class SatellitesApi {
   }
 
   async update(
-    organizationId: number,
-    orbitId: number,
-    satelliteId: number,
+    organizationId: string,
+    orbitId: string,
+    satelliteId: string,
     payload: CreateSatellitePayload,
   ) {
     const { data: responseData } = await this.api.patch<Satellite>(
@@ -34,28 +34,28 @@ export class SatellitesApi {
     return responseData
   }
 
-  async getList(organizationId: number, orbitId: number) {
+  async getList(organizationId: string, orbitId: string) {
     const { data: responseData } = await this.api.get<Satellite[]>(
       `/organizations/${organizationId}/orbits/${orbitId}/satellites`,
     )
     return responseData
   }
 
-  async getItem(organizationId: number, orbitId: number, satelliteId: number) {
+  async getItem(organizationId: string, orbitId: string, satelliteId: string) {
     const { data: responseData } = await this.api.get<Satellite>(
       `/organizations/${organizationId}/orbits/${orbitId}/satellites/${satelliteId}`,
     )
     return responseData
   }
 
-  async delete(organizationId: number, orbitId: number, satelliteId: number) {
+  async delete(organizationId: string, orbitId: string, satelliteId: string) {
     const { data: responseData } = await this.api.delete(
       `/organizations/${organizationId}/orbits/${orbitId}/satellites/${satelliteId}`,
     )
     return responseData
   }
 
-  async regenerateApiKye(organizationId: number, orbitId: number, satelliteId: number) {
+  async regenerateApiKye(organizationId: string, orbitId: string, satelliteId: string) {
     const { data: responseData } = await this.api.post<RegenerateApiKeyResponse>(
       `/organizations/${organizationId}/orbits/${orbitId}/satellites/${satelliteId}/api-key`,
     )

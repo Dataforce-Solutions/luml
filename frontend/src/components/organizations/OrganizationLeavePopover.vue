@@ -14,7 +14,7 @@ import { simpleErrorToast, simpleSuccessToast } from '@/lib/primevue/data/toasts
 import { leaveOrganizationConfirmOptions } from '@/lib/primevue/data/confirm'
 
 type Props = {
-  organizationId: number
+  organizationId: string
 }
 
 const props = defineProps<Props>()

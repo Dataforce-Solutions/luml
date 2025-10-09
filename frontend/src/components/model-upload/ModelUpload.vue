@@ -121,8 +121,8 @@ type Props = {
 const props = defineProps<Props>()
 
 interface FormData {
-  orbit: number | null
-  collection: number | null
+  orbit: string | null
+  collection: string | null
   name: string
   description: string
   tags: string[]
@@ -173,7 +173,7 @@ function searchTags(event: AutoCompleteCompleteEvent) {
   autocompleteItems.value = getTagsByQuery(event.query)
 }
 
-async function onOrbitChange(orbitId: number | null) {
+async function onOrbitChange(orbitId: string | null) {
   if (orbitId) {
     await collectionsStore.loadCollections(organizationId.value, orbitId)
   } else {
@@ -182,7 +182,7 @@ async function onOrbitChange(orbitId: number | null) {
   formData.value.collection = null
 }
 
-async function onCollectionChange(collectionId: number | null) {
+async function onCollectionChange(collectionId: string | null) {
   if (collectionId) {
     if (!formData.value.orbit) throw new Error('Orbit was not found')
     const modelsList = await modelsStore.getModelsList(

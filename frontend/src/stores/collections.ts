@@ -19,12 +19,12 @@ export const useCollectionsStore = defineStore('collections', () => {
       throw new Error('Current organization not found')
     if (typeof route.params.id !== 'string') throw new Error('Orbit was not found')
     return {
-      organizationId: +route.params.organizationId,
-      orbitId: +route.params.id,
+      organizationId: route.params.organizationId,
+      orbitId: route.params.id,
     }
   })
 
-  async function loadCollections(organizationId?: number, orbitId?: number) {
+  async function loadCollections(organizationId?: string, orbitId?: string) {
     collectionsList.value = await dataforceApi.orbitCollections.getCollectionsList(
       organizationId ?? requestInfo.value.organizationId,
       orbitId ?? requestInfo.value.orbitId,
@@ -44,7 +44,7 @@ export const useCollectionsStore = defineStore('collections', () => {
     collectionsList.value.push(collection)
   }
 
-  async function updateCollection(collectionId: number, payload: OrbitCollectionCreator) {
+  async function updateCollection(collectionId: string, payload: OrbitCollectionCreator) {
     const updatedCollection = await dataforceApi.orbitCollections.updateCollection(
       requestInfo.value.organizationId,
       requestInfo.value.orbitId,
@@ -56,7 +56,7 @@ export const useCollectionsStore = defineStore('collections', () => {
     })
   }
 
-  async function deleteCollection(collectionId: number) {
+  async function deleteCollection(collectionId: string) {
     await dataforceApi.orbitCollections.deleteCollection(
       requestInfo.value.organizationId,
       requestInfo.value.orbitId,
@@ -67,7 +67,7 @@ export const useCollectionsStore = defineStore('collections', () => {
     )
   }
 
-  async function setCurrentCollection(collectionId: number) {
+  async function setCurrentCollection(collectionId: string) {
     currentCollection.value =
       collectionsList.value.find((collection) => collection.id === collectionId) || null
   }

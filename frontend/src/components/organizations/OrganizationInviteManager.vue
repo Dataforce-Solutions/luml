@@ -76,7 +76,7 @@ const loading = ref(false)
 
 const invites = computed(() => organizationStore.organizationDetails?.invites || [])
 
-async function reject(organizationId: number, inviteId: number) {
+async function reject(organizationId: string, inviteId: string) {
   loading.value = true
   try {
     await invitationStore.cancelInvite(organizationId, inviteId)

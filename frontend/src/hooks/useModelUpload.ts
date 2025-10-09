@@ -21,7 +21,7 @@ export const useModelUpload = () => {
     name: string,
     description: string,
     tags: string[],
-    requestInfo?: { organizationId: number; orbitId: number; collectionId: number },
+    requestInfo?: { organizationId: string; orbitId: string; collectionId: string },
   ) {
     const model = await FnnxService.createModelFromFile(file)
     const manifest = model.getManifest()
@@ -63,7 +63,7 @@ export const useModelUpload = () => {
     modelName: string,
     description: string,
     tags: string[],
-    requestInfo?: { organizationId: number; orbitId: number; collectionId: number },
+    requestInfo?: { organizationId: string; orbitId: string; collectionId: string },
   ) {
     try {
       progress.value = 0

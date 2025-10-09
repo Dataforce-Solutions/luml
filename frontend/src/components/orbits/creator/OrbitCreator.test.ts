@@ -4,7 +4,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { createPinia } from 'pinia'
 
 vi.mock('vue-router', () => ({
-  useRoute: () => ({ params: { organizationId: '123' } }),
+  useRoute: () => ({ params: { organizationId: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa' } }),
   useRouter: () => ({
     push: vi.fn(),
     replace: vi.fn(),
@@ -25,7 +25,7 @@ vi.mock('@/stores/organization', () => ({
       members: [
         {
           user: {
-            id: 2,
+            id: 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',
             full_name: 'Test User',
             email: 'test@example.com',
           },
@@ -44,7 +44,7 @@ vi.mock('@/stores/orbits', () => ({
 
 vi.mock('@/stores/user', () => ({
   useUserStore: () => ({
-    getUserId: 1,
+    getUserId: 'cccccccc-cccc-cccc-cccc-cccccccccccc',
   }),
 }))
 
@@ -160,7 +160,7 @@ describe('OrbitCreator', () => {
           },
         },
         mocks: {
-          $route: { params: { organizationId: '123' } },
+          $route: { params: { organizationId: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa' } },
         },
       },
       props: {

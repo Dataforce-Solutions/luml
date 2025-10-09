@@ -71,7 +71,7 @@ const route = useRoute()
 
 const currentModel = computed(() => {
   if (typeof route.params.modelId !== 'string') return undefined
-  return modelsStore.modelsList.find((model) => model.id === +route.params.modelId)
+  return modelsStore.modelsList.find((model) => model.id === route.params.modelId)
 })
 const statusSeverity = computed(() => {
   if (!currentModel.value) return null

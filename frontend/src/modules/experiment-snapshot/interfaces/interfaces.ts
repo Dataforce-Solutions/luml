@@ -14,7 +14,7 @@ export interface ExperimentSnapshotStaticParams {
   eval_version: string
   evaluation_metrics: string[]
   model_type: string
-  modelId: number
+  modelId: string
 }
 
 export interface ExperimentSnapshotDynamicMetrics
@@ -23,7 +23,7 @@ export interface ExperimentSnapshotDynamicMetrics
 export interface ExperimentSnapshotDynamicMetric {
   x: number[]
   y: number[]
-  modelId: number
+  modelId: string
 }
 
 export interface EvalsDatasets extends Record<string, EvalsInfo[]> {}
@@ -36,11 +36,11 @@ export interface EvalsInfo {
   refs: Record<string, string | number>
   scores: Record<string, string | number>
   metadata: Record<string, string | number>
-  modelId: number
+  modelId: string
 }
 
 export interface ModelSnapshot {
-  modelId: number
+  modelId: string
   database: Database
 }
 
@@ -57,12 +57,12 @@ export interface ScoreInfo {
 }
 
 export interface ModelScores {
-  modelId: number | string
+  modelId: string | string
   scores: ScoreInfo[]
 }
 
 export interface SpansParams {
-  modelId: number
+  modelId: string
   datasetId: string
   evalId: string
 }

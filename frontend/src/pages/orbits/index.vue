@@ -48,7 +48,7 @@ const createAvailable = computed(
     !!organizationStore.currentOrganization?.permissions?.orbit?.includes(PermissionEnum.create),
 )
 
-async function loadOrbits(organizationId: number, skipHideLoading = false) {
+async function loadOrbits(organizationId: string, skipHideLoading = false) {
   try {
     loading.value = true
     await orbitsStore.loadOrbitsList(organizationId)
@@ -63,7 +63,7 @@ async function loadOrbits(organizationId: number, skipHideLoading = false) {
 watch(
   () => organizationStore.currentOrganization?.id,
   async (id) => {
-    if (!id || +route.params.organizationId === id) return
+    if (!id || route.params.organizationId === id) return
 
     await router.push({ name: route.name, params: { organizationId: id } })
     loadOrbits(id)
@@ -71,9 +71,16 @@ watch(
 )
 
 onBeforeMount(async () => {
+  const idParam = route.params.organizationId;
+  const organizationId = Array.isArray(idParam) ? idParam[0] : idParam;
+  if (!organizationId) {
+    toast.add(simpleErrorToast('Organization ID is missing in the URL.'));
+    loading.value = false;
+    return;
+  }
   try {
-    await loadOrbits(+route.params.organizationId, true)
-    await organizationStore.getOrganizationDetails(+route.params.organizationId)
+    await loadOrbits(organizationId, true);
+    await organizationStore.getOrganizationDetails(organizationId);
   } catch (e: any) {
     console.error(e?.response?.data?.detail, e?.message)
   } finally {

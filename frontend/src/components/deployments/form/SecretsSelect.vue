@@ -20,7 +20,8 @@
         </div>
       </template>
     </Select>
-    <SecretCreator v-if="isCreating" v-model:visible="isCreating"></SecretCreator>
+    <SecretCreator v-if="isCreating" v-model:visible="isCreating"
+      :organization-id="String($route.params.organizationId)" :orbit-id="String($route.params.id)"></SecretCreator>
   </div>
 </template>
 
@@ -37,7 +38,7 @@ type Props = {
 
 defineProps<Props>()
 
-const modelValue = defineModel<number | null>('modelValue')
+const modelValue = defineModel<string | null>('modelValue')
 
 const isCreating = ref(false)
 

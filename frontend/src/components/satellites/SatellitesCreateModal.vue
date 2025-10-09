@@ -79,8 +79,12 @@ const loading = ref(false)
 
 async function onSubmit({ valid }: FormSubmitEvent) {
   if (!valid) return
-  const organizationId = +route.params.organizationId
-  const orbitId = +route.params.id
+  const organizationIdParam = route.params.organizationId
+  const orbitIdParam = route.params.id
+
+  const organizationId = typeof organizationIdParam === 'string' ? organizationIdParam : organizationIdParam?.[0]
+  const orbitId = typeof orbitIdParam === 'string' ? orbitIdParam : orbitIdParam?.[0]
+
   try {
     if (!organizationId) {
       throw new Error('Current organization was not found')

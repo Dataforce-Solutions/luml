@@ -85,7 +85,7 @@ import { useEvalsStore } from '@/modules/experiment-snapshot/store/evals'
 import type { TraceSpan } from '@/modules/experiment-snapshot/interfaces/interfaces'
 
 type Props = {
-  id: number
+  id: string
   name: string
 }
 

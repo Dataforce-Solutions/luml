@@ -101,7 +101,7 @@ export interface ISendEmailRequest {
 }
 
 export interface Organization {
-  id: number
+  id: string
   name: string
   logo: string | null
   role: OrganizationRoleEnum
@@ -112,10 +112,10 @@ export interface Organization {
 }
 
 export interface Invitation {
-  id: number
+  id: string
   email: string
   role: OrganizationRoleEnum
-  organization_id: number
+  organization_id: string
   invited_by_user: Omit<IGetUserResponse, 'auth_method'>
   created_at: Date
   organization: Omit<Organization, 'role'>
@@ -127,7 +127,7 @@ export interface CreateOrganizationPayload {
 }
 
 export interface CreateOrganizationResponse {
-  id: number
+  id: string
   name: string
   logo: string
   created_at: Date
@@ -146,15 +146,15 @@ export interface OrganizationDetails extends Omit<Organization, 'role'> {
 }
 
 export interface Member {
-  id: number
-  organization_id: number
+  id: string
+  organization_id: string
   role: OrganizationRoleEnum
   user: Omit<IGetUserResponse, 'auth_method'>
 }
 
 export interface AddMemberPayload {
-  user_id: number
-  organization_id: number
+  user_id: string
+  organization_id: string
   role: OrganizationRoleEnum
 }
 
@@ -165,17 +165,17 @@ export interface UpdateMemberPayload {
 export interface CreateInvitePayload {
   email: string
   role: OrganizationRoleEnum
-  organization_id: number
+  organization_id: string
 }
 
 export interface Orbit {
-  id: number
+  id: string
   name: string
-  organization_id: number
+  organization_id: string
   total_members: number
   created_at: Date
   updated_at: Date | null
-  bucket_secret_id: number
+  bucket_secret_id: string
   total_collections: number
   role: OrbitRoleEnum
   permissions: OrbitPermissions
@@ -183,23 +183,23 @@ export interface Orbit {
 
 export interface CreateOrbitPayload {
   name: string
-  bucket_secret_id: number
+  bucket_secret_id: string
   members: {
-    user_id: number
+    user_id: string
     role: OrbitRoleEnum
   }[]
   notify: boolean
 }
 
 export interface UpdateOrbitPayload {
-  id: number
+  id: string
   name: string
-  bucket_secret_id: number
+  bucket_secret_id: string
 }
 
 export interface AddMemberToOrbitPayload {
-  user_id: number
-  orbit_id: number
+  user_id: string
+  orbit_id: string
   role: OrbitRoleEnum
 }
 
@@ -208,7 +208,7 @@ export interface OrbitDetails extends Orbit {
 }
 
 export interface OrbitMember extends Omit<Member, 'organization_id' | 'role'> {
-  orbit_id: number
+  orbit_id: string
   role: OrbitRoleEnum
 }
 

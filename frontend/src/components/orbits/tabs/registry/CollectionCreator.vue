@@ -77,8 +77,8 @@ import { simpleErrorToast, simpleSuccessToast } from '@/lib/primevue/data/toasts
 import { collectionCreatorResolver } from '@/utils/forms/resolvers'
 
 type Props = {
-  organizationId?: number
-  orbitId?: number
+  organizationId?: string
+  orbitId?: string
 }
 
 const props = defineProps<Props>()

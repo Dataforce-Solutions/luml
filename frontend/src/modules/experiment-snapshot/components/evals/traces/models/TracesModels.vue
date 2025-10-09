@@ -24,10 +24,12 @@ defineProps<Props>()
 const evalsStore = useEvalsStore()
 
 const uniqueModelsIds = computed(() => {
-  return evalsStore.currentEvalData?.reduce((acc, item) => {
+  if (!evalsStore.currentEvalData) return []
+  const idsSet = evalsStore.currentEvalData.reduce((acc, item) => {
     acc.add(item.modelId)
     return acc
-  }, new Set<number>())
+  }, new Set<string>())
+  return Array.from(idsSet)
 })
 </script>
 

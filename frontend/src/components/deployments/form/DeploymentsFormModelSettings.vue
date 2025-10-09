@@ -197,8 +197,8 @@ import { FormField } from '@primevue/forms'
 import SecretsSelect from './SecretsSelect.vue'
 
 type Props = {
-  initialCollectionId?: number
-  initialModelId?: number
+  initialCollectionId?: string
+  initialModelId?: string
 }
 
 const props = defineProps<Props>()
@@ -210,15 +210,15 @@ const toast = useToast()
 
 const modelsList = ref<MlModel[]>([])
 
-const collectionId = defineModel<number | null>('collectionId')
-const modelId = defineModel<number | null>('modelId')
-const secretDynamicAttributes = defineModel<FieldInfo<number>[]>('secretDynamicAttributes', {
+const collectionId = defineModel<string | null>('collectionId')
+const modelId = defineModel<string | null>('modelId')
+const secretDynamicAttributes = defineModel<FieldInfo<string>[]>('secretDynamicAttributes', {
+  default: [],
+})
+const secretEnvs = defineModel<FieldInfo<string>[]>('secretEnvs', {
   default: [],
 })
 const dynamicAttributes = defineModel<FieldInfo[]>('dynamicAttributes', {
-  default: [],
-})
-const secretEnvs = defineModel<FieldInfo<number>[]>('secretEnvs', {
   default: [],
 })
 const notSecretEnvs = defineModel<FieldInfo<string>[]>('notSecretEnvs', {
@@ -243,7 +243,7 @@ async function getCollections() {
   }
 }
 
-async function getModels(collectionId: number) {
+async function getModels(collectionId: string) {
   try {
     const { organizationId, orbitId } = collectionsStore.requestInfo
     modelsList.value = await modelsStore.getModelsList(organizationId, orbitId, collectionId)
@@ -268,7 +268,7 @@ function addCustomVariable() {
   customVariables.value?.push({ key: '', value: '' })
 }
 
-function onCollectionChange(collectionId: number | null | undefined) {
+function onCollectionChange(collectionId: string | null | undefined) {
   modelsList.value = []
   if (collectionId) {
     getModels(collectionId)

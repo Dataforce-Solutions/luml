@@ -71,7 +71,7 @@ const dialogPt = {
 }
 
 const formData = ref<UpdateSecretPayload>({
-  id: props.secret?.id || 0,
+  id: props.secret?.id || '',
   name: props.secret?.name || '',
   value: '',
   tags: props.secret?.tags ? [...props.secret.tags] : [],
@@ -113,7 +113,7 @@ watch(
       await loadSecretDetails()
     } else {
       formData.value = {
-        id: 0,
+        id: '',
         name: '',
         value: '',
         tags: [],

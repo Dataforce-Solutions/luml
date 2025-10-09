@@ -1,6 +1,6 @@
 export interface FieldInfo<T = string> {
   key: string
-  value: T | null
+  value: T | null 
   label: string
 }
 
@@ -8,9 +8,9 @@ export interface CreateDeploymentForm {
   name: string
   description: string
   tags: string[]
-  collectionId: number
-  modelId: number
-  satelliteId: number
+  collectionId: string
+  modelId: string
+  satelliteId: string
   secretDynamicAttributes: FieldInfo<number>[]
   dynamicAttributes: FieldInfo<string>[]
   secretEnvs: FieldInfo<number>[]

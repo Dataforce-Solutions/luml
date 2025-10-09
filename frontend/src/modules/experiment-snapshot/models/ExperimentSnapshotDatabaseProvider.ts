@@ -59,14 +59,14 @@ export class ExperimentSnapshotDatabaseProvider implements ExperimentSnapshotPro
     return val
   }
 
-  private getStaticParams(database: Database, modelId: number): ExperimentSnapshotStaticParams[] {
+  private getStaticParams(database: Database, modelId: string): ExperimentSnapshotStaticParams[] {
     const queryResult = database.exec('SELECT key, value, value_type FROM static_params')
     const rows = queryResult[0]?.values || []
     const obj = Object.fromEntries(rows.map((row) => [row[0], this.parseValue(row[1], row[2])]))
     return { ...obj, modelId }
   }
 
-  private getDynamicMetrics(database: Database, modelId: number) {
+  private getDynamicMetrics(database: Database, modelId: string) {
     const queryResult = database.exec(
       'SELECT key, value, step FROM dynamic_metrics ORDER BY key, step',
     )
@@ -82,7 +82,7 @@ export class ExperimentSnapshotDatabaseProvider implements ExperimentSnapshotPro
     return grouped
   }
 
-  private getEvals(database: Database, modelId: number): EvalsDatasets {
+  private getEvals(database: Database, modelId: string): EvalsDatasets {
     const queryResult = database.exec(
       'SELECT id, dataset_id, inputs, outputs, refs, scores, metadata FROM evals LIMIT 100',
     )

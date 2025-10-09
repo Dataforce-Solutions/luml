@@ -46,14 +46,14 @@ const props = defineProps<Props>()
 
 const evalsStore = useEvalsStore()
 
-const selectedModel = ref<number>()
+const selectedModel = ref<string>()
 
 const uniqueModelsIds = computed(() => {
   if (!evalsStore.currentEvalData) return []
   const idsSet = evalsStore.currentEvalData.reduce((acc, item) => {
     acc.add(item.modelId)
     return acc
-  }, new Set<number>())
+  }, new Set<string>())
   return Array.from(idsSet)
 })
 

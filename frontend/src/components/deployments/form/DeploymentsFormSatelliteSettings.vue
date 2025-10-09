@@ -64,7 +64,7 @@ const satellitesStore = useSatellitesStore()
 const route = useRoute()
 const toast = useToast()
 
-const satelliteId = defineModel<number | null>('satelliteId')
+const satelliteId = defineModel<string | null>('satelliteId')
 const fields = defineModel<FieldInfo[]>('fields')
 
 const currentSatellite = computed(() => {
@@ -77,14 +77,19 @@ const currentSatellite = computed(() => {
 
 async function getSatellites() {
   try {
-    const organizationId = +route.params.organizationId
-    const orbitId = +route.params.id
-    if (!organizationId) {
-      throw new Error('Current organization was not found')
-    }
-    if (!orbitId) {
-      throw new Error('Current orbit was not found')
-    }
+    const organizationIdParam = route.params.organizationId
+    const orbitIdParam = route.params.id
+
+    const organizationId =
+      typeof organizationIdParam === 'string'
+        ? organizationIdParam
+        : organizationIdParam[0]
+
+    const orbitId =
+      typeof orbitIdParam === 'string'
+        ? orbitIdParam
+        : orbitIdParam[0]
+
     const list = await satellitesStore.loadSatellites(organizationId, orbitId)
     satellitesStore.setList(list)
   } catch (e: any) {

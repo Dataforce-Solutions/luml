@@ -48,15 +48,18 @@ function onAddClick() {
 onBeforeMount(async () => {
   try {
     loading.value = true
-    const organizationId = +route.params.organizationId
-    const orbitId = +route.params.id
+    const organizationId = route.params.organizationId
+    const orbitId = route.params.id
     if (!organizationId) {
       throw new Error('Current organization was not found')
     }
     if (!orbitId) {
       throw new Error('Current orbit was not found')
     }
-    const deployments = await deploymentsStore.getDeployments(organizationId, orbitId)
+    const deployments = await deploymentsStore.getDeployments(
+      String(route.params.organizationId),
+      String(route.params.id)
+    )
     deploymentsStore.setDeployments(deployments)
   } catch (e: any) {
     toast.add(simpleErrorToast(getErrorMessage(e, 'Failed to load deployments list')))

@@ -52,8 +52,8 @@ async function loadOrbitDetails() {
     loading.value = true
     orbitsStore.setCurrentOrbitDetails(null)
     const details = await orbitsStore.getOrbitDetails(
-      +route.params.organizationId,
-      +route.params.id,
+      String(route.params.organizationId),
+      String(route.params.id),
     )
     orbitsStore.setCurrentOrbitDetails(details)
   } catch (e) {
@@ -100,7 +100,7 @@ const buttonInfo = computed(() => {
 watch(
   () => organizationStore.currentOrganization?.id,
   async (id) => {
-    if (!id || +route.params.organizationId === id) return
+    if (!id || route.params.organizationId === id) return
 
     await router.push({ name: 'orbits', params: { organizationId: id } })
   },

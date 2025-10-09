@@ -59,15 +59,18 @@ function onApiKeyClose() {
 onBeforeMount(async () => {
   try {
     loading.value = true
-    const organizationId = +route.params.organizationId
-    const orbitId = +route.params.id
+    const organizationId = route.params.organizationId
+    const orbitId = route.params.id
     if (!organizationId) {
       throw new Error('Current organization was not found')
     }
     if (!orbitId) {
       throw new Error('Current orbit was not found')
     }
-    const list = await satellitesStore.loadSatellites(organizationId, orbitId)
+    const list = await satellitesStore.loadSatellites(
+      String(route.params.organizationId),
+      String(route.params.id)
+    )
     satellitesStore.setList(list)
   } catch (e: any) {
     toast.add(

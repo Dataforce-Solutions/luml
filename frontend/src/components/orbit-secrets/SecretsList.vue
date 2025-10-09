@@ -67,7 +67,7 @@ import { Eye, Bolt } from 'lucide-vue-next'
 
 const secretsStore = useSecretsStore()
 
-const visibleSecrets = reactive<Record<number, boolean>>({})
+const visibleSecrets = reactive<Record<string, boolean>>({})
 
 const editDialogVisible = ref(false)
 const secretToEdit = ref<OrbitSecret | null>(null)
@@ -76,7 +76,7 @@ const secretModalVisible = ref(false)
 const currentSecret = ref<OrbitSecret | null>(null)
 
 type Props = {
-  organizationId: number
+  organizationId: string
   editAvailable?: boolean
   copyAvailable?: boolean
 }
