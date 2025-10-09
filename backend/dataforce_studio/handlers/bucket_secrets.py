@@ -1,6 +1,7 @@
 from dataforce_studio.handlers.permissions import PermissionsHandler
 from dataforce_studio.infra.db import engine
 from dataforce_studio.infra.exceptions import (
+    BucketConnectionError,
     BucketSecretInUseError,
     DatabaseConstraintError,
     NotFoundError,
@@ -94,6 +95,9 @@ class BucketSecretHandler:
     ) -> BucketSecretUrls:
         object_name = "test_file"
         s3_service = S3Service(secret_data)
+
+        if not await s3_service.bucket_exists():
+            raise BucketConnectionError("No such bucket.")
 
         return BucketSecretUrls(
             presigned_url=await s3_service.get_upload_url(object_name),

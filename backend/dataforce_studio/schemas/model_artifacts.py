@@ -57,9 +57,8 @@ class CollectionUpdateIn(BaseModel):
 ModelArtifactNamesField = Annotated[
     str,
     Field(
-        pattern=r"^[^\s<>:\"/\\|?*{}\[\]`~#%;'^)+!(]+$",
-        description="mustn't contain whitespace or characters: "
-        "< > : \" / \\ | ? * { } [ ] ` ~ # % ; ' ^ ) + ! (",
+        pattern=r"^[^:\"*\`~#%;'^]+\.[^\s:\"*\`~#%;'^]+$",
+        description="mustn't contain characters: \" * ` ~ # % ; ' ^ ",
     ),
 ]
 
