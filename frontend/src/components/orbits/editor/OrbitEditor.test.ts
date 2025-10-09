@@ -207,7 +207,6 @@ describe('OrbitSettingsDialog', () => {
 
     vi.doMock('primevue', async (importOriginal) => {
       const actual = (await importOriginal()) as Record<string, unknown>
-
       return {
         ...actual,
 
