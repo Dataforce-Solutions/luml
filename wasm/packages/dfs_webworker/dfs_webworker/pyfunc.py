@@ -29,7 +29,7 @@ class FnnxPyFunc:
         return self._runtime
 
     async def compute(self, inputs: dict, dynamic_attributes: dict) -> Any:
-        runtime = self.runtime
+        runtime = self._ensure_runtime()
         try:
             return await runtime.compute_async(inputs or {}, dynamic_attributes or {})
         except NotImplementedError:
