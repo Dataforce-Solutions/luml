@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from dataforce_studio.handlers.permissions import PermissionsHandler
 from dataforce_studio.infra.db import engine
 from dataforce_studio.infra.exceptions import CollectionDeleteError, NotFoundError
@@ -22,9 +24,9 @@ class CollectionHandler:
 
     async def create_collection(
         self,
-        user_id: int,
-        organization_id: int,
-        orbit_id: int,
+        user_id: UUID,
+        organization_id: UUID,
+        orbit_id: UUID,
         collection: CollectionCreateIn,
     ) -> Collection:
         await self.__permissions_handler.check_orbit_action_access(
@@ -45,7 +47,7 @@ class CollectionHandler:
         return await self.__repository.create_collection(collection_create)
 
     async def get_orbit_collections(
-        self, user_id: int, organization_id: int, orbit_id: int
+        self, user_id: UUID, organization_id: UUID, orbit_id: UUID
     ) -> list[Collection]:
         await self.__permissions_handler.check_orbit_action_access(
             organization_id,
@@ -63,10 +65,10 @@ class CollectionHandler:
 
     async def update_collection(
         self,
-        user_id: int,
-        organization_id: int,
-        orbit_id: int,
-        collection_id: int,
+        user_id: UUID,
+        organization_id: UUID,
+        orbit_id: UUID,
+        collection_id: UUID,
         collection: CollectionUpdateIn,
     ) -> Collection:
         await self.__permissions_handler.check_orbit_action_access(
@@ -95,7 +97,11 @@ class CollectionHandler:
         return updated
 
     async def delete_collection(
-        self, user_id: int, organization_id: int, orbit_id: int, collection_id: int
+        self,
+        user_id: UUID,
+        organization_id: UUID,
+        orbit_id: UUID,
+        collection_id: UUID,
     ) -> None:
         await self.__permissions_handler.check_orbit_action_access(
             organization_id,

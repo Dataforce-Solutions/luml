@@ -1,5 +1,6 @@
 from datetime import datetime
 from unittest.mock import AsyncMock, MagicMock, Mock, patch
+from uuid import UUID
 
 import pytest
 
@@ -69,7 +70,7 @@ async def test_send_invite(
     invite_data: CreateOrganizationInvite,
     test_user_out: UserOut,
 ) -> None:
-    invite_id = 1
+    invite_id = UUID("0199c416-6117-7a3d-a91c-9b4037837882")
 
     invite = CreateOrganizationInviteIn(
         email=invite_data.email,
@@ -143,9 +144,9 @@ async def test_cancel_invite(
     mock_delete_organization_invite: AsyncMock,
     mock_get_organization_member_role: AsyncMock,
 ) -> None:
-    organization_id = 1
-    user_id = 764
-    invite_id = 1
+    user_id = UUID("0199c337-09f1-7d8f-b0c4-b68349bbe24b")
+    organization_id = UUID("0199c337-09f2-7af1-af5e-83fd7a5b51a0")
+    invite_id = UUID("0199c416-6117-7a3d-a91c-9b4037837882")
 
     mock_delete_organization_invite.return_value = None
     mock_get_organization_member_role.return_value = OrgRole.OWNER
@@ -188,7 +189,7 @@ async def test_accept_invite(
     mock_get_user_organizations_membership_count: AsyncMock,
     invite_accept_data: CreateOrganizationInvite,
 ) -> None:
-    user_id = 24
+    user_id = UUID("0199c337-09f1-7d8f-b0c4-b68349bbe24b")
     invite = OrganizationInviteOrm(**invite_accept_data.model_dump())
 
     mock_get_invite.return_value = invite
@@ -219,8 +220,7 @@ async def test_accept_invite(
 async def test_reject_invite(
     mock_delete_organization_invite: AsyncMock,
 ) -> None:
-    invite_id = 1
-
+    invite_id = UUID("0199c416-6117-7a3d-a91c-9b4037837882")
     mock_delete_organization_invite.return_value = None
 
     await handler.reject_invite(invite_id)
@@ -241,8 +241,8 @@ async def test_get_organization_invites(
     mock_get_organization_member_role: AsyncMock,
     invite_get_data: OrganizationInvite,
 ) -> None:
-    user_id = 43
-    organization_id = 1
+    user_id = UUID("0199c337-09f1-7d8f-b0c4-b68349bbe24b")
+    organization_id = UUID("0199c337-09f2-7af1-af5e-83fd7a5b51a0")
     expected = [invite_get_data]
 
     mock_get_organization_invites.return_value = expected

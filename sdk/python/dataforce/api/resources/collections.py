@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 from collections.abc import Coroutine
 from typing import TYPE_CHECKING, Any
 
-from .._types import Collection, CollectionType
+from .._types import Collection, CollectionType, is_uuid
 from .._utils import find_by_value
 from ._validators import validate_collection
 
@@ -16,7 +16,7 @@ class CollectionResourceBase(ABC):
 
     @abstractmethod
     def get(
-        self, collection_value: str | int | None
+        self, collection_value: str | None
     ) -> Collection | None | Coroutine[Any, Any, Collection | None]:
         raise NotImplementedError()
 
@@ -28,7 +28,7 @@ class CollectionResourceBase(ABC):
 
     @abstractmethod
     def _get_by_id(
-        self, secret_id: int
+        self, secret_id: str
     ) -> Collection | None | Coroutine[Any, Any, Collection | None]:
         raise NotImplementedError()
 
@@ -53,12 +53,12 @@ class CollectionResourceBase(ABC):
         description: str | None = None,
         tags: builtins.list[str] | None = None,
         *,
-        collection_id: int,
+        collection_id: str,
     ) -> Collection | Coroutine[Any, Any, Collection]:
         raise NotImplementedError()
 
     @abstractmethod
-    def delete(self, collection_id: int) -> None | Coroutine[Any, Any, None]:
+    def delete(self, collection_id: str) -> None | Coroutine[Any, Any, None]:
         raise NotImplementedError()
 
 
@@ -67,7 +67,7 @@ class CollectionResource(CollectionResourceBase):
         self._client = client
 
     @validate_collection
-    def get(self, collection_value: str | int | None = None) -> Collection | None:
+    def get(self, collection_value: str | None = None) -> Collection | None:
         """
         Get collection by id or name.
 
@@ -89,31 +89,35 @@ class CollectionResource(CollectionResourceBase):
 
         Example:
             >>> dfs = DataForceClient(api_key="dfs_your_key")
-            >>> collection_by_name = dfs.collections.get("My Collection")
-            >>> collection_by_id = dfs.collections.get(456)
+            ... collection_by_name = dfs.collections.get("My Collection")
+            ... collection_by_id = dfs.collections.get(
+            ...     "0199c455-21ee-74c6-b747-19a82f1a1e75"
+            ... )
 
         Example response:
             >>> Collection(
-            ...     id=456,
+            ...     id="0199c455-21ee-74c6-b747-19a82f1a1e75",
             ...     name="My Collection",
             ...     description="Dataset for ML models",
             ...     collection_type='model',
-            ...     orbit_id=123,
+            ...     orbit_id="0199c455-21ed-7aba-9fe5-5231611220de",
             ...     tags=["ml", "training"],
             ...     created_at='2025-01-15T10:30:00.123456Z',
             ...     updated_at=None
             ... )
         """
-        if isinstance(collection_value, str):
-            return self._get_by_name(collection_value)
-        if isinstance(collection_value, int):
+        if collection_value is None:
+            if self._client.collection:
+                return self._get_by_id(self._client.collection)
+            return None
+        if is_uuid(collection_value):
             return self._get_by_id(collection_value)
-        return None
+        return self._get_by_name(collection_value)
 
     def _get_by_name(self, name: str) -> Collection | None:
         return find_by_value(self.list(), name)
 
-    def _get_by_id(self, collection_id: int) -> Collection | None:
+    def _get_by_id(self, collection_id: str) -> Collection | None:
         return find_by_value(
             self.list(), collection_id, lambda c: c.id == collection_id
         )
@@ -132,11 +136,11 @@ class CollectionResource(CollectionResourceBase):
         Example response:
             >>> [
             ...     Collection(
-            ...         id=456,
+            ...         id="0199c455-21ee-74c6-b747-19a82f1a1e75",
             ...         name="My Collection",
             ...         description="Dataset for ML models",
             ...         collection_type='model',
-            ...         orbit_id=123,
+            ...         orbit_id="0199c455-21ed-7aba-9fe5-5231611220de",
             ...         tags=["ml", "training"],
             ...         created_at='2025-01-15T10:30:00.123456Z',
             ...         updated_at=None
@@ -181,11 +185,11 @@ class CollectionResource(CollectionResourceBase):
 
         Response object:
             >>> Collection(
-            ...     id=456,
+            ...     id="0199c455-21ee-74c6-b747-19a82f1a1e75",
             ...     name="Training Dataset",
             ...     description="Dataset for model training",
             ...     collection_type='model',
-            ...     orbit_id=123,
+            ...     orbit_id="0199c455-21ed-7aba-9fe5-5231611220de",
             ...     tags=["ml", "training"],
             ...     created_at='2025-01-15T10:30:00.123456Z',
             ...     updated_at=None
@@ -209,7 +213,7 @@ class CollectionResource(CollectionResourceBase):
         description: str | None = None,
         tags: builtins.list[str] | None = None,
         *,
-        collection_id: int | None = None,
+        collection_id: str | None = None,
     ) -> Collection:
         """
         Update collection by ID or use default collection if collection_id not provided.
@@ -230,15 +234,17 @@ class CollectionResource(CollectionResourceBase):
 
         Example:
             >>> dfs = DataForceClient(
-            ...     api_key="dfs_your_key", organization_id=1, orbit_id=1
+            ...     api_key="dfs_your_key",
+            ...     organization="0199c455-21ec-7c74-8efe-41470e29bae5",
+            ...     orbit="0199c455-21ed-7aba-9fe5-5231611220de"
             ... )
             >>> collection = dfs.collections.update(
-            ...     collection_id=456,
+            ...     collection_id="0199c455-21ee-74c6-b747-19a82f1a1e75",
             ...     name="Updated Dataset",
             ...     tags=["ml", "updated"]
             ... )
 
-            >>> dfs.collection = 456
+            >>> dfs.collection = "0199c455-21ee-74c6-b747-19a82f1a1e75"
             >>> collection = dfs.collections.update(
             ...     name="Updated Dataset",
             ...     description="Updated description"
@@ -246,8 +252,8 @@ class CollectionResource(CollectionResourceBase):
 
         Response object:
             >>> Collection(
-            ...     id=456,
-            ...     orbit_id=1,
+            ...     id="0199c455-21ee-74c6-b747-19a82f1a1e75",
+            ...     orbit_id="0199c455-21ed-7aba-9fe5-5231611220de",
             ...     description="Updated description",
             ...     name="Updated Dataset",
             ...     collection_type='model',
@@ -270,7 +276,7 @@ class CollectionResource(CollectionResourceBase):
         return Collection.model_validate(response)
 
     @validate_collection
-    def delete(self, collection_id: int | None = None) -> None:
+    def delete(self, collection_id: str | None = None) -> None:
         """
         Delete collection by ID or use default collection if collection_id not provided.
 
@@ -287,14 +293,17 @@ class CollectionResource(CollectionResourceBase):
 
         Example:
             >>> dfs = DataForceClient(
-            ...     api_key="dfs_your_key", organization_id=1, orbit_id=1
+            ...     api_key="dfs_your_key",
+            ...     organization="0199c455-21ec-7c74-8efe-41470e29bae5",
+            ...     orbit="0199c455-21ed-7aba-9fe5-5231611220de"
             ... )
-            >>> # Delete specific collection by ID
-            >>> dfs.collections.delete(456)
+            ... # Delete specific collection by ID
+            ... dfs.collections.delete("0199c455-21ee-74c6-b747-19a82f1a1e75")
 
-            >>> # Delete default collection (collection_id will be auto-filled)
-            >>> dfs.collection = 456  # Set default collection
-            >>> dfs.collections.delete()
+            ...  # Set default collection
+            ... dfs.collection = "0199c455-21ee-74c6-b747-19a82f1a1e75"
+            ... # Delete default collection (collection_id will be autofilled)
+            ... dfs.collections.delete()
 
         Warning:
             This operation is irreversible. All models, datasets, and data
@@ -311,7 +320,7 @@ class AsyncCollectionResource(CollectionResourceBase):
         self._client = client
 
     @validate_collection
-    async def get(self, collection_value: str | int | None = None) -> Collection | None:
+    async def get(self, collection_value: str | None = None) -> Collection | None:
         """
         Get collection by id or name.
 
@@ -334,31 +343,37 @@ class AsyncCollectionResource(CollectionResourceBase):
         Example:
             >>> dfs = AsyncDataForceClient(api_key="dfs_your_key")
             >>> async def main():
-            ...     collection_by_name = await dfs.collections.get("My Collection")
-            ...     collection_by_id = await dfs.collections.get(456)
+            ...     collection_by_name = await dfs.collections.get(
+            ...         "My Collection"
+            ...     )
+            ...     collection_by_id = await dfs.collections.get(
+            ...         "0199c455-21ee-74c6-b747-19a82f1a1e75"
+            ...     )
 
         Example response:
             >>> Collection(
-            ...     id=456,
+            ...     id="0199c455-21ee-74c6-b747-19a82f1a1e75",
             ...     name="My Collection",
             ...     description="Dataset for ML models",
             ...     collection_type='model',
-            ...     orbit_id=123,
+            ...     orbit_id="0199c455-21ed-7aba-9fe5-5231611220de",
             ...     tags=["ml", "training"],
             ...     created_at='2025-01-15T10:30:00.123456Z',
             ...     updated_at=None
             ... )
         """
-        if isinstance(collection_value, str):
-            return await self._get_by_name(collection_value)
-        if isinstance(collection_value, int):
+        if collection_value is None:
+            if self._client.collection:
+                return await self._get_by_id(self._client.collection)
+            return None
+        if is_uuid(collection_value):
             return await self._get_by_id(collection_value)
-        return None
+        return await self._get_by_name(collection_value)
 
     async def _get_by_name(self, name: str) -> Collection | None:
         return find_by_value(await self.list(), name)
 
-    async def _get_by_id(self, collection_id: int) -> Collection | None:
+    async def _get_by_id(self, collection_id: str) -> Collection | None:
         return find_by_value(
             await self.list(), collection_id, lambda c: c.id == collection_id
         )
@@ -378,11 +393,11 @@ class AsyncCollectionResource(CollectionResourceBase):
         Example response:
             >>> [
             ...     Collection(
-            ...         id=456,
+            ...         id="0199c455-21ee-74c6-b747-19a82f1a1e75",
             ...         name="My Collection",
             ...         description="Dataset for ML models",
             ...         collection_type='model',
-            ...         orbit_id=123,
+            ...         orbit_id="0199c455-21ed-7aba-9fe5-5231611220de",
             ...         tags=["ml", "training"],
             ...         created_at='2025-01-15T10:30:00.123456Z',
             ...         updated_at=None
@@ -428,11 +443,11 @@ class AsyncCollectionResource(CollectionResourceBase):
 
         Response object:
             >>> Collection(
-            ...     id=456,
+            ...     id="0199c455-21ee-74c6-b747-19a82f1a1e75",
             ...     name="Training Dataset",
             ...     description="Dataset for model training",
             ...     collection_type='model',
-            ...     orbit_id=123,
+            ...     orbit_id="0199c455-21ed-7aba-9fe5-5231611220de",
             ...     tags=["ml", "training"],
             ...     created_at='2025-01-15T10:30:00.123456Z',
             ...     updated_at=None
@@ -456,7 +471,7 @@ class AsyncCollectionResource(CollectionResourceBase):
         description: str | None = None,
         tags: builtins.list[str] | None = None,
         *,
-        collection_id: int | None = None,
+        collection_id: str | None = None,
     ) -> Collection:
         """
         Update collection by ID or use default collection if collection_id not provided.
@@ -477,16 +492,20 @@ class AsyncCollectionResource(CollectionResourceBase):
 
         Example:
             >>> dfs = AsyncDataForceClient(
-            ...     api_key="dfs_your_key", organization_id=1, orbit_id=1
+            ...     api_key="dfs_your_key",
+            ... )
+            ... dfs.setup_config(
+            ...     organization="0199c455-21ec-7c74-8efe-41470e29bae5",
+            ...     orbit="0199c455-21ed-7aba-9fe5-5231611220de",
             ... )
             >>> async def main():
             ...     collection = await dfs.collections.update(
-            ...         collection_id=456,
+            ...         collection_id="0199c455-21ee-74c6-b747-19a82f1a1e75",
             ...         name="Updated Dataset",
             ...         tags=["ml", "updated"]
             ...     )
             ...
-            ...     dfs.collection = 456
+            ...     dfs.collection = "0199c455-21ee-74c6-b747-19a82f1a1e75"
             ...     collection = await dfs.collections.update(
             ...         name="Updated Dataset",
             ...         description="Updated description"
@@ -494,8 +513,8 @@ class AsyncCollectionResource(CollectionResourceBase):
 
         Response object:
             >>> Collection(
-            ...     id=456,
-            ...     orbit_id=1,
+            ...     id="0199c455-21ee-74c6-b747-19a82f1a1e75",
+            ...     orbit_id="0199c455-21ed-7aba-9fe5-5231611220de",
             ...     description="Updated description",
             ...     name="Updated Dataset",
             ...     collection_type='model',
@@ -518,7 +537,7 @@ class AsyncCollectionResource(CollectionResourceBase):
         return Collection.model_validate(response)
 
     @validate_collection
-    async def delete(self, collection_id: int | None = None) -> None:
+    async def delete(self, collection_id: str | None = None) -> None:
         """
         Delete collection by ID or use default collection if collection_id not provided.
 
@@ -535,14 +554,21 @@ class AsyncCollectionResource(CollectionResourceBase):
 
         Example:
             >>> dfs = AsyncDataForceClient(
-            ...     api_key="dfs_your_key", organization_id=1, orbit_id=1
+            ...     api_key="dfs_your_key",
+            ... )
+            ... dfs.setup_config(
+            ...     organization="0199c455-21ec-7c74-8efe-41470e29bae5",
+            ...     orbit="0199c455-21ed-7aba-9fe5-5231611220de",
             ... )
             >>> async def main():
             ...     # Delete specific collection by ID
-            ...     await dfs.collections.delete(456)
+            ...     await dfs.collections.delete(
+            ....        "0199c455-21ee-74c6-b747-19a82f1a1e75"
+            ...     )
             ...
+            ...     # Set default collection
+            ...     dfs.collection = "0199c455-21ee-74c6-b747-19a82f1a1e56"
             ...     # Delete default collection
-            ...     dfs.collection = 456  # Set default collection
             ...     await dfs.collections.delete()
 
         Warning:

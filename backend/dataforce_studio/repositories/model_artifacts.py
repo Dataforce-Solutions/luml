@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 
@@ -23,7 +25,7 @@ class ModelArtifactRepository(RepositoryBase, CrudMixin):
             return db_model.to_model_artifact()
 
     async def update_status(
-        self, model_artifact_id: int, status: ModelArtifactStatus
+        self, model_artifact_id: UUID, status: ModelArtifactStatus
     ) -> ModelArtifact | None:
         async with self._get_session() as session:
             db_model = await self.update_model_where(
@@ -34,7 +36,7 @@ class ModelArtifactRepository(RepositoryBase, CrudMixin):
             )
             return db_model.to_model_artifact() if db_model else None
 
-    async def delete_model_artifact(self, model_artifact_id: int) -> None:
+    async def delete_model_artifact(self, model_artifact_id: UUID) -> None:
         try:
             async with self._get_session() as session:
                 await self.delete_model(session, ModelArtifactOrm, model_artifact_id)
@@ -47,7 +49,7 @@ class ModelArtifactRepository(RepositoryBase, CrudMixin):
             ) from error
 
     async def get_collection_model_artifact(
-        self, collection_id: int
+        self, collection_id: UUID
     ) -> list[ModelArtifact]:
         async with self._get_session() as session:
             result = await session.execute(
@@ -58,7 +60,7 @@ class ModelArtifactRepository(RepositoryBase, CrudMixin):
             db_versions = result.scalars().all()
             return [v.to_model_artifact() for v in db_versions]
 
-    async def get_model_artifact(self, model_artifact_id: int) -> ModelArtifact | None:
+    async def get_model_artifact(self, model_artifact_id: UUID) -> ModelArtifact | None:
         async with self._get_session() as session:
             db_model = await self.get_model(
                 session, ModelArtifactOrm, model_artifact_id
@@ -67,8 +69,8 @@ class ModelArtifactRepository(RepositoryBase, CrudMixin):
 
     async def update_model_artifact(
         self,
-        model_artifact_id: int,
-        collection_id: int,
+        model_artifact_id: UUID,
+        collection_id: UUID,
         model_artifact: ModelArtifactUpdate,
     ) -> ModelArtifact | None:
         model_artifact.id = model_artifact_id
@@ -82,7 +84,7 @@ class ModelArtifactRepository(RepositoryBase, CrudMixin):
             )
             return db_model.to_model_artifact() if db_model else None
 
-    async def get_collection_model_artifacts_count(self, collection_id: int) -> int:
+    async def get_collection_model_artifacts_count(self, collection_id: UUID) -> int:
         async with self._get_session() as session:
             result = await session.execute(
                 select(func.count())

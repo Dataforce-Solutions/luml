@@ -1,4 +1,5 @@
 import pytest
+import uuid6
 from sqlalchemy.ext.asyncio import create_async_engine
 
 from dataforce_studio.repositories.orbit_secrets import OrbitSecretRepository
@@ -49,7 +50,7 @@ async def test_get_orbit_secret_not_found(
     engine = create_async_engine(create_database_and_apply_migrations)
     repo = OrbitSecretRepository(engine)
 
-    fetched_secret = await repo.get_orbit_secret(99999999)
+    fetched_secret = await repo.get_orbit_secret(uuid6.uuid7())
 
     assert fetched_secret is None
 
@@ -114,6 +115,6 @@ async def test_update_orbit_secret_not_found(
     repo = OrbitSecretRepository(engine)
 
     update_data = OrbitSecretUpdate(name="test", value="secret")
-    result = await repo.update_orbit_secret(99999999, update_data)
+    result = await repo.update_orbit_secret(uuid6.uuid7(), update_data)
 
     assert result is None

@@ -1,4 +1,5 @@
-from dataforce_studio.models.base import Base
+from dataforce_studio.models.auth import AuthSatellite, AuthUser
+from dataforce_studio.models.base import Base, TimestampMixin
 from dataforce_studio.models.bucket_secrets import BucketSecretOrm
 from dataforce_studio.models.collection import CollectionOrm
 from dataforce_studio.models.deployment import DeploymentOrm
@@ -17,6 +18,7 @@ from dataforce_studio.models.user import UserOrm
 
 __all__ = [
     "Base",
+    "TimestampMixin",
     "UserOrm",
     "TokenBlackListOrm",
     "OrganizationOrm",
@@ -32,4 +34,6 @@ __all__ = [
     "BucketSecretOrm",
     "ModelArtifactOrm",
     "CollectionOrm",
+    "AuthSatellite",
+    "AuthUser",
 ]

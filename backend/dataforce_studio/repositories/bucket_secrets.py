@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 
@@ -21,13 +23,13 @@ class BucketSecretRepository(RepositoryBase, CrudMixin):
             await session.refresh(orm_secret)
             return orm_secret.to_bucket_secret()
 
-    async def get_bucket_secret(self, secret_id: int) -> BucketSecret | None:
+    async def get_bucket_secret(self, secret_id: UUID) -> BucketSecret | None:
         async with self._get_session() as session:
             db_secret = await self.get_model(session, BucketSecretOrm, secret_id)
             return db_secret.to_bucket_secret() if db_secret else None
 
     async def get_organization_bucket_secrets(
-        self, organization_id: int
+        self, organization_id: UUID
     ) -> list[BucketSecret]:
         async with self._get_session() as session:
             db_secrets = await self.get_models_where(
@@ -60,7 +62,7 @@ class BucketSecretRepository(RepositoryBase, CrudMixin):
             await session.refresh(db_secret)
             return db_secret.to_bucket_secret()
 
-    async def delete_bucket_secret(self, secret_id: int) -> None:
+    async def delete_bucket_secret(self, secret_id: UUID) -> None:
         async with self._get_session() as session:
             try:
                 return await self.delete_model(session, BucketSecretOrm, secret_id)

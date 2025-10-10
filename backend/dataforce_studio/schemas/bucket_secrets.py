@@ -1,4 +1,5 @@
 from datetime import datetime
+from uuid import UUID
 
 from pydantic import BaseModel
 
@@ -20,12 +21,12 @@ class BucketSecretCreateIn(_BucketSecretBase): ...
 
 
 class BucketSecretCreate(_BucketSecretBase):
-    organization_id: int
+    organization_id: UUID
 
 
 class BucketSecret(_BucketSecretBase, BaseOrmConfig):
-    id: int
-    organization_id: int
+    id: UUID
+    organization_id: UUID
     created_at: datetime
     updated_at: datetime | None = None
 
@@ -36,13 +37,13 @@ class BucketSecret(_BucketSecretBase, BaseOrmConfig):
 
 
 class BucketSecretOut(BaseModel, BaseOrmConfig):
-    id: int
+    id: UUID
     endpoint: str
     bucket_name: str
     secure: bool | None = None
     region: str | None = None
     cert_check: bool | None = None
-    organization_id: int
+    organization_id: UUID
     created_at: datetime
     updated_at: datetime | None = None
 
@@ -59,7 +60,7 @@ class BucketSecretUpdateIn(BaseModel):
 
 
 class BucketSecretUpdate(BucketSecretUpdateIn):
-    id: int
+    id: UUID
 
 
 class BucketSecretUrls(BaseModel, BaseOrmConfig):

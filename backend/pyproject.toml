@@ -15,6 +15,7 @@ dependencies = [
     "pyjwt==2.9.0",
     "sendgrid==6.11.0",
     "sqlalchemy[asyncio]==2.0.36",
+    "uuid6==2025.0.1",
     "uvicorn==0.32.0",
 ]
 
@@ -76,6 +77,6 @@ known-first-party = ["dataforce_studio"]
 split-on-trailing-comma = true
 
 [tool.mypy]
-files = ["dataforce_studio", "utils"]
+files = ["dataforce_studio", "utils", "tests"]
 python_version = "3.12"
 strict = true

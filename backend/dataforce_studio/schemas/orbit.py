@@ -1,6 +1,7 @@
 from datetime import datetime
 from enum import StrEnum
 from typing import Any
+from uuid import UUID
 
 from pydantic import BaseModel
 
@@ -15,10 +16,10 @@ class OrbitRole(StrEnum):
 
 
 class Orbit(BaseModel, BaseOrmConfig):
-    id: int
+    id: UUID
     name: str
-    organization_id: int
-    bucket_secret_id: int
+    organization_id: UUID
+    bucket_secret_id: UUID
     total_members: int | None = None
     total_collections: int | None = None
     role: OrbitRole | None = None
@@ -32,41 +33,41 @@ class OrbitDetails(Orbit):
 
 
 class OrbitUpdate(BaseModel, BaseOrmConfig):
-    id: int | None = None
+    id: UUID | None = None
     name: str | None = None
-    bucket_secret_id: int | None = None
+    bucket_secret_id: UUID | None = None
 
 
 class OrbitCreateIn(BaseModel, BaseOrmConfig):
     name: str
-    bucket_secret_id: int
+    bucket_secret_id: UUID
     members: list["OrbitMemberCreateSimple"] | None = None
     notify_by_email: bool = False
 
 
 class OrbitCreate(BaseModel, BaseOrmConfig):
     name: str
-    bucket_secret_id: int
-    organization_id: int | None = None
+    bucket_secret_id: UUID
+    organization_id: UUID | None = None
 
 
 class OrbitMemberCreateSimple(BaseModel):
-    user_id: int
+    user_id: UUID
     role: OrbitRole
 
 
 class OrbitMemberCreate(OrbitMemberCreateSimple):
-    orbit_id: int
+    orbit_id: UUID
 
 
 class UpdateOrbitMember(BaseModel):
-    id: int
+    id: UUID
     role: OrbitRole
 
 
 class OrbitMember(BaseModel, BaseOrmConfig):
-    id: int
-    orbit_id: int
+    id: UUID
+    orbit_id: UUID
     role: OrbitRole
     user: UserOut
     created_at: datetime

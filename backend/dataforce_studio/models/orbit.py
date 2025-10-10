@@ -1,13 +1,8 @@
+import uuid
 from collections.abc import Sequence
 
-from sqlalchemy import (
-    ForeignKey,
-    Integer,
-    String,
-    UniqueConstraint,
-    func,
-    select,
-)
+import uuid6
+from sqlalchemy import UUID, ForeignKey, String, UniqueConstraint, func, select
 from sqlalchemy.orm import Mapped, column_property, mapped_column, relationship
 
 from dataforce_studio.models.base import Base, TimestampMixin
@@ -24,21 +19,19 @@ class OrbitMembersOrm(TimestampMixin, Base):
     __tablename__ = "orbit_members"
     __table_args__ = (UniqueConstraint("orbit_id", "user_id", name="orbit_member"),)
 
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-
-    user_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid6.uuid7
     )
-    orbit_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey("orbits.id", ondelete="CASCADE"), nullable=False
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False
     )
-
+    orbit_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("orbits.id", ondelete="CASCADE"), nullable=False
+    )
     role: Mapped[str] = mapped_column(String, nullable=False)
-
     user: Mapped["UserOrm"] = relationship(
         "UserOrm", back_populates="orbit_memberships", lazy="selectin"
     )
-
     orbit: Mapped["OrbitOrm"] = relationship(
         "OrbitOrm", back_populates="members", lazy="selectin"
     )
@@ -59,13 +52,17 @@ class OrbitMembersOrm(TimestampMixin, Base):
 class OrbitOrm(TimestampMixin, Base):
     __tablename__ = "orbits"
 
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    name: Mapped[str] = mapped_column(String, nullable=False)
-    organization_id: Mapped[int] = mapped_column(
-        ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid6.uuid7
     )
-    bucket_secret_id: Mapped[int] = mapped_column(
-        Integer,
+    name: Mapped[str] = mapped_column(String, nullable=False)
+    organization_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("organizations.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    bucket_secret_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
         ForeignKey("bucket_secrets.id", ondelete="CASCADE"),
         nullable=False,
     )

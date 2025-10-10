@@ -1,7 +1,7 @@
 import os
 from abc import ABC, abstractmethod
 from functools import cached_property
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 from httpx import URL
 
@@ -13,6 +13,7 @@ from ._exceptions import (
     OrbitResourceNotFoundError,
     OrganizationResourceNotFoundError,
 )
+from ._types import is_uuid
 
 if TYPE_CHECKING:
     from .resources.bucket_secrets import (
@@ -49,20 +50,20 @@ class DataForceClientBase(ABC):
             )
         self._api_key = api_key
 
-        self._organization: int | None = None
-        self._orbit: int | None = None
-        self._collection: int | None = None
+        self._organization: str | None = None
+        self._orbit: str | None = None
+        self._collection: str | None = None
 
     @staticmethod
     def _validate_default_resource(
-        entity_value: int | str | None,
+        entity_value: str | None,
         entities: list,
         exception_class: type[Exception],
-    ) -> int | None:
+    ) -> str | None:
         if not entity_value:
             return entities[0].id if len(entities) == 1 else None
 
-        if isinstance(entity_value, int):
+        if is_uuid(entity_value):
             entity = next((e for e in entities if e.id == entity_value), None)
         elif isinstance(entity_value, str):
             entity = next((e for e in entities if e.name == entity_value), None)
@@ -71,43 +72,42 @@ class DataForceClientBase(ABC):
 
         if not entity:
             raise exception_class(entity_value, entities)
-
         return entity.id
 
     @abstractmethod
-    def _validate_organization(self, org_value: int | str | None) -> Any:  # noqa: ANN401
+    def _validate_organization(self, org_value: str | None) -> str | None:
         raise NotImplementedError()
 
     @abstractmethod
-    def _validate_orbit(self, orbit_value: int | str | None) -> Any:  # noqa: ANN401
+    def _validate_orbit(self, orbit_value: str | None) -> str | None:
         raise NotImplementedError()
 
     @abstractmethod
-    def _validate_collection(self, collection_value: int | str | None) -> Any:  # noqa: ANN401
+    def _validate_collection(self, collection_value: str | None) -> str | None:
         raise NotImplementedError()
 
     @property
-    def organization(self) -> int | None:
+    def organization(self) -> str | None:
         return self._organization
 
     @organization.setter
-    def organization(self, organization: int | None) -> None:
+    def organization(self, organization: str | None) -> None:
         self._organization = organization
 
     @property
-    def orbit(self) -> int | None:
+    def orbit(self) -> str | None:
         return self._orbit
 
     @orbit.setter
-    def orbit(self, orbit: int | None) -> None:
+    def orbit(self, orbit: str | None) -> None:
         self._orbit = orbit
 
     @property
-    def collection(self) -> int | None:
+    def collection(self) -> str | None:
         return self._collection
 
     @collection.setter
-    def collection(self, collection: int | None) -> None:
+    def collection(self, collection: str | None) -> None:
         self._collection = collection
 
     @property
@@ -175,8 +175,8 @@ class AsyncDataForceClient(DataForceClientBase, AsyncBaseClient):
         Example:
             >>> dfs = DataForceClient(
             ...     api_key="dfs_your_api_key",
-            ...     organization=123,
-            ...     orbit=456
+            ...     organization="0199c455-21ec-7c74-8efe-41470e29bae5",
+            ...     orbit="0199c455-21ed-7aba-9fe5-5231611220de"
             ... )
 
             >>> dfs = DataForceClient(
@@ -206,9 +206,10 @@ class AsyncDataForceClient(DataForceClientBase, AsyncBaseClient):
 
     async def setup_config(
         self,
-        organization: int | str | None = None,
-        orbit: int | str | None = None,
-        collection: int | str | None = None,
+        *,
+        organization: str | None = None,
+        orbit: str | None = None,
+        collection: str | None = None,
     ) -> None:
         """
         Method for setting default values for AsyncDataForceClient
@@ -224,20 +225,24 @@ class AsyncDataForceClient(DataForceClientBase, AsyncBaseClient):
         Example:
             >>> dfs = AsyncDataForceClient(api_key="dfs_api_key")
             >>> async def main():
-            ...     await dfs.setup_config(1, 1215, 15)
+            ...     await dfs.setup_config(
+            ...         "0199c455-21ec-7c74-8efe-41470e29bae5",
+            ...         "0199c455-21ed-7aba-9fe5-5231611220de",
+            ...         "0199c455-21ee-74c6-b747-19a82f1a1e75"
+            ...     )
 
         """
         self._organization = await self._validate_organization(organization)
         self._orbit = await self._validate_orbit(orbit)
         self._collection = await self._validate_collection(collection)
 
-    async def _validate_organization(self, org_value: int | str | None) -> int | None:
+    async def _validate_organization(self, org_value: str | None) -> str | None:  # type: ignore[override]
         all_organizations = await self.organizations.list()
         return self._validate_default_resource(
             org_value, all_organizations, OrganizationResourceNotFoundError
         )
 
-    async def _validate_orbit(self, orbit_value: int | str | None) -> int | None:
+    async def _validate_orbit(self, orbit_value: str | None) -> str | None:  # type: ignore[override]
         if not orbit_value and not self._organization:
             return None
 
@@ -253,9 +258,7 @@ class AsyncDataForceClient(DataForceClientBase, AsyncBaseClient):
             orbit_value, all_orbits, OrbitResourceNotFoundError
         )
 
-    async def _validate_collection(
-        self, collection_value: int | str | None
-    ) -> int | None:
+    async def _validate_collection(self, collection_value: str | None) -> str | None:  # type: ignore[override]
         if not collection_value and (not self._organization or not self._orbit):
             return None
 
@@ -312,9 +315,9 @@ class DataForceClient(DataForceClientBase, SyncBaseClient):
         self,
         base_url: str | None = None,
         api_key: str | None = None,
-        organization: int | str | None = None,
-        orbit: int | str | None = None,
-        collection: int | str | None = None,
+        organization: str | None = None,
+        orbit: str | None = None,
+        collection: str | None = None,
     ) -> None:
         """Client for interacting with the DataForce platform API.
 
@@ -351,8 +354,8 @@ class DataForceClient(DataForceClientBase, SyncBaseClient):
         Example:
             >>> dfs = DataForceClient(
             ...     api_key="dfs_your_api_key",
-            ...     organization=123,
-            ...     orbit=456
+            ...     organization="0199c455-21ec-7c74-8efe-41470e29bae5",
+            ...     orbit="0199c455-21ed-7aba-9fe5-5231611220de"
             ... )
 
             >>> dfs = DataForceClient(
@@ -377,7 +380,7 @@ class DataForceClient(DataForceClientBase, SyncBaseClient):
             - Default collection must belong to the default orbit
 
             You can change default resource after client inizialization
-                ``dfs.organization=4``.
+                ``dfs.organization="0199c455-21ec-7c74-8efe-41470e29bae5"``.
         """
 
         DataForceClientBase.__init__(self, base_url=base_url, api_key=api_key)
@@ -392,13 +395,13 @@ class DataForceClient(DataForceClientBase, SyncBaseClient):
         validated_collection = self._validate_collection(collection)
         self._collection = validated_collection
 
-    def _validate_organization(self, org_value: int | str | None) -> int | None:
+    def _validate_organization(self, org_value: str | None) -> str | None:
         all_organizations = self.organizations.list()
         return self._validate_default_resource(
             org_value, all_organizations, OrganizationResourceNotFoundError
         )
 
-    def _validate_orbit(self, orbit_value: int | str | None) -> int | None:
+    def _validate_orbit(self, orbit_value: str | None) -> str | None:
         if not orbit_value and not self._organization:
             return None
 
@@ -414,7 +417,7 @@ class DataForceClient(DataForceClientBase, SyncBaseClient):
             orbit_value, all_orbits, OrbitResourceNotFoundError
         )
 
-    def _validate_collection(self, collection_value: int | str | None) -> int | None:
+    def _validate_collection(self, collection_value: str | None) -> str | None:
         if not collection_value and (not self._organization or not self._orbit):
             return None
         all_collections = self.collections.list()

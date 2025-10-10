@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from fastapi import APIRouter, Depends, Request, status
 
 from dataforce_studio.handlers.organizations import OrganizationHandler
@@ -21,7 +23,7 @@ organization_handler = OrganizationHandler()
     "", responses=endpoint_responses, response_model=list[OrganizationInvite]
 )
 async def get_organization_invites(
-    request: Request, organization_id: int
+    request: Request, organization_id: UUID
 ) -> list[OrganizationInvite]:
     return await organization_handler.get_organization_invites(
         request.user.id, organization_id
@@ -32,7 +34,7 @@ async def get_organization_invites(
     "", responses=endpoint_responses, response_model=OrganizationInvite
 )
 async def create_invite_in_organization(
-    request: Request, organization_id: int, invite: CreateOrganizationInviteIn
+    request: Request, organization_id: UUID, invite: CreateOrganizationInviteIn
 ) -> OrganizationInvite:
     return await organization_handler.send_invite(request.user.id, invite)
 
@@ -41,7 +43,7 @@ async def create_invite_in_organization(
     "/{invite_id}", responses=endpoint_responses, status_code=status.HTTP_204_NO_CONTENT
 )
 async def cancel_invite_to_organization(
-    request: Request, organization_id: int, invite_id: int
+    request: Request, organization_id: UUID, invite_id: UUID
 ) -> None:
     return await organization_handler.cancel_invite(
         request.user.id, organization_id, invite_id

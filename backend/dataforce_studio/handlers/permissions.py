@@ -1,4 +1,5 @@
 from collections.abc import Sequence
+from uuid import UUID
 
 from dataforce_studio.infra.db import engine
 from dataforce_studio.infra.exceptions import (
@@ -37,8 +38,8 @@ class PermissionsHandler:
 
     async def check_organization_permission(
         self,
-        organization_id: int,
-        user_id: int,
+        organization_id: UUID,
+        user_id: UUID,
         resource: Resource,
         action: Action,
     ) -> str:
@@ -56,8 +57,8 @@ class PermissionsHandler:
 
     async def check_orbit_permission(
         self,
-        orbit_id: int,
-        user_id: int,
+        orbit_id: UUID,
+        user_id: UUID,
         resource: Resource,
         action: Action,
     ) -> str:
@@ -75,9 +76,9 @@ class PermissionsHandler:
 
     async def check_orbit_action_access(
         self,
-        organization_id: int,
-        orbit_id: int,
-        user_id: int,
+        organization_id: UUID,
+        orbit_id: UUID,
+        user_id: UUID,
         resource: Resource,
         action: Action,
     ) -> tuple[None, str] | tuple[str, None]:
@@ -99,8 +100,8 @@ class PermissionsHandler:
 
         return org_role, None
 
+    @staticmethod
     def _get_organization_permissions_for_role_and_resources(
-        self,
         role: OrgRole,
         resources: Sequence[Resource],
     ) -> dict[str, list[str]]:
@@ -114,8 +115,8 @@ class PermissionsHandler:
                 ]
         return result
 
+    @staticmethod
     def get_orbit_permissions_for_role_and_resources(
-        self,
         role: OrbitRole,
         resources: Sequence[Resource],
     ) -> dict[str, list[str]]:

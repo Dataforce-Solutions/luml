@@ -1,6 +1,7 @@
 from datetime import UTC, datetime, timedelta
 from enum import StrEnum
 from typing import Any
+from uuid import UUID
 
 from pydantic import BaseModel, HttpUrl, computed_field
 
@@ -31,8 +32,8 @@ class SatelliteStatus(StrEnum):
 
 
 class Satellite(BaseModel, BaseOrmConfig):
-    id: int
-    orbit_id: int
+    id: UUID
+    orbit_id: UUID
     name: str | None = None
     description: str | None = None
     base_url: str | None = None
@@ -63,7 +64,7 @@ class SatelliteCreateIn(BaseModel, BaseOrmConfig):
 
 
 class SatelliteCreate(BaseModel, BaseOrmConfig):
-    orbit_id: int
+    orbit_id: UUID
     api_key_hash: str
     name: str | None = None
     description: str | None = None
@@ -80,20 +81,20 @@ class SatelliteUpdateIn(BaseModel, BaseOrmConfig):
 
 
 class SatelliteUpdate(BaseModel, BaseOrmConfig):
-    id: int
+    id: UUID
     name: str | None = None
     description: str | None = None
 
 
 class SatelliteRegenerateApiKey(BaseModel, BaseOrmConfig):
-    id: int
+    id: UUID
     api_key_hash: str
 
 
 class SatelliteQueueTask(BaseModel, BaseOrmConfig):
-    id: int
-    satellite_id: int
-    orbit_id: int
+    id: UUID
+    satellite_id: UUID
+    orbit_id: UUID
     type: SatelliteTaskType
     payload: dict[str, Any]
     status: SatelliteTaskStatus

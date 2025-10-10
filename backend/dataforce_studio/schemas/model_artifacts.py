@@ -1,6 +1,7 @@
 from datetime import datetime
 from enum import StrEnum
 from typing import Annotated, Any, Literal
+from uuid import UUID
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -15,7 +16,7 @@ class CollectionType(StrEnum):
 
 
 class CollectionCreate(BaseModel):
-    orbit_id: int
+    orbit_id: UUID
     description: str
     name: str
     collection_type: CollectionType
@@ -30,8 +31,8 @@ class CollectionCreateIn(BaseModel):
 
 
 class Collection(BaseModel, BaseOrmConfig):
-    id: int
-    orbit_id: int
+    id: UUID
+    orbit_id: UUID
     description: str
     name: str
     collection_type: CollectionType
@@ -42,7 +43,7 @@ class Collection(BaseModel, BaseOrmConfig):
 
 
 class CollectionUpdate(BaseModel):
-    id: int | None = None
+    id: UUID | None = None
     description: str | None = None
     name: str | None = None
     tags: list[str] | None = None
@@ -118,7 +119,7 @@ class Manifest(BaseModel):
 
 
 class ModelArtifactCreate(BaseModel):
-    collection_id: int
+    collection_id: UUID
     file_name: str
     model_name: str | None = None
     description: str | None = None
@@ -164,7 +165,7 @@ class ModelArtifactIn(BaseModel):
 
 
 class ModelArtifactUpdate(BaseModel):
-    id: int
+    id: UUID
     file_name: str | None = None
     model_name: str | None = None
     description: str | None = None
@@ -188,8 +189,8 @@ class ModelArtifactUpdateIn(BaseModel):
 
 
 class ModelArtifact(BaseModel, BaseOrmConfig):
-    id: int
-    collection_id: int
+    id: UUID
+    collection_id: UUID
     file_name: str
     model_name: str | None = None
     description: str | None = None

@@ -306,7 +306,9 @@ async def test_async_collection_update(
     mock_async_client.filter_none.return_value = update_data
 
     resource = AsyncCollectionResource(mock_async_client)
-    collection = await resource.update(collection_id=collection_id, name="Updated Collection")
+    collection = await resource.update(
+        collection_id=collection_id, name="Updated Collection"
+    )
 
     mock_async_client.patch.assert_called_once_with(
         f"/organizations/{organization_id}/orbits/{orbit_id}/collections/{collection_id}",

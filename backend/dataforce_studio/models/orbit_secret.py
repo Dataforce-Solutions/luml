@@ -1,22 +1,24 @@
-from sqlalchemy import ForeignKey, Integer, String, UniqueConstraint
+import uuid
+
+import uuid6
+from sqlalchemy import UUID, ForeignKey, String, UniqueConstraint
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from dataforce_studio.infra.encryption import decrypt, encrypt
 from dataforce_studio.models.base import Base, TimestampMixin
-from dataforce_studio.schemas.orbit_secret import (
-    OrbitSecret,
-    OrbitSecretCreate,
-)
+from dataforce_studio.schemas.orbit_secret import OrbitSecret, OrbitSecretCreate
 
 
 class OrbitSecretOrm(TimestampMixin, Base):
     __tablename__ = "orbit_secrets"
     __table_args__ = (UniqueConstraint("orbit_id", "name", name="orbit_secret_name"),)
 
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    orbit_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey("orbits.id", ondelete="CASCADE"), nullable=False
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid6.uuid7
+    )
+    orbit_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("orbits.id", ondelete="CASCADE"), nullable=False
     )
     name: Mapped[str] = mapped_column(String, nullable=False)
     value: Mapped[str] = mapped_column(String, nullable=False)

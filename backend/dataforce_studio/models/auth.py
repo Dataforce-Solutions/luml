@@ -1,17 +1,13 @@
-from pydantic import BaseModel, EmailStr
+from uuid import UUID
+
+from pydantic import EmailStr
 from starlette.authentication import BaseUser
-
-
-class Token(BaseModel):
-    access_token: str
-    token_type: str
-    refresh_token: str | None = None
 
 
 class AuthUser(BaseUser):
     def __init__(
         self,
-        user_id: int,
+        user_id: UUID,
         email: EmailStr,
         full_name: str | None = None,
         disabled: bool | None = None,
@@ -31,7 +27,7 @@ class AuthUser(BaseUser):
 
 
 class AuthSatellite(BaseUser):
-    def __init__(self, satellite_id: int, orbit_id: int) -> None:
+    def __init__(self, satellite_id: UUID, orbit_id: UUID) -> None:
         self.id = satellite_id
         self.orbit_id = orbit_id
 

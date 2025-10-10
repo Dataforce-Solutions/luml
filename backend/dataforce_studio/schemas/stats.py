@@ -1,4 +1,5 @@
 from datetime import datetime
+from uuid import UUID
 
 from pydantic import BaseModel, EmailStr
 
@@ -11,7 +12,7 @@ class StatsEmailSendCreate(BaseModel):
 
 
 class StatsEmailSendOut(BaseModel, BaseOrmConfig):
-    id: int
+    id: UUID
     email: EmailStr
     description: str
     created_at: datetime

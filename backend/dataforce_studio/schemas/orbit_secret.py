@@ -1,4 +1,5 @@
 from datetime import datetime
+from uuid import UUID
 
 from pydantic import BaseModel
 
@@ -15,21 +16,21 @@ class OrbitSecretCreateIn(_OrbitSecretBase): ...
 
 
 class OrbitSecretCreate(_OrbitSecretBase):
-    orbit_id: int
+    orbit_id: UUID
 
 
 class OrbitSecret(_OrbitSecretBase, BaseOrmConfig):
-    id: int
-    orbit_id: int
+    id: UUID
+    orbit_id: UUID
     created_at: datetime
     updated_at: datetime | None = None
 
 
 class OrbitSecretOut(BaseModel, BaseOrmConfig):
-    id: int
+    id: UUID
     name: str
     value: str
-    orbit_id: int
+    orbit_id: UUID
     tags: list[str] | None = None
     created_at: datetime
     updated_at: datetime | None = None

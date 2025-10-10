@@ -1,4 +1,5 @@
 from unittest.mock import AsyncMock, Mock, patch
+from uuid import UUID
 
 import pytest
 
@@ -29,12 +30,14 @@ handler = OrganizationHandler()
 async def test_check_org_members_limit_raises(
     mock_get_organization_details: AsyncMock,
 ) -> None:
+    organization_id = UUID("0199c337-09f2-7af1-af5e-83fd7a5b51a0")
+
     mock_get_organization_details.return_value = Mock(
         members_limit=50, total_members=200
     )
 
     with pytest.raises(OrganizationLimitReachedError):
-        await handler._check_org_members_limit(organization_id=1)
+        await handler._check_org_members_limit(organization_id=organization_id)
 
     mock_get_organization_details.assert_awaited_once()
 
@@ -47,7 +50,8 @@ async def test_check_org_members_limit_raises(
 async def test_get_user_organizations(
     mock_get_user_organizations: AsyncMock, test_org: Organization
 ) -> None:
-    user_id = 1
+    user_id = UUID("0199c337-09f1-7d8f-b0c4-b68349bbe24b")
+
     expected = [
         OrganizationSwitcher(
             id=test_org.id,
@@ -80,8 +84,9 @@ async def test_get_organization(
     mock_get_organization_member_role: AsyncMock,
     test_org_details: OrganizationDetails,
 ) -> None:
-    user_id = 1
-    organization_id = 1
+    user_id = UUID("0199c337-09f1-7d8f-b0c4-b68349bbe24b")
+    organization_id = UUID("0199c337-09f2-7af1-af5e-83fd7a5b51a0")
+
     expected = test_org_details
 
     mock_get_organization_details.return_value = expected
@@ -106,8 +111,9 @@ async def test_get_organization_not_found(
     mock_get_organization_details: AsyncMock,
     mock_get_organization_member_role: AsyncMock,
 ) -> None:
-    user_id = 1
-    organization_id = 1
+    user_id = UUID("0199c337-09f1-7d8f-b0c4-b68349bbe24b")
+    organization_id = UUID("0199c337-09f2-7af1-af5e-83fd7a5b51a0")
+
     mock_get_organization_details.return_value = None
     mock_get_organization_member_role.return_value = OrgRole.OWNER
 
@@ -134,7 +140,8 @@ async def test_create_organization(
     mock_get_user_organizations_membership_count: AsyncMock,
     test_org: Organization,
 ) -> None:
-    user_id = 1
+    user_id = UUID("0199c337-09f1-7d8f-b0c4-b68349bbe24b")
+
     org_to_create = OrganizationCreateIn(name=test_org.name, logo=test_org.logo)
     expected = test_org
 
@@ -174,7 +181,7 @@ async def test_update_organization(
     test_org_details: OrganizationDetails,
 ) -> None:
     expected = test_org_details
-    user_id = 1
+    user_id = UUID("0199c337-09f1-7d8f-b0c4-b68349bbe24b")
 
     mock_get_organization_details.return_value = expected
     mock_update_organization.return_value = expected
@@ -200,8 +207,9 @@ async def test_update_organization_not_found(
     mock_update_organization: AsyncMock,
     mock_get_organization_member_role: AsyncMock,
 ) -> None:
-    user_id = 1
-    organization_id = 1
+    user_id = UUID("0199c337-09f1-7d8f-b0c4-b68349bbe24b")
+    organization_id = UUID("0199c337-09f2-7af1-af5e-83fd7a5b51a0")
+
     organization_to_update = OrganizationUpdate(name="test", logo=None)
 
     mock_update_organization.return_value = None
@@ -239,8 +247,8 @@ async def test_delete_organization(
     mock_get_organization_member_role: AsyncMock,
     test_org_details: OrganizationDetails,
 ) -> None:
-    user_id = 1
-    organization_id = 1
+    user_id = UUID("0199c337-09f1-7d8f-b0c4-b68349bbe24b")
+    organization_id = UUID("0199c337-09f2-7af1-af5e-83fd7a5b51a0")
 
     mock_delete_organization.return_value = None
     mock_get_organization_details.return_value = test_org_details
@@ -264,8 +272,8 @@ async def test_leave_from_organization(
     mock_delete_organization_member_by_user_id: AsyncMock,
     mock_get_organization_member_role: AsyncMock,
 ) -> None:
-    user_id = 1
-    organization_id = 1
+    user_id = UUID("0199c337-09f1-7d8f-b0c4-b68349bbe24b")
+    organization_id = UUID("0199c337-09f2-7af1-af5e-83fd7a5b51a0")
 
     mock_delete_organization_member_by_user_id.return_value = None
     mock_get_organization_member_role.return_value = OrgRole.MEMBER
@@ -290,8 +298,8 @@ async def test_leave_from_organization_owner(
     mock_delete_organization_member_by_user_id: AsyncMock,
     mock_get_organization_member_role: AsyncMock,
 ) -> None:
-    user_id = 1
-    organization_id = 1
+    user_id = UUID("0199c337-09f1-7d8f-b0c4-b68349bbe24b")
+    organization_id = UUID("0199c337-09f2-7af1-af5e-83fd7a5b51a0")
 
     mock_delete_organization_member_by_user_id.return_value = None
     mock_get_organization_member_role.return_value = OrgRole.OWNER

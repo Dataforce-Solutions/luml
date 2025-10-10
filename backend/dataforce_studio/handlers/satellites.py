@@ -2,6 +2,7 @@ import hashlib
 import hmac
 import secrets
 from typing import Any
+from uuid import UUID
 
 from fastapi import status
 
@@ -54,9 +55,9 @@ class SatelliteHandler:
 
     async def list_satellites(
         self,
-        user_id: int,
-        organization_id: int,
-        orbit_id: int,
+        user_id: UUID,
+        organization_id: UUID,
+        orbit_id: UUID,
         paired: bool | None = None,
     ) -> list[Satellite]:
         await self.__permissions_handler.check_orbit_action_access(
@@ -66,10 +67,10 @@ class SatelliteHandler:
 
     async def get_satellite(
         self,
-        user_id: int,
-        organization_id: int,
-        orbit_id: int,
-        satellite_id: int,
+        user_id: UUID,
+        organization_id: UUID,
+        orbit_id: UUID,
+        satellite_id: UUID,
     ) -> Satellite:
         await self.__permissions_handler.check_orbit_action_access(
             organization_id, orbit_id, user_id, Resource.SATELLITE, Action.READ
@@ -80,7 +81,11 @@ class SatelliteHandler:
         return satellite
 
     async def regenerate_satellite_api_key(
-        self, user_id: int, organization_id: int, orbit_id: int, satellite_id: int
+        self,
+        user_id: UUID,
+        organization_id: UUID,
+        orbit_id: UUID,
+        satellite_id: UUID,
     ) -> str:
         await self.__permissions_handler.check_orbit_action_access(
             organization_id, orbit_id, user_id, Resource.SATELLITE, Action.UPDATE
@@ -102,9 +107,9 @@ class SatelliteHandler:
 
     async def create_satellite(
         self,
-        user_id: int,
-        organization_id: int,
-        orbit_id: int,
+        user_id: UUID,
+        organization_id: UUID,
+        orbit_id: UUID,
         data: SatelliteCreateIn,
     ) -> SatelliteCreateOut:
         await self.__permissions_handler.check_orbit_action_access(
@@ -134,10 +139,10 @@ class SatelliteHandler:
 
     async def update_satellite(
         self,
-        user_id: int,
-        organization_id: int,
-        orbit_id: int,
-        satellite_id: int,
+        user_id: UUID,
+        organization_id: UUID,
+        orbit_id: UUID,
+        satellite_id: UUID,
         satellite_update_in: SatelliteUpdateIn,
     ) -> Satellite:
         await self.__permissions_handler.check_orbit_action_access(
@@ -163,7 +168,7 @@ class SatelliteHandler:
 
     async def pair_satellite(
         self,
-        satellite_id: int,
+        satellite_id: UUID,
         base_url: str,
         capabilities: dict[SatelliteCapability, dict[str, str | int] | None],
     ) -> Satellite:
@@ -190,18 +195,18 @@ class SatelliteHandler:
 
         return updated_satellite
 
-    async def touch_last_seen(self, satellite_id: int) -> None:
+    async def touch_last_seen(self, satellite_id: UUID) -> None:
         await self.__sat_repo.touch_last_seen(satellite_id)
 
     async def list_tasks(
-        self, satellite_id: int, status: SatelliteTaskStatus | None = None
+        self, satellite_id: UUID, status: SatelliteTaskStatus | None = None
     ) -> list[SatelliteQueueTask]:
         return await self.__sat_repo.list_tasks(satellite_id, status)
 
     async def update_task_status(
         self,
-        satellite_id: int,
-        task_id: int,
+        satellite_id: UUID,
+        task_id: UUID,
         status: SatelliteTaskStatus,
         result: dict[str, Any] | None = None,
     ) -> SatelliteQueueTask:
@@ -213,7 +218,11 @@ class SatelliteHandler:
         return task
 
     async def delete_satellite(
-        self, organization_id: int, orbit_id: int, user_id: int, satellite_id: int
+        self,
+        organization_id: UUID,
+        orbit_id: UUID,
+        user_id: UUID,
+        satellite_id: UUID,
     ) -> None:
         await self.__permissions_handler.check_orbit_action_access(
             organization_id, orbit_id, user_id, Resource.SATELLITE, Action.DELETE

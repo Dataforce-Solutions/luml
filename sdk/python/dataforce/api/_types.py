@@ -1,10 +1,21 @@
 from enum import StrEnum
 
 from pydantic import BaseModel
+from uuid6 import UUID
+
+
+def is_uuid(value: str | None) -> bool:
+    if value is None:
+        return False
+    try:
+        UUID(value)
+        return True
+    except (ValueError, AttributeError, TypeError):
+        return False
 
 
 class Organization(BaseModel):
-    id: int
+    id: str
     name: str
     logo: str | None = None
     created_at: str
@@ -12,22 +23,22 @@ class Organization(BaseModel):
 
 
 class BucketSecret(BaseModel):
-    id: int
+    id: str
     endpoint: str
     bucket_name: str
     secure: bool | None = None
     region: str | None = None
     cert_check: bool | None = None
-    organization_id: int
+    organization_id: str
     created_at: str
     updated_at: str | None = None
 
 
 class Orbit(BaseModel):
-    id: int
+    id: str
     name: str
-    organization_id: int
-    bucket_secret_id: int
+    organization_id: str
+    bucket_secret_id: str
     total_members: int | None = None
     total_collections: int | None = None
     created_at: str
@@ -47,8 +58,8 @@ class ModelArtifactStatus(StrEnum):
 
 
 class Collection(BaseModel):
-    id: int
-    orbit_id: int
+    id: str
+    orbit_id: str
     description: str
     name: str
     collection_type: str
@@ -59,8 +70,8 @@ class Collection(BaseModel):
 
 
 class ModelArtifact(BaseModel):
-    id: int
-    collection_id: int
+    id: str
+    collection_id: str
     file_name: str
     model_name: str | None = None
     description: str | None = None

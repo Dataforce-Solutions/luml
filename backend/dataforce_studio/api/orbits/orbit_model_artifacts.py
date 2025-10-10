@@ -1,4 +1,5 @@
 from typing import Any
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, Request, status
 
@@ -26,9 +27,9 @@ model_artifacts_handler = ModelArtifactHandler()
 )
 async def create_model_artifact(
     request: Request,
-    organization_id: int,
-    orbit_id: int,
-    collection_id: int,
+    organization_id: UUID,
+    orbit_id: UUID,
+    collection_id: UUID,
     model_artifact: ModelArtifactIn,
 ) -> CreateModelArtifactResponse:
     return await model_artifacts_handler.create_model_artifact(
@@ -47,10 +48,10 @@ async def create_model_artifact(
 )
 async def update_model_artifact(
     request: Request,
-    organization_id: int,
-    orbit_id: int,
-    collection_id: int,
-    model_artifact_id: int,
+    organization_id: UUID,
+    orbit_id: UUID,
+    collection_id: UUID,
+    model_artifact_id: UUID,
     model_artifact: ModelArtifactUpdateIn,
 ) -> ModelArtifact:
     return await model_artifacts_handler.update_model_artifact(
@@ -70,9 +71,9 @@ async def update_model_artifact(
 )
 async def get_model_artifact(
     request: Request,
-    organization_id: int,
-    orbit_id: int,
-    collection_id: int,
+    organization_id: UUID,
+    orbit_id: UUID,
+    collection_id: UUID,
 ) -> list[ModelArtifact]:
     return await model_artifacts_handler.get_collection_model_artifact(
         request.user.id,
@@ -87,10 +88,10 @@ async def get_model_artifact(
 )
 async def get_model_artifact_download_url(
     request: Request,
-    organization_id: int,
-    orbit_id: int,
-    collection_id: int,
-    model_artifact_id: int,
+    organization_id: UUID,
+    orbit_id: UUID,
+    collection_id: UUID,
+    model_artifact_id: UUID,
 ) -> dict[str, Any]:
     url = await model_artifacts_handler.request_download_url(
         request.user.id,
@@ -107,10 +108,10 @@ async def get_model_artifact_download_url(
 )
 async def get_model_artifact_delete_url(
     request: Request,
-    organization_id: int,
-    orbit_id: int,
-    collection_id: int,
-    model_artifact_id: int,
+    organization_id: UUID,
+    orbit_id: UUID,
+    collection_id: UUID,
+    model_artifact_id: UUID,
 ) -> dict[str, Any]:
     url = await model_artifacts_handler.request_delete_url(
         request.user.id,
@@ -129,10 +130,10 @@ async def get_model_artifact_delete_url(
 )
 async def confirm_model_artifact_delete(
     request: Request,
-    organization_id: int,
-    orbit_id: int,
-    collection_id: int,
-    model_artifact_id: int,
+    organization_id: UUID,
+    orbit_id: UUID,
+    collection_id: UUID,
+    model_artifact_id: UUID,
 ) -> None:
     await model_artifacts_handler.confirm_deletion(
         request.user.id,

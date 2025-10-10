@@ -1,4 +1,5 @@
 from typing import Any
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, Request
 
@@ -60,7 +61,7 @@ async def list_orbit_secrets(request: Request) -> list[OrbitSecret]:
     responses=endpoint_responses,
     response_model=OrbitSecret,
 )
-async def get_orbit_secret(request: Request, secret_id: int) -> OrbitSecret:
+async def get_orbit_secret(request: Request, secret_id: UUID) -> OrbitSecret:
     return await orbit_secret_handler.get_worker_orbit_secret(
         request.user.orbit_id,
         secret_id,
@@ -85,7 +86,7 @@ async def list_tasks(
     response_model=SatelliteQueueTask,
 )
 async def update_task_status(
-    request: Request, task_id: int, data: SatelliteTaskUpdateIn
+    request: Request, task_id: UUID, data: SatelliteTaskUpdateIn
 ) -> SatelliteQueueTask:
     await satellite_handler.touch_last_seen(request.user.id)
     return await satellite_handler.update_task_status(
@@ -112,7 +113,7 @@ async def list_deployments(request: Request) -> list[Deployment]:
     response_model=Deployment,
 )
 async def update_deployment(
-    request: Request, deployment_id: int, data: DeploymentUpdateIn
+    request: Request, deployment_id: UUID, data: DeploymentUpdateIn
 ) -> Deployment:
     await satellite_handler.touch_last_seen(request.user.id)
     return await deployment_handler.update_worker_deployment(
@@ -128,7 +129,7 @@ async def update_deployment(
     response_model=Deployment,
 )
 async def update_deployment_status(
-    request: Request, deployment_id: int, data: DeploymentStatusUpdateIn
+    request: Request, deployment_id: UUID, data: DeploymentStatusUpdateIn
 ) -> Deployment:
     await satellite_handler.touch_last_seen(request.user.id)
     return await deployment_handler.update_worker_deployment_status(
@@ -141,7 +142,7 @@ async def update_deployment_status(
     responses=endpoint_responses,
     response_model=Deployment,
 )
-async def get_satellite_deployment(request: Request, deployment_id: int) -> Deployment:
+async def get_satellite_deployment(request: Request, deployment_id: UUID) -> Deployment:
     await satellite_handler.touch_last_seen(request.user.id)
     return await deployment_handler.get_worker_deployment(
         request.user.orbit_id,
@@ -169,7 +170,7 @@ async def authorize_inference_access(
     responses=endpoint_responses,
 )
 async def get_model_artifact_download_url(
-    request: Request, model_artifact_id: int
+    request: Request, model_artifact_id: UUID
 ) -> dict[str, Any]:
     await satellite_handler.touch_last_seen(request.user.id)
     url = await model_artifacts_handler.request_satellite_download_url(
@@ -183,7 +184,7 @@ async def get_model_artifact_download_url(
     responses=endpoint_responses,
 )
 async def get_model_artifact(
-    request: Request, model_artifact_id: int
+    request: Request, model_artifact_id: UUID
 ) -> SatelliteModelArtifactResponse:
     await satellite_handler.touch_last_seen(request.user.id)
     return await model_artifacts_handler.get_satellite_model_artifact(

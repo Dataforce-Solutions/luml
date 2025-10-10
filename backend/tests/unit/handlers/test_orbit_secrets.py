@@ -1,5 +1,6 @@
 import datetime
 from unittest.mock import AsyncMock, patch
+from uuid import UUID
 
 import pytest
 
@@ -30,11 +31,13 @@ handler = OrbitSecretHandler()
 async def test_create_orbit_secret(
     mock_check_orbit_action_access: AsyncMock, mock_create_orbit_secret: AsyncMock
 ) -> None:
-    user_id = 1
-    organization_id = 1
-    orbit_id = 1
+    user_id = UUID("0199c337-09f1-7d8f-b0c4-b68349bbe24b")
+    organization_id = UUID("0199c337-09f2-7af1-af5e-83fd7a5b51a0")
+    orbit_id = UUID("0199c337-09f3-753e-9def-b27745e69be6")
+    orbit_secret = UUID("0199c337-09f4-7a01-9f5f-5f68db62cf70")
+
     expected = OrbitSecretOut(
-        id=1,
+        id=orbit_secret,
         orbit_id=orbit_id,
         name="test",
         value="test-value",
@@ -74,12 +77,14 @@ async def test_create_orbit_secret(
 async def test_get_orbit_secrets(
     mock_check_orbit_action_access: AsyncMock, mock_get_orbit_secrets: AsyncMock
 ) -> None:
-    user_id = 1
-    organization_id = 1
-    orbit_id = 1
+    user_id = UUID("0199c337-09f1-7d8f-b0c4-b68349bbe24b")
+    organization_id = UUID("0199c337-09f2-7af1-af5e-83fd7a5b51a0")
+    orbit_id = UUID("0199c337-09f3-753e-9def-b27745e69be6")
+    orbit_secret = UUID("0199c337-09f4-7a01-9f5f-5f68db62cf70")
+
     expected = [
         OrbitSecretOut(
-            id=1,
+            id=orbit_secret,
             orbit_id=orbit_id,
             name="test",
             value="",
@@ -111,10 +116,11 @@ async def test_get_orbit_secrets(
 async def test_get_orbit_secret(
     mock_check_orbit_action_access: AsyncMock, mock_get_orbit_secret: AsyncMock
 ) -> None:
-    user_id = 1
-    organization_id = 1
-    orbit_id = 1
-    secret_id = 1
+    user_id = UUID("0199c337-09f1-7d8f-b0c4-b68349bbe24b")
+    organization_id = UUID("0199c337-09f2-7af1-af5e-83fd7a5b51a0")
+    orbit_id = UUID("0199c337-09f3-753e-9def-b27745e69be6")
+    secret_id = UUID("0199c337-09f4-7a01-9f5f-5f68db62cf70")
+
     expected = OrbitSecretOut(
         id=secret_id,
         orbit_id=orbit_id,
@@ -150,10 +156,10 @@ async def test_get_orbit_secret(
 async def test_get_orbit_secret_not_found(
     mock_check_orbit_action_access: AsyncMock, mock_get_orbit_secret: AsyncMock
 ) -> None:
-    user_id = 1
-    organization_id = 1
-    orbit_id = 1
-    secret_id = 1
+    user_id = UUID("0199c337-09f1-7d8f-b0c4-b68349bbe24b")
+    organization_id = UUID("0199c337-09f2-7af1-af5e-83fd7a5b51a0")
+    orbit_id = UUID("0199c337-09f3-753e-9def-b27745e69be6")
+    secret_id = UUID("0199c337-09f4-7a01-9f5f-5f68db62cf70")
 
     mock_check_orbit_action_access.return_value = OrgRole.OWNER, None
     mock_get_orbit_secret.return_value = None
@@ -176,10 +182,10 @@ async def test_get_orbit_secret_not_found(
 async def test_update_orbit_secret(
     mock_check_orbit_action_access: AsyncMock, mock_update_orbit_secret: AsyncMock
 ) -> None:
-    user_id = 1
-    organization_id = 1
-    orbit_id = 1
-    secret_id = 1
+    user_id = UUID("0199c337-09f1-7d8f-b0c4-b68349bbe24b")
+    organization_id = UUID("0199c337-09f2-7af1-af5e-83fd7a5b51a0")
+    orbit_id = UUID("0199c337-09f3-753e-9def-b27745e69be6")
+    secret_id = UUID("0199c337-09f4-7a01-9f5f-5f68db62cf70")
 
     secret_update = OrbitSecretUpdate(name="updated-name", value="updated-value")
     expected = OrbitSecretOut(
@@ -217,10 +223,10 @@ async def test_update_orbit_secret(
 async def test_update_orbit_secret_not_found(
     mock_check_orbit_action_access: AsyncMock, mock_update_orbit_secret: AsyncMock
 ) -> None:
-    user_id = 1
-    organization_id = 1
-    orbit_id = 1
-    secret_id = 1
+    user_id = UUID("0199c337-09f1-7d8f-b0c4-b68349bbe24b")
+    organization_id = UUID("0199c337-09f2-7af1-af5e-83fd7a5b51a0")
+    orbit_id = UUID("0199c337-09f3-753e-9def-b27745e69be6")
+    secret_id = UUID("0199c337-09f4-7a01-9f5f-5f68db62cf70")
 
     secret_update = OrbitSecretUpdate(name="updated-name", value="updated-value")
 
@@ -248,10 +254,10 @@ async def test_update_orbit_secret_not_found(
 async def test_delete_orbit_secret(
     mock_check_orbit_action_access: AsyncMock, mock_delete_orbit_secret: AsyncMock
 ) -> None:
-    user_id = 1
-    organization_id = 1
-    orbit_id = 1
-    secret_id = 1
+    user_id = UUID("0199c337-09f1-7d8f-b0c4-b68349bbe24b")
+    organization_id = UUID("0199c337-09f2-7af1-af5e-83fd7a5b51a0")
+    orbit_id = UUID("0199c337-09f3-753e-9def-b27745e69be6")
+    secret_id = UUID("0199c337-09f4-7a01-9f5f-5f68db62cf70")
 
     mock_check_orbit_action_access.return_value = OrgRole.OWNER, None
     mock_delete_orbit_secret.return_value = None
@@ -269,11 +275,12 @@ async def test_delete_orbit_secret(
 )
 @pytest.mark.asyncio
 async def test_get_worker_orbit_secrets(mock_get_orbit_secrets: AsyncMock) -> None:
-    orbit_id = 1
+    orbit_id = UUID("0199c337-09f3-753e-9def-b27745e69be6")
+    secret_id = UUID("0199c337-09f4-7a01-9f5f-5f68db62cf70")
 
     expected = [
         OrbitSecret(
-            id=1,
+            id=secret_id,
             orbit_id=orbit_id,
             name="secret1",
             value="value1",
@@ -296,8 +303,8 @@ async def test_get_worker_orbit_secrets(mock_get_orbit_secrets: AsyncMock) -> No
 )
 @pytest.mark.asyncio
 async def test_get_worker_orbit_secret(mock_get_orbit_secret: AsyncMock) -> None:
-    orbit_id = 1
-    secret_id = 1
+    orbit_id = UUID("0199c337-09f3-753e-9def-b27745e69be6")
+    secret_id = UUID("0199c337-09f4-7a01-9f5f-5f68db62cf70")
 
     expected_secret = OrbitSecret(
         id=secret_id,
@@ -324,8 +331,8 @@ async def test_get_worker_orbit_secret(mock_get_orbit_secret: AsyncMock) -> None
 async def test_get_worker_orbit_secret_not_found(
     mock_get_orbit_secret: AsyncMock,
 ) -> None:
-    orbit_id = 1
-    secret_id = 1
+    orbit_id = UUID("0199c337-09f3-753e-9def-b27745e69be6")
+    secret_id = UUID("0199c337-09f4-7a01-9f5f-5f68db62cf70")
 
     mock_get_orbit_secret.return_value = None
 

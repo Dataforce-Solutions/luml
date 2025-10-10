@@ -1,4 +1,6 @@
-from pydantic import ConfigDict
+from pydantic import (
+    ConfigDict,
+)
 
 
 class BaseOrmConfig:

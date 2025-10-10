@@ -205,5 +205,7 @@ async def test_delete_model_artifact_with_deployment_constraint(
     )
     await deployment_repo.create_deployment(deployment_data)
 
-    with pytest.raises(DatabaseConstraintError):
+    with pytest.raises(DatabaseConstraintError) as error:
         await repo.delete_model_artifact(created_model.id)
+
+    assert error.value.status_code == 409

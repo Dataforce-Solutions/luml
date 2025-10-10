@@ -1,6 +1,7 @@
 from datetime import datetime
 from enum import StrEnum
 from typing import Any
+from uuid import UUID
 
 from pydantic import BaseModel, EmailStr, Field, HttpUrl, field_validator
 
@@ -26,13 +27,13 @@ class OrganizationCreate(BaseModel):
 
 
 class OrganizationUpdate(BaseModel):
-    id: int | None = None
+    id: UUID | None = None
     name: str | None = None
     logo: HttpUrl | str | None = None
 
 
 class Organization(BaseModel, BaseOrmConfig):
-    id: int
+    id: UUID
     name: str
     logo: HttpUrl | None = None
     created_at: datetime
@@ -47,7 +48,7 @@ class OrganizationSwitcher(Organization):
 class CreateOrganizationInviteIn(BaseModel):
     email: EmailStr
     role: OrgRole
-    organization_id: int
+    organization_id: UUID
 
     @field_validator("role")
     @classmethod
@@ -60,25 +61,25 @@ class CreateOrganizationInviteIn(BaseModel):
 class CreateOrganizationInvite(BaseModel):
     email: EmailStr
     role: OrgRole
-    organization_id: int
-    invited_by: int
+    organization_id: UUID
+    invited_by: UUID
 
 
 class OrganizationInvite(BaseModel, BaseOrmConfig):
-    id: int
+    id: UUID
     email: EmailStr
     role: OrgRole
-    organization_id: int
+    organization_id: UUID
     invited_by_user: UserOut | None = None
     organization: Organization | None = None
     created_at: datetime
 
 
 class OrganizationInviteSimple(BaseModel, BaseOrmConfig):
-    id: int
+    id: UUID
     email: EmailStr
     role: OrgRole
-    organization_id: int
+    organization_id: UUID
     created_at: datetime
 
 
@@ -87,7 +88,7 @@ class UserInvite(OrganizationInvite):
 
 
 class UpdateOrganizationMember(BaseModel):
-    id: int | None = None
+    id: UUID | None = None
     role: OrgRole
 
     @field_validator("role")
@@ -99,15 +100,15 @@ class UpdateOrganizationMember(BaseModel):
 
 
 class OrganizationMember(BaseModel, BaseOrmConfig):
-    id: int
-    organization_id: int
+    id: UUID
+    organization_id: UUID
     role: OrgRole
     user: UserOut
 
 
 class OrganizationMemberCreate(BaseModel):
-    user_id: int
-    organization_id: int
+    user_id: UUID
+    organization_id: UUID
     role: OrgRole
 
     @field_validator("role")
@@ -119,8 +120,8 @@ class OrganizationMemberCreate(BaseModel):
 
 
 class OrganizationOwnerCreate(BaseModel):
-    user_id: int
-    organization_id: int
+    user_id: UUID
+    organization_id: UUID
     role: OrgRole
 
     @field_validator("role")

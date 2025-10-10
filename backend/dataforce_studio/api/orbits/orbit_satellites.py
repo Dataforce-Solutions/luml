@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from fastapi import APIRouter, Depends, Request, status
 
 from dataforce_studio.handlers.satellites import SatelliteHandler
@@ -25,8 +27,8 @@ satellite_handler = SatelliteHandler()
 )
 async def create_satellite(
     request: Request,
-    organization_id: int,
-    orbit_id: int,
+    organization_id: UUID,
+    orbit_id: UUID,
     satellite: SatelliteCreateIn,
 ) -> SatelliteCreateOut:
     return await satellite_handler.create_satellite(
@@ -39,8 +41,8 @@ async def create_satellite(
 )
 async def list_satellites(
     request: Request,
-    organization_id: int,
-    orbit_id: int,
+    organization_id: UUID,
+    orbit_id: UUID,
     paired: bool | None = None,
 ) -> list[Satellite]:
     return await satellite_handler.list_satellites(
@@ -53,9 +55,9 @@ async def list_satellites(
 )
 async def get_satellite(
     request: Request,
-    organization_id: int,
-    orbit_id: int,
-    satellite_id: int,
+    organization_id: UUID,
+    orbit_id: UUID,
+    satellite_id: UUID,
 ) -> Satellite:
     return await satellite_handler.get_satellite(
         request.user.id, organization_id, orbit_id, satellite_id
@@ -67,9 +69,9 @@ async def get_satellite(
 )
 async def update_satellite(
     request: Request,
-    organization_id: int,
-    orbit_id: int,
-    satellite_id: int,
+    organization_id: UUID,
+    orbit_id: UUID,
+    satellite_id: UUID,
     satellite: SatelliteUpdateIn,
 ) -> Satellite:
     return await satellite_handler.update_satellite(
@@ -84,9 +86,9 @@ async def update_satellite(
 )
 async def regenerate_satellite_api_key(
     request: Request,
-    organization_id: int,
-    orbit_id: int,
-    satellite_id: int,
+    organization_id: UUID,
+    orbit_id: UUID,
+    satellite_id: UUID,
 ) -> APIKeyCreateOut:
     api_key = await satellite_handler.regenerate_satellite_api_key(
         request.user.id, organization_id, orbit_id, satellite_id
@@ -100,7 +102,10 @@ async def regenerate_satellite_api_key(
     status_code=status.HTTP_204_NO_CONTENT,
 )
 async def delete_satellite(
-    request: Request, organization_id: int, orbit_id: int, satellite_id: int
+    request: Request,
+    organization_id: UUID,
+    orbit_id: UUID,
+    satellite_id: UUID,
 ) -> None:
     return await satellite_handler.delete_satellite(
         organization_id, orbit_id, request.user.id, satellite_id

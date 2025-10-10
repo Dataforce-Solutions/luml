@@ -7,7 +7,7 @@ T = TypeVar("T")
 
 
 def find_by_value(
-    items: list[T], value: str | int, condition: Callable[[T], bool] | None = None
+    items: list[T], value: str, condition: Callable[[T], bool] | None = None
 ) -> T | None:
     condition = condition or (lambda item: getattr(item, "name", None) == value)
 
