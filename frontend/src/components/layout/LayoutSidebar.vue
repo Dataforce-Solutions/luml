@@ -36,16 +36,18 @@
               <component :is="item.icon" :size="14" class="icon"></component>
               <span>{{ item.label }}</span>
             </div>
+            <div
+              v-else-if="requiresOrgId(item.route) && !organizationsStore.currentOrganization?.id"
+              class="menu-link disabled"
+              v-tooltip.right="'Please select an organization'"
+            >
+              <component :is="item.icon" :size="14" class="icon"></component>
+              <span>{{ item.label }}</span>
+            </div>
 
             <router-link
               v-else
-              :to="{
-                name: item.route,
-                params:
-                  item.route === 'orbits'
-                    ? { organizationId: organizationsStore.currentOrganization?.id || '' }
-                    : {},
-              }"
+              :to="getRouteParams(item.route)"
               class="menu-link"
               @click="sendAnalytics(item.analyticsOption)"
             >
@@ -110,12 +112,47 @@ const organizationsStore = useOrganizationStore()
 
 const isSidebarOpened = ref(true)
 const githubStarsCount = ref(null)
+const ROUTES_REQUIRING_ORG_ID = ['orbits', 'orbit', 'organization', 'collection']
 
 const getFormattedGithubStars = computed(() => {
   if (githubStarsCount.value === null) return null
   else if (githubStarsCount.value < 1000) return githubStarsCount.value
   else return (githubStarsCount.value / 1000).toFixed() + 'K'
 })
+
+function requiresOrgId(routeName: string): boolean {
+  return ROUTES_REQUIRING_ORG_ID.includes(routeName)
+}
+
+function getRouteParams(routeName: string) {
+  const baseRoute = { name: routeName }
+  if (!requiresOrgId(routeName)) {
+    return baseRoute
+  }
+  
+  const orgId = organizationsStore.currentOrganization?.id
+  if (!orgId) {
+    console.warn(`Route "${routeName}" requires organizationId but none is selected`)
+    return baseRoute
+  }
+  if (routeName === 'orbits') {
+    return {
+      ...baseRoute,
+      params: { organizationId: orgId }
+    }
+  }
+  
+  if (routeName === 'organization') {
+    return {
+      ...baseRoute,
+      params: { id: orgId }
+    }
+  }
+  return {
+    ...baseRoute,
+    params: { organizationId: orgId }
+  }
+}
 
 const toggleSidebar = () => {
   isSidebarOpened.value = !isSidebarOpened.value
