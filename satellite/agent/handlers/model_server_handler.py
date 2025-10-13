@@ -39,7 +39,7 @@ class ModelServerHandler:
         for dep_id, info in self.deployments.items():
             async with ModelServerClient() as client:
                 try:
-                    health_ok = await client.is_healthy(int(dep_id))
+                    health_ok = await client.is_healthy(dep_id)
                     if health_ok:
                         active_deployments[dep_id] = info
                 except Exception:
@@ -106,8 +106,8 @@ class ModelServerHandler:
 
         return compute_dynamic_atr | missing_secrets
 
-    async def model_compute(self, deployment_id: int, body: dict) -> dict:
-        deployment = await self.get_deployment(str(deployment_id))
+    async def model_compute(self, deployment_id: str, body: dict) -> dict:
+        deployment = await self.get_deployment(deployment_id)
         if not deployment:
             raise ValueError(f"Deployment {deployment_id} not found")
 

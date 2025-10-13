@@ -24,12 +24,12 @@ class ModelServerClient:
             self._session = None
 
     @staticmethod
-    def _url(deployment_id: int) -> str:
+    def _url(deployment_id: str) -> str:
         return f"http://sat-{deployment_id}:{config.CONTAINER_PORT}"
 
     async def compute(
         self,
-        deployment_id: int,
+        deployment_id: str,
         body: dict,
     ) -> dict:
         assert self._session is not None
@@ -37,7 +37,7 @@ class ModelServerClient:
         response.raise_for_status()
         return response.json()
 
-    async def is_healthy(self, deployment_id: int, timeout: int = 45) -> bool:
+    async def is_healthy(self, deployment_id: str, timeout: int = 45) -> bool:
         assert self._session is not None
         for _ in range(timeout):
             try:
@@ -49,7 +49,7 @@ class ModelServerClient:
             await asyncio.sleep(1)
         return False
 
-    async def get_openapi_schema(self, deployment_id: int) -> dict | None:
+    async def get_openapi_schema(self, deployment_id: str) -> dict | None:
         assert self._session is not None
         try:
             response = await self._session.get(f"{self._url(deployment_id)}/openapi.json")
@@ -59,7 +59,7 @@ class ModelServerClient:
             pass
         return None
 
-    async def get_manifest(self, deployment_id: int) -> dict | None:
+    async def get_manifest(self, deployment_id: str) -> dict | None:
         assert self._session is not None
         try:
             response = await self._session.get(f"{self._url(deployment_id)}/manifest")

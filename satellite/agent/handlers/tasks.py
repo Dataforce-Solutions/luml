@@ -1,3 +1,4 @@
+import logging
 from typing import Any
 
 from pydantic import ValidationError
@@ -5,6 +6,8 @@ from pydantic import ValidationError
 from agent.clients import DockerService, PlatformClient
 from agent.schemas import SatelliteQueueTask, SatelliteTaskStatus, SatelliteTaskType
 from agent.tasks import DeployTask, PairingTask, Task
+
+logger = logging.getLogger("satellite")
 
 
 # TODO add task undeploy
@@ -18,13 +21,16 @@ class TaskHandler:
         }
 
     async def dispatch(self, raw_task: dict[str, Any]) -> None:
+        logger.info(f"[dispatch] Processing task: {raw_task.get('id', 'unknown')} type: {raw_task.get('type', 'unknown')}")
+        
         try:
             task = SatelliteQueueTask.model_validate(raw_task)
-        except ValidationError:
+
+        except ValidationError as e:
+            logger.error(f"[dispatch] Task validation failed: {e}")
             try:
-                tid = int(raw_task.get("id"))
                 await self.platform.update_task_status(
-                    tid, SatelliteTaskStatus.FAILED, {"reason": "invalid task payload"}
+                    raw_task.get("id"), SatelliteTaskStatus.FAILED, {"reason": "invalid task payload"}
                 )
             except Exception:
                 pass
@@ -32,9 +38,11 @@ class TaskHandler:
 
         handler = self._handlers.get(task.type)
         if handler is None:
+            logger.error(f"[dispatch] Unknown task type: {task.type}")
             await self.platform.update_task_status(
                 task.id, SatelliteTaskStatus.FAILED, {"reason": f"unknown type: {task.type}"}
             )
             return
 
+        logger.info(f"[dispatch] Running task {task.id} with handler {handler.__class__.__name__}")
         await handler.run(task)

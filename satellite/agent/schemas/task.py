@@ -18,9 +18,9 @@ class SatelliteTaskStatus(StrEnum):
 
 
 class SatelliteQueueTask(BaseModel):
-    id: int
-    satellite_id: int
-    orbit_id: int
+    id: str
+    satellite_id: str
+    orbit_id: str
     type: SatelliteTaskType
     payload: dict[str, Any] | None = None
     status: SatelliteTaskStatus

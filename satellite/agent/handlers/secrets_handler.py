@@ -8,7 +8,7 @@ from agent.settings import config
 
 class SecretsHandler:
     def __init__(self) -> None:
-        self.orbit_secrets: dict[int, Secret] = {}
+        self.orbit_secrets: dict[str, Secret] = {}
         self._cleanup_task: asyncio.Task | None = None
         self._initialized = False
 
@@ -21,7 +21,7 @@ class SecretsHandler:
 
         self._initialized = True
 
-    async def _load_secrets_to_cache(self) -> dict[int, Secret]:
+    async def _load_secrets_to_cache(self) -> dict[str, Secret]:
         secrets = await SecretsHandler.get_all_secrets()
         if secrets:
             for secret_data in secrets:
@@ -49,7 +49,7 @@ class SecretsHandler:
             except Exception as e:
                 logger.error(f"Error in periodic cleanup: {e}")
 
-    async def get_secret(self, secret_id: int) -> Secret | None:
+    async def get_secret(self, secret_id: str) -> Secret | None:
         if secret_id in self.orbit_secrets:
             return self.orbit_secrets[secret_id]
 

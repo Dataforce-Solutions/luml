@@ -1,9 +1,12 @@
+import logging
 from typing import Any, Self
 
 import httpx
 
 from agent.schemas import SatelliteTaskStatus
 from agent.schemas.deployments import Deployment
+
+logger = logging.getLogger("satellite")
 
 
 class PlatformClient:
@@ -35,11 +38,14 @@ class PlatformClient:
         params = {"status": status.value if status else None}
         r = await self._session.get(self._url("/satellites/tasks"), params=params)
         r.raise_for_status()
-        return r.json()
+        tasks = r.json()
+        logger.info(f"[platform_client] Retrieved {len(tasks)} tasks with status {status}")
+        logger.info(f"[platform_client] Tasks: {tasks}")
+        return tasks
 
     async def update_task_status(
         self,
-        task_id: int,
+        task_id: str,
         status: SatelliteTaskStatus,
         result: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
@@ -53,7 +59,7 @@ class PlatformClient:
 
     async def update_deployment_inference_url(
         self,
-        deployment_id: int,
+        deployment_id: str,
         inference_url: str,
     ) -> dict[str, Any]:
         assert self._session is not None
@@ -83,7 +89,7 @@ class PlatformClient:
         data = r.json()
         return bool(data.get("authorized", False))
 
-    async def get_model_artifact_download_url(self, model_artifact_id: int) -> str:
+    async def get_model_artifact_download_url(self, model_artifact_id: str) -> str:
         assert self._session is not None
         r = await self._session.get(
             self._url(f"/satellites/model_artifacts/{model_artifact_id}/download-url")
@@ -92,14 +98,14 @@ class PlatformClient:
         data = r.json()
         return str(data.get("url", ""))
 
-    async def get_model_artifact(self, model_artifact_id: int) -> tuple[dict, str]:
+    async def get_model_artifact(self, model_artifact_id: str) -> tuple[dict, str]:
         assert self._session is not None
         r = await self._session.get(self._url(f"/satellites/model_artifacts/{model_artifact_id}"))
         r.raise_for_status()
         data = r.json()
         return data.get("model"), str(data.get("url", ""))
 
-    async def get_orbit_secret(self, secret_id: int) -> dict[str, Any]:
+    async def get_orbit_secret(self, secret_id: str) -> dict[str, Any]:
         assert self._session is not None
         r = await self._session.get(self._url(f"/satellites/secrets/{secret_id}"))
         r.raise_for_status()
@@ -117,7 +123,7 @@ class PlatformClient:
         r.raise_for_status()
         return r.json()
 
-    async def get_deployment(self, deployment_id: int) -> Deployment:
+    async def get_deployment(self, deployment_id: str) -> Deployment:
         assert self._session is not None
         r = await self._session.get(self._url(f"/satellites/deployments/{deployment_id}"))
         r.raise_for_status()

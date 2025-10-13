@@ -1,9 +1,13 @@
 import asyncio
+import logging
 from contextlib import suppress
 
 from agent.handlers import TaskHandler
 from agent.schemas import SatelliteTaskStatus
 
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+
+logger = logging.getLogger("satellite")
 
 class PeriodicController:
     def __init__(self, *, handler: TaskHandler, poll_interval_s: float) -> None:
@@ -16,19 +20,20 @@ class PeriodicController:
 
     async def tick(self) -> None:
         tasks = await self.handler.platform.list_tasks(SatelliteTaskStatus.PENDING)
+        logger.info(f"[tasks] Found {len(tasks)} pending tasks: {[t.get('id', 'unknown') for t in tasks]}")
         for t in tasks:
             try:
                 await self.handler.dispatch(t)
             except Exception as e:
                 with suppress(Exception):
                     await self.handler.platform.update_task_status(
-                        int(t["id"]),
+                        t["id"],
                         SatelliteTaskStatus.FAILED,
                         {"reason": f"handler error: {e}"},
                     )
 
     async def run_forever(self) -> None:
-        print("[satellite] starting periodic controller…", flush=True)
+        print("[satellite] starting periodic controller...", flush=True)
         while not self._stopped:
             try:
                 await self.tick()

@@ -9,7 +9,7 @@ class OpenAPIHandler:
         self.ms_handler = model_server_handler
 
     def _update_schema_refs(
-        self, schema_obj: Any, deployment_id: int, original_schemas: set
+        self, schema_obj: Any, deployment_id: str, original_schemas: set
     ) -> Any:
         if isinstance(schema_obj, dict):
             if "$ref" in schema_obj:
@@ -56,7 +56,7 @@ class OpenAPIHandler:
     def _add_prefixed_schema(
         self,
         openapi_schema: dict[str, Any],
-        deployment_id: int,
+        deployment_id: str,
         schema_name: str,
         schema_def: dict[str, Any],
         model_schema: dict[str, Any],

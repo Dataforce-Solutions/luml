@@ -9,7 +9,7 @@ from agent.tasks.base import Task
 
 
 class DeployTask(Task):
-    async def _handle_healthcheck_timeout(self, container: DockerContainer, task_id: int) -> None:
+    async def _handle_healthcheck_timeout(self, container: DockerContainer, task_id: str) -> None:
         try:
             logs = await container.log(stdout=True, stderr=True, follow=False, tail=80)
             if isinstance(logs, list):
@@ -24,7 +24,7 @@ class DeployTask(Task):
             {"reason": "healthcheck timeout", "tail": str(logs)[-1000:]},
         )
 
-    async def _get_deployment_artifacts(self, dep_id: int, task_id: int) -> tuple[Deployment, str]:
+    async def _get_deployment_artifacts(self, dep_id: str, task_id: str) -> tuple[Deployment, str]:
         try:
             deployment = await self.platform.get_deployment(dep_id)
             if not deployment:
@@ -39,12 +39,12 @@ class DeployTask(Task):
             )
             raise
 
-    async def _get_secrets_env(self, secrets_payload: dict[str, int]) -> dict[str, str]:
+    async def _get_secrets_env(self, secrets_payload: dict[str, str]) -> dict[str, str]:
         secrets_env: dict[str, str] = {}
         if isinstance(secrets_payload, dict):
             for key, secret_id in secrets_payload.items():
                 try:
-                    secret = await self.platform.get_orbit_secret(int(secret_id))
+                    secret = await self.platform.get_orbit_secret(secret_id)
                     secrets_env[str(key)] = str(secret.get("value", ""))
                 except Exception:
                     continue
@@ -83,18 +83,18 @@ class DeployTask(Task):
             image=config.MODEL_IMAGE,
             name=f"sat-{dep_id}",
             container_port=int(config.CONTAINER_PORT),
-            labels={"df.deployment_id": str(dep_id)},
+            labels={"df.deployment_id": dep_id},
             env=env,
         )
 
-        inference_url = f"{config.BASE_URL}:{int(config.AUTH_PORT)}/deployments/{int(dep_id)}/compute"
+        inference_url = f"{config.BASE_URL}:{int(config.AUTH_PORT)}/deployments/{dep_id}/compute"
         async with ModelServerClient() as client:
-            health_ok = await client.is_healthy(int(dep_id))
+            health_ok = await client.is_healthy(dep_id)
 
         if not health_ok:
             await self._handle_healthcheck_timeout(container, task.id)
             return
-        await self.platform.update_deployment_inference_url(int(dep_id), inference_url)
+        await self.platform.update_deployment_inference_url(dep_id, inference_url)
         await self.platform.update_task_status(
             task.id,
             SatelliteTaskStatus.DONE,
