@@ -338,6 +338,7 @@ async def test_generate_bucket_urls(
     )
 
     mock_s3_instance = Mock()
+    mock_s3_instance.bucket_exists = Mock(return_value=True)
     mock_s3_instance.get_upload_url = AsyncMock(return_value=presigned_url)
     mock_s3_instance.get_download_url = AsyncMock(return_value=download_url)
     mock_s3_instance.get_delete_url = AsyncMock(return_value=delete_url)
@@ -398,6 +399,7 @@ async def test_get_existing_bucket_urls(
     )
 
     mock_s3_instance = Mock()
+    mock_s3_instance.bucket_exists = Mock(return_value=True)
     mock_s3_instance.get_upload_url = AsyncMock(return_value=presigned_url)
     mock_s3_instance.get_download_url = AsyncMock(return_value=download_url)
     mock_s3_instance.get_delete_url = AsyncMock(return_value=delete_url)

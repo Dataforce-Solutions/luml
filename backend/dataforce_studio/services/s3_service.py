@@ -27,6 +27,12 @@ class S3Service:
             cert_check=secret.cert_check if secret.cert_check is not None else True,
         )
 
+    def bucket_exists(self) -> bool:
+        try:
+            return self._client.bucket_exists(self._bucket_name)
+        except Exception as error:
+            raise BucketConnectionError(str(error)) from error
+
     @staticmethod
     def _calculate_optimal_chunk_size(file_size: int) -> int:
         if file_size <= 1073741824:  # 1gb
@@ -66,8 +72,8 @@ class S3Service:
             )
 
         except Exception as error:
-            raise ValueError(
-                f"Failed to initiate multipart upload: {str(error)}"
+            raise BucketConnectionError(
+                "Failed to initiate multipart upload."
             ) from error
 
     async def _get_multipart_upload_urls(
@@ -89,9 +95,7 @@ class S3Service:
                 urls.append(url)
             return urls
         except Exception as error:
-            raise BucketConnectionError(
-                f"Failed to generate upload URL: {str(error)}"
-            ) from error
+            raise BucketConnectionError("Failed to generate upload URL.") from error
 
     @staticmethod
     def _parts_upload_details(
@@ -124,9 +128,7 @@ class S3Service:
                 expires=timedelta(hours=self._url_expire),
             )
         except Exception as error:
-            raise BucketConnectionError(
-                f"Failed to generate upload URL: {str(error)}"
-            ) from error
+            raise BucketConnectionError("Failed to generate upload URL.") from error
 
     async def get_complete_url(self, object_name: str, upload_id: str) -> str:
         try:
@@ -138,9 +140,7 @@ class S3Service:
                 extra_query_params={"uploadId": upload_id},
             )
         except Exception as error:
-            raise BucketConnectionError(
-                f"Failed to generate complete URL: {str(error)}"
-            ) from error
+            raise BucketConnectionError("Failed to generate complete URL.") from error
 
     async def get_download_url(self, object_name: str) -> str:
         try:
@@ -150,9 +150,7 @@ class S3Service:
                 expires=timedelta(hours=self._url_expire),
             )
         except Exception as error:
-            raise BucketConnectionError(
-                f"Failed to generate download URL: {str(error)}"
-            ) from error
+            raise BucketConnectionError("Failed to generate download URL.") from error
 
     async def get_delete_url(self, object_name: str) -> str:
         try:
@@ -163,9 +161,7 @@ class S3Service:
                 expires=timedelta(hours=self._url_expire),
             )
         except Exception as error:
-            raise BucketConnectionError(
-                f"Failed to generate delete URL: {str(error)}"
-            ) from error
+            raise BucketConnectionError("Failed to generate delete URL.") from error
 
     async def create_single_upload(
         self, bucket_location: str, size: int
