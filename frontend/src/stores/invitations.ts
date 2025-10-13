@@ -13,14 +13,14 @@ export const useInvitationsStore = defineStore('invitations', () => {
     invitations.value = await dataforceApi.getInvitations()
   }
 
-  async function acceptInvitation(inviteId: number, organizationId: number) {
+  async function acceptInvitation(inviteId: string, organizationId: string) {
     await dataforceApi.acceptInvitation(inviteId)
     invitations.value = invitations.value.filter((invitation) => invitation.id !== inviteId)
     await organizationStore.getAvailableOrganizations()
     organizationStore.setCurrentOrganizationId(organizationId)
   }
 
-  async function rejectInvitation(inviteId: number) {
+  async function rejectInvitation(inviteId: string) {
     await dataforceApi.rejectInvitation(inviteId)
     invitations.value = invitations.value.filter((invitation) => invitation.id !== inviteId)
   }
@@ -29,7 +29,7 @@ export const useInvitationsStore = defineStore('invitations', () => {
     return dataforceApi.createInvite(payload.organization_id, payload)
   }
 
-  async function cancelInvite(organizationId: number, inviteId: number) {
+  async function cancelInvite(organizationId: string, inviteId: string) {
     return dataforceApi.cancelInvitation(organizationId, inviteId)
   }
 

@@ -5,13 +5,13 @@ import { OrbitRoleEnum } from '../orbits.interfaces'
 import { PermissionEnum } from '@/lib/api/DataforceApi.interfaces'
 
 const mockData = {
-  id: 1,
+  id: '11111111-1111-1111-1111-111111111111',
   name: 'Test Orbit',
-  organization_id: 1,
+  organization_id: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
   total_members: 10,
   created_at: new Date(),
   updated_at: null,
-  bucket_secret_id: 0,
+  bucket_secret_id: '00000000-0000-0000-0000-000000000000',
   total_collections: 5,
   role: OrbitRoleEnum.member,
   permissions: {

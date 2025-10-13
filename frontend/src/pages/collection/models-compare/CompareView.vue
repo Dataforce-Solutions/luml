@@ -44,8 +44,11 @@ const { init } = useExperimentSnapshotsDatabaseProvider()
 const loading = ref(false)
 
 const modelIdsList = computed(() => {
-  if (typeof route.query.models !== 'object') return []
-  return route.query.models?.filter((model) => model !== null).map((modelId) => +modelId) || []
+  if (!route.query.models) return []
+  if (Array.isArray(route.query.models)) {
+    return route.query.models.filter((model) => model !== null).map(String)
+  }
+  return [String(route.query.models)]
 })
 
 const modelsList = computed(() =>

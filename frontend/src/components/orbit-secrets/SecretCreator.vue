@@ -36,8 +36,8 @@ import { createSecretResolver } from '@/utils/forms/resolvers'
 import { useOrbitsStore } from '@/stores/orbits'
 
 type Props = {
-  organizationId?: number
-  orbitId?: number
+  organizationId?: string
+  orbitId?: string
 }
 
 const props = defineProps<Props>()

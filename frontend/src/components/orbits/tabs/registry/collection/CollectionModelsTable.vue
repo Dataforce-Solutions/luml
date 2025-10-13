@@ -63,9 +63,9 @@
           v-model:selection="selectedModels"
           :value="tableData"
           :pt="{
-            emptyMessageCell: {
-              style: 'padding: 25px 16px;',
-            },
+          emptyMessageCell: {
+            style: 'padding: 25px 16px;',
+          },
           }"
           selection-mode="multiple"
           data-key="id"
@@ -198,7 +198,7 @@ import { getSizeText } from '@/helpers/helpers'
 import { deleteModelConfirmOptions } from '@/lib/primevue/data/confirm'
 import { useOrbitsStore } from '@/stores/orbits'
 import { PermissionEnum } from '@/lib/api/DataforceApi.interfaces'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { useCollectionsStore } from '@/stores/collections'
 import DeploymentsCreateModal from '@/components/deployments/create/DeploymentsCreateModal.vue'
 import CollectionModelEditor from './model/CollectionModelEditor.vue'
@@ -218,11 +218,12 @@ const toast = useToast()
 const confirm = useConfirm()
 const orbitsStore = useOrbitsStore()
 const router = useRouter()
+const route = useRoute()
 const collectionsStore = useCollectionsStore()
 
 const selectedModels = ref<SelectedModel[]>([])
 const loading = ref(false)
-const modelForDeployment = ref<number | null>(null)
+const modelForDeployment = ref<string | null>(null)
 const modelForEdit = ref<SelectedModel | null>(null)
 
 const tableData = computed<SelectedModel[]>(() => {
@@ -340,7 +341,11 @@ watch(tableData, (data) => {
 
 onBeforeMount(async () => {
   try {
-    const modelsList = await modelsStore.getModelsList()
+    const modelsList = await modelsStore.getModelsList(
+      String(route.params.organizationId),
+      String(route.params.id),
+      String(collectionsStore.currentCollection?.id),
+    )
     modelsStore.setModelsList(modelsList)
   } catch {
     toast.add(simpleErrorToast('Failed to load models'))

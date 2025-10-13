@@ -24,13 +24,13 @@ export const editorDialogPt: DialogPassThroughOptions = {
   },
 }
 
-export const getInitialFormData = (collectionId?: number, modelId?: number) => {
+export const getInitialFormData = (collectionId?: string, modelId?: string) => {
   return {
     name: '',
     description: '',
     tags: [],
-    collectionId: collectionId,
-    modelId: modelId,
+    collectionId: collectionId ?? null,
+    modelId: modelId ?? null,
     satelliteId: null,
     secretDynamicAttributes: [],
     dynamicAttributes: [],

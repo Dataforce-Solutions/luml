@@ -14,21 +14,21 @@ export class BucketSecretsApi {
     this.api = api
   }
 
-  async getBucketSecretsList(organizationId: number) {
+  async getBucketSecretsList(organizationId: string) {
     const { data: responseData } = await this.api.get<BucketSecret[]>(
       `/organizations/${organizationId}/bucket-secrets`,
     )
     return responseData
   }
 
-  async getBucketSecret(organizationId: number, secretId: number) {
+  async getBucketSecret(organizationId: string, secretId: string) {
     const { data: responseData } = await this.api.get<BucketSecret>(
       `/organizations/${organizationId}/bucket-secrets/${secretId}`,
     )
     return responseData
   }
 
-  async createBucketSecret(organizationId: number, data: BucketSecretCreator) {
+  async createBucketSecret(organizationId: string, data: BucketSecretCreator) {
     const { data: responseData } = await this.api.post<BucketSecret>(
       `/organizations/${organizationId}/bucket-secrets`,
       data,
@@ -37,9 +37,9 @@ export class BucketSecretsApi {
   }
 
   async updateBucketSecret(
-    organizationId: number,
-    secretId: number,
-    data: BucketSecretCreator & { id: number },
+    organizationId: string,
+    secretId: string,
+    data: BucketSecretCreator & { id: string },
   ) {
     const { data: responseData } = await this.api.patch<BucketSecret>(
       `/organizations/${organizationId}/bucket-secrets/${secretId}`,
@@ -48,7 +48,7 @@ export class BucketSecretsApi {
     return responseData
   }
 
-  async deleteBucketSecret(organizationId: number, secretId: number) {
+  async deleteBucketSecret(organizationId: string, secretId: string) {
     const { data: responseData } = await this.api.delete<BaseDetailResponse>(
       `/organizations/${organizationId}/bucket-secrets/${secretId}`,
     )
@@ -64,8 +64,8 @@ export class BucketSecretsApi {
   }
 
   async getExistingBucketSecretConnectionUrls(
-    organizationId: number,
-    secretId: number,
+    organizationId: string,
+    secretId: string,
     data: BucketSecretValidator,
   ) {
     const { data: responseData } = await this.api.post<BucketConnectionUrls>(

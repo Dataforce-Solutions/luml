@@ -23,7 +23,7 @@ export const useSecretsStore = defineStore("secrets", () => {
 		creatorVisible.value = false;
 	}
 
-	async function loadSecrets(organizationId: number, orbitId: number) {
+	async function loadSecrets(organizationId: string, orbitId: string) {
 		secretsList.value = await dataforceApi.orbitSecrets.getSecrets(
 			organizationId,
 			orbitId,
@@ -31,8 +31,8 @@ export const useSecretsStore = defineStore("secrets", () => {
 	}
 
 	async function addSecret(
-		organizationId: number,
-		orbitId: number,
+		organizationId: string,
+		orbitId: string,
 		payload: CreateSecretPayload,
 	) {
 		await dataforceApi.orbitSecrets.createSecret(organizationId, orbitId, payload);
@@ -40,8 +40,8 @@ export const useSecretsStore = defineStore("secrets", () => {
 	}
 
 	async function updateSecret(
-		organizationId: number,
-		orbitId: number,
+		organizationId: string,
+		orbitId: string,
 		payload: UpdateSecretPayload,
 	) {
 		await dataforceApi.orbitSecrets.updateSecret(organizationId, orbitId, payload);
@@ -49,9 +49,9 @@ export const useSecretsStore = defineStore("secrets", () => {
 	}
 
 	async function deleteSecret(
-		organizationId: number,
-		orbitId: number,
-		secretId: number,
+		organizationId: string,
+		orbitId: string,
+		secretId: string,
 	) {
 		await dataforceApi.orbitSecrets.deleteSecret(organizationId, orbitId, secretId);
 		secretsList.value = secretsList.value.filter(
@@ -60,9 +60,9 @@ export const useSecretsStore = defineStore("secrets", () => {
 	}
 
 	async function getSecretById(
-		organizationId: number,
-		orbitId: number,
-		secretId: number,
+		organizationId: string,
+		orbitId: string,
+		secretId: string,
 	) {
 		return await dataforceApi.orbitSecrets.getSecretById(
 			organizationId,

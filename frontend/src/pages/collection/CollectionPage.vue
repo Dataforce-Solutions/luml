@@ -34,21 +34,30 @@ const modelsStore = useModelsStore()
 
 const loading = ref(true)
 
-async function init(organizationId: number) {
+function ensureString(param: string | string[] | undefined): string {
+  if (Array.isArray(param)) return param[0]
+  if (!param) throw new Error('Missing route param')
+  return param
+}
+
+async function init(organizationId: string) {
   try {
     loading.value = true
-    if (typeof route.params.id !== 'string' || typeof route.params.collectionId !== 'string')
-      throw new Error('Incorrect route data')
 
-    if (orbitsStore.currentOrbitDetails?.id !== +route.params.id) {
-      const details = await orbitsStore.getOrbitDetails(organizationId, +route.params.id)
+    const orbitId = ensureString(route.params.id)
+    const collectionId = ensureString(route.params.collectionId)
+
+    if (orbitsStore.currentOrbitDetails?.id !== orbitId) {
+      const details = await orbitsStore.getOrbitDetails(organizationId, orbitId)
       orbitsStore.setCurrentOrbitDetails(details)
     }
     await collectionsStore.loadCollections()
-    const modelsList = await modelsStore.getModelsList()
+
+    const modelsList = await modelsStore.getModelsList(organizationId, orbitId, collectionId)
     modelsStore.setModelsList(modelsList)
-    collectionsStore.setCurrentCollection(+route.params.collectionId)
-  } catch {
+
+    collectionsStore.setCurrentCollection(collectionId)
+  } catch (e) {
     toast.add(simpleErrorToast('Failed to load collection data'))
   } finally {
     loading.value = false
@@ -58,13 +67,14 @@ async function init(organizationId: number) {
 watch(
   () => organizationStore.currentOrganization?.id,
   async (id) => {
-    if (!id || +route.params.organizationId === id) return
+    if (!id || route.params.organizationId === id) return
     await router.push({ name: 'orbits', params: { organizationId: id } })
   },
 )
 
 onBeforeMount(() => {
-  init(+route.params.organizationId)
+  const organizationId = ensureString(route.params.organizationId)
+  init(organizationId)
 })
 
 onUnmounted(() => {

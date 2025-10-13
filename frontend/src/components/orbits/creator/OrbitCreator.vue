@@ -68,7 +68,7 @@
                 <d-button variant="text" as-child v-slot="slotProps" size="small">
                   <RouterLink
                     :to="{
-                      name: 'organization-buckets',
+                    name: 'organization-buckets',
                       params: { id: +route.params.organizationId },
                     }"
                     :class="slotProps.class"
@@ -164,16 +164,20 @@ const initialValues = ref<Partial<CreateOrbitPayload>>({
 const loading = ref(false)
 const membersModel = ref<Omit<IGetUserResponse, 'auth_method'>[]>([])
 
-const getMemberFullName = computed(() => (userId: number) => {
-  return membersList.value.find((member) => +member.id === userId)?.full_name || ''
+const getMemberFullName = computed(() => (userId: string) => {
+  return membersList.value.find((member) => member.id === userId)?.full_name || ''
 })
+
+function getSingleParam(param: string | string[] | undefined): string {
+  return Array.isArray(param) ? param[0] : param || ''
+}
 
 watch(
   membersModel,
   (members) => {
     initialValues.value.members = members.map((member) => {
-      const includedMember = initialValues.value.members?.find((m) => m.user_id === +member.id)
-      return includedMember || { user_id: +member.id, role: OrbitRoleEnum.member }
+      const includedMember = initialValues.value.members?.find((m) => m.user_id === member.id)
+      return includedMember || { user_id: member.id, role: OrbitRoleEnum.member }
     })
   },
   { deep: true },
@@ -184,9 +188,8 @@ async function onSubmit({ valid }: FormSubmitEvent) {
   try {
     loading.value = true
     const payload = initialValues.value as CreateOrbitPayload
-    await orbitsStore.createOrbit(+route.params.organizationId, payload)
+    await orbitsStore.createOrbit(getSingleParam(route.params.organizationId), payload)
     toast.add(simpleSuccessToast('Orbit created'))
-    loading.value = true
     visible.value = false
   } catch (e: any) {
     toast.add(simpleErrorToast(e?.response?.data?.detail || e.message || 'Failed to create orbit'))
@@ -196,7 +199,7 @@ async function onSubmit({ valid }: FormSubmitEvent) {
 }
 
 watch(visible, (val) => {
-  val && bucketsStore.getBuckets(+route.params.organizationId)
+  if (val) bucketsStore.getBuckets(getSingleParam(route.params.organizationId))
 })
 </script>
 

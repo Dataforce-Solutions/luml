@@ -43,7 +43,7 @@ export const useEvalsStore = defineStore('evals', () => {
     spansCount.value = null
   }
 
-  function getTraceId(modelId: number) {
+  function getTraceId(modelId: string) {
     if (!currentEvalData.value || !currentDatasetId.value || !currentEvalId.value) return null
     return getProvider.value.getTraceId({
       modelId,
@@ -52,7 +52,7 @@ export const useEvalsStore = defineStore('evals', () => {
     })
   }
 
-  async function getSpansTree(modelId: number) {
+  async function getSpansTree(modelId: string) {
     if (!currentEvalData.value || !currentDatasetId.value || !currentEvalId.value) return []
     const spansList = await getProvider.value.getSpansList({
       modelId,

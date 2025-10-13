@@ -23,8 +23,8 @@ export interface MlModelCreator {
 }
 
 export interface MlModel {
-  id: number
-  collection_id: number
+  id: string
+  collection_id: string
   file_name: string
   model_name: string
   description: string
@@ -42,7 +42,7 @@ export interface MlModel {
 }
 
 export interface UpdateMlModelPayload {
-  id: number
+  id: string
   file_name: string
   model_name: string
   description: string

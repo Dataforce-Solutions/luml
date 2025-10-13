@@ -4,8 +4,8 @@ export enum OrbitCollectionTypeEnum {
 }
 
 export interface OrbitCollection {
-  id: number
-  orbit_id: number
+  id: string
+  orbit_id: string
   description: string
   name: string
   collection_type: OrbitCollectionTypeEnum

@@ -33,19 +33,19 @@ export class BucketValidationError extends Error {
 export const useBucketsStore = defineStore('buckets', () => {
   const buckets = ref<BucketSecret[]>([])
 
-  async function getBuckets(organizationId: number) {
+  async function getBuckets(organizationId: string) {
     buckets.value = await dataforceApi.bucketSecrets.getBucketSecretsList(organizationId)
   }
 
-  async function createBucket(organizationId: number, data: BucketSecretCreator) {
+  async function createBucket(organizationId: string, data: BucketSecretCreator) {
     const bucket = await dataforceApi.bucketSecrets.createBucketSecret(organizationId, data)
     buckets.value.push(bucket)
   }
 
   async function updateBucket(
-    organizationId: number,
-    bucketId: number,
-    data: BucketSecretCreator & { id: number },
+    organizationId: string,
+    bucketId: string,
+    data: BucketSecretCreator & { id: string },
   ) {
     const updatedBucket = await dataforceApi.bucketSecrets.updateBucketSecret(
       organizationId,
@@ -59,7 +59,7 @@ export const useBucketsStore = defineStore('buckets', () => {
     return updatedBucket
   }
 
-  async function deleteBucket(organizationId: number, bucketId: number) {
+  async function deleteBucket(organizationId: string, bucketId: string) {
     await dataforceApi.bucketSecrets.deleteBucketSecret(organizationId, bucketId)
     buckets.value = buckets.value.filter((bucket) => bucket.id !== bucketId)
   }
@@ -113,8 +113,8 @@ export const useBucketsStore = defineStore('buckets', () => {
   }
 
   async function checkExistingBucket(
-    organizationId: number,
-    bucketId: number,
+    organizationId: string,
+    bucketId: string,
     data: BucketSecretCreator,
   ) {
     const connectionUrls = await dataforceApi.bucketSecrets.getExistingBucketSecretConnectionUrls(

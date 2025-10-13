@@ -75,7 +75,7 @@ const toast = useToast()
 const visible = ref(false)
 const loading = ref(false)
 
-async function accept(inviteId: number, organizationId: number) {
+async function accept(inviteId: string, organizationId: string) {
   loading.value = true
 
   try {
@@ -88,7 +88,7 @@ async function accept(inviteId: number, organizationId: number) {
   }
 }
 
-async function reject(inviteId: number) {
+async function reject(inviteId: string) {
   loading.value = true
 
   try {

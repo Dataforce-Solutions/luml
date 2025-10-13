@@ -123,7 +123,7 @@ const OPTIONS = [
 ]
 
 type Props = {
-  orbitId: number
+  orbitId: string
 }
 
 const props = defineProps<Props>()
@@ -170,7 +170,7 @@ async function addUsers() {
     return {
       role: OrbitRoleEnum.member,
       orbit_id: props.orbitId,
-      user_id: +member.user.id,
+      user_id: member.user.id,
     }
   })
 
@@ -200,11 +200,11 @@ async function getOrbitDetails() {
   }
 }
 
-function onTrashClick(memberId: number) {
+function onTrashClick(memberId: string) {
   confirm.require(deleteUserConfirmOptions(() => deleteMember(memberId), 'You can add a user to your orbit at any time.'))
 }
 
-async function deleteMember(memberId: number) {
+async function deleteMember(memberId: string) {
   try {
     loading.value = true
     const organizationId = organizationsStore.currentOrganization?.id

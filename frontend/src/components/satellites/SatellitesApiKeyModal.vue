@@ -49,7 +49,7 @@ import { useRoute } from 'vue-router'
 
 type Props = {
   apiKey: string | null
-  satelliteId: number
+  satelliteId: string
 }
 
 const dialogPt: DialogPassThroughOptions = {
@@ -79,12 +79,14 @@ const loading = ref(false)
 const isCopied = ref(false)
 
 const organizationId = computed(() => {
-  if (!route.params.organizationId) throw new Error('Current organization was not found')
-  return +route.params.organizationId
+  const param = route.params.organizationId
+  if (!param) throw new Error('Current organization was not found')
+  return typeof param === 'string' ? param : param[0]
 })
 const orbitId = computed(() => {
-  if (!route.params.id) throw new Error('Current orbit was not found')
-  return +route.params.id
+  const param = route.params.id
+  if (!param) throw new Error('Current orbit was not found')
+  return typeof param === 'string' ? param : param[0]
 })
 
 const copyAvailable = computed(() => !!currentApiKey.value)

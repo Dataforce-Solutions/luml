@@ -38,9 +38,9 @@ import { useDeploymentsStore } from '@/stores/deployments'
 import { getErrorMessage } from '@/helpers/helpers'
 
 type Props = {
-  organizationId: number
-  orbitId: number
-  deploymentId: number
+  organizationId: string
+  orbitId: string
+  deploymentId: string
   name: string
 }
 

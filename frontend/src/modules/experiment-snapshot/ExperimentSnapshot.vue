@@ -50,7 +50,7 @@ import { useEvalsStore } from './store/evals'
 
 type Props = {
   provider: ExperimentSnapshotProvider
-  modelsIds: number[]
+  modelsIds: string[]
   modelsInfo: ModelsInfo
 }
 

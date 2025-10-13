@@ -28,8 +28,8 @@ export interface CreateSatelliteResponse {
 }
 
 export interface Satellite {
-  id: number
-  orbit_id: number
+  id: string
+  orbit_id: string
   name: string
   description: string
   base_url: string
@@ -51,9 +51,9 @@ export interface CapabilitiesDeploy {
 }
 
 export interface SatelliteTask {
-  id: number
-  satellite_id: number
-  orbit_id: number
+  id: string
+  satellite_id: string
+  orbit_id: string
   type: SatelliteTaskTypeEnum
   payload: object
   status: SatelliteTaskStatusEnum

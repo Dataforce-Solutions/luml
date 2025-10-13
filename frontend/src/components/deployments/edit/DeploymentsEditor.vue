@@ -114,9 +114,9 @@ interface FormValues {
   name: string
   description: string
   tags: string[]
-  collectionId: number
-  modelId: number
-  secretDynamicAttributes: FieldInfo<number>[]
+  collectionId: string
+  modelId: string
+  secretDynamicAttributes: FieldInfo[]
 }
 
 type Props = {
@@ -149,20 +149,20 @@ const loading = ref(false)
 
 const organizationId = computed(() => {
   if (typeof route.params.organizationId !== 'string') throw new Error('Incorrect organization ID')
-  return +route.params.organizationId
+  return route.params.organizationId
 })
 
 async function saveChanges() {
   try {
     loading.value = true
     const dynamic_attributes_secrets = initialValues.value.secretDynamicAttributes.reduce(
-      (acc: Record<string, number>, attribute) => {
-        if (!attribute.value) return acc
-        acc[attribute.key] = attribute.value
-        return acc
-      },
-      {},
-    )
+      (acc: Record<string, string>, attribute) => {
+     if (!attribute.value) return acc
+     acc[attribute.key] = attribute.value
+     return acc
+   },
+   {},
+)
     const payload: UpdateDeploymentPayload = {
       name: initialValues.value.name,
       description: initialValues.value.description,

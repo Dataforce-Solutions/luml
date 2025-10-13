@@ -7,10 +7,13 @@
     />
   </div>
 
-  <SecretCreator
-    v-model:visible="secretsStore.creatorVisible"
-    @update:visible="(val) => (val ? secretsStore.showCreator() : secretsStore.hideCreator())"
-  />
+<SecretCreator
+  :organization-id="orbitsStore.currentOrbitDetails!.organization_id"
+  :orbit-id="orbitsStore.currentOrbitDetails!.id"
+  v-model:visible="secretsStore.creatorVisible"
+  @update:visible="(val) => (val ? secretsStore.showCreator() : secretsStore.hideCreator())"
+/>
+
 </template>
 
 <script setup lang="ts">

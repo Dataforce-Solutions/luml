@@ -38,7 +38,7 @@ import { useAuthStore } from '@/stores/auth'
 import { X, Menu } from 'lucide-vue-next'
 
 type Emits = {
-  burgerClick: void
+  (e: 'burgerClick'): void
 }
 
 defineProps({
@@ -51,7 +51,7 @@ defineProps({
   },
 })
 
-defineEmits<Emits>()
+const emit = defineEmits<Emits>()
 
 const authStore = useAuthStore()
 

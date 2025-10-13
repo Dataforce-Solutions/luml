@@ -1,8 +1,8 @@
 export interface OrbitSecret {
-  id: number;
+  id: string;
   name: string;
   value: string;
-  orbit_id: number;
+  orbit_id: string;
   created_at: string;
   updated_at: string;
   tags?: string[];
@@ -15,7 +15,7 @@ export type CreateSecretPayload = {
 };
 
 export type UpdateSecretPayload = {
-  id: number;
+  id: string;
   name?: string;
   value?: string;
   tags?: string[];

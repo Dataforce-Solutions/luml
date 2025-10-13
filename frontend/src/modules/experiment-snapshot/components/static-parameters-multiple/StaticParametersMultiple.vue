@@ -48,7 +48,7 @@ const tableData = computed(() => {
   return uniqueParams.value.map((param) => {
     const modelsWithParams = Object.entries(props.modelsInfo).map((entries) => {
       const modelValue =
-        props.parametersList.find((staticParams) => staticParams.modelId === +entries[0])?.[
+        props.parametersList.find((staticParams) => staticParams.modelId === entries[0])?.[
           param
         ] || '-'
       return [entries[1].name, modelValue]

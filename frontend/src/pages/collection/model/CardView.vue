@@ -46,7 +46,7 @@ const loading = ref(false)
 
 const currentModel = computed(() => {
   if (typeof route.params.modelId !== 'string') return undefined
-  return modelsStore.modelsList.find((model) => model.id === +route.params.modelId)
+  return modelsStore.modelsList.find((model) => model.id === route.params.modelId)
 })
 const isTabular = computed(
   () => modelsStore.currentModelTag && FnnxService.isTabularTag(modelsStore.currentModelTag),

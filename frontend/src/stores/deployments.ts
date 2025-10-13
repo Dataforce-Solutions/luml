@@ -12,15 +12,15 @@ export const useDeploymentsStore = defineStore('deployments', () => {
   const creatorVisible = ref(false)
 
   async function createDeployment(
-    organizationId: number,
-    orbitId: number,
+    organizationId: string,
+    orbitId: string,
     payload: CreateDeploymentPayload,
   ) {
     const newDeployment = await dataforceApi.deployments.create(organizationId, orbitId, payload)
     deployments.value.push(newDeployment)
   }
 
-  function getDeployments(organizationId: number, orbitId: number) {
+  function getDeployments(organizationId: string, orbitId: string) {
     return dataforceApi.deployments.getList(organizationId, orbitId)
   }
 
@@ -40,7 +40,7 @@ export const useDeploymentsStore = defineStore('deployments', () => {
     creatorVisible.value = false
   }
 
-  async function deleteDeployment(organizationId: number, orbitId: number, deploymentId: number) {
+  async function deleteDeployment(organizationId: string, orbitId: string, deploymentId: string) {
     const updatedDeployment = await dataforceApi.deployments.deleteDeployment(
       organizationId,
       orbitId,
@@ -52,9 +52,9 @@ export const useDeploymentsStore = defineStore('deployments', () => {
   }
 
   async function update(
-    organizationId: number,
-    orbitId: number,
-    deploymentId: number,
+    organizationId: string,
+    orbitId: string,
+    deploymentId: string,
     payload: UpdateDeploymentPayload,
   ) {
     const newDeployment = await dataforceApi.deployments.update(

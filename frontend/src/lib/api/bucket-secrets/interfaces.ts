@@ -1,11 +1,11 @@
 export interface BucketSecret {
-  id: number
+  id: string
   endpoint: string
   bucket_name: string
   secure: boolean
   region: string
   cert_check: boolean
-  organization_id: number
+  organization_id: string
   created_at: Date
   updated_at: Date
 }
@@ -28,6 +28,6 @@ export interface BucketConnectionUrls {
 }
 
 export interface BucketSecretValidator extends BucketSecretCreator {
-  id: number
+  id: string
 }
 

@@ -55,7 +55,7 @@ const dialogPt: DialogPassThroughOptions = {
 }
 
 
-async function loadSecretValue(secretId: number) {
+async function loadSecretValue(secretId: string) {
   const orbit = orbitsStore.currentOrbitDetails
   if (!orbit?.organization_id || !orbit?.id) return
 

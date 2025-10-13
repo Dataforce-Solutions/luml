@@ -16,16 +16,16 @@ export const useOrbitsStore = defineStore('orbit', () => {
 
   const getCurrentOrbitPermissions = computed(() => currentOrbitDetails.value?.permissions)
 
-  async function loadOrbitsList(organizationId: number) {
+  async function loadOrbitsList(organizationId: string) {
     orbitsList.value = await dataforceApi.getOrganizationOrbits(organizationId)
   }
 
-  async function createOrbit(organizationId: number, payload: CreateOrbitPayload) {
+  async function createOrbit(organizationId: string, payload: CreateOrbitPayload) {
     const orbit = await dataforceApi.createOrbit(organizationId, payload)
     orbitsList.value.push(orbit)
   }
 
-  async function updateOrbit(organizationId: number, payload: UpdateOrbitPayload) {
+  async function updateOrbit(organizationId: string, payload: UpdateOrbitPayload) {
     const orbit = await dataforceApi.updateOrbit(organizationId, payload)
     orbitsList.value = orbitsList.value.map((savedOrbit) => {
       if (savedOrbit.id !== orbit.id) return savedOrbit
@@ -33,27 +33,27 @@ export const useOrbitsStore = defineStore('orbit', () => {
     })
   }
 
-  async function deleteOrbit(organizationId: number, orbitId: number) {
+  async function deleteOrbit(organizationId: string, orbitId: string) {
     await dataforceApi.deleteOrbit(organizationId, orbitId)
     orbitsList.value = orbitsList.value.filter((orbit) => orbit.id !== orbitId)
   }
 
-  async function addMemberToOrbit(organizationId: number, payload: AddMemberToOrbitPayload) {
+  async function addMemberToOrbit(organizationId: string, payload: AddMemberToOrbitPayload) {
     return dataforceApi.addMemberToOrbit(organizationId, payload)
   }
 
-  async function getOrbitDetails(organizationId: number, orbitId: number) {
+  async function getOrbitDetails(organizationId: string, orbitId: string) {
     return dataforceApi.getOrbitDetails(organizationId, orbitId)
   }
 
-  async function deleteMember(organizationId: number, orbitId: number, memberId: number) {
+  async function deleteMember(organizationId: string, orbitId: string, memberId: string) {
     return dataforceApi.deleteOrbitMember(organizationId, orbitId, memberId)
   }
 
   async function updateMember(
-    organizationId: number,
-    orbitId: number,
-    data: { id: number; role: OrbitRoleEnum },
+    organizationId: string,
+    orbitId: string,
+    data: { id: string; role: OrbitRoleEnum },
   ) {
     return dataforceApi.updateOrbitMember(organizationId, orbitId, data)
   }

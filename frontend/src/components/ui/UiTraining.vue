@@ -29,13 +29,13 @@ type Props = {
   time: number
   isCancelAvailable?: boolean
 }
-type Emits = {
-  cancel: void
-  'update:modelValue': [boolean]
-}
+const emit = defineEmits<{
+  (e: 'cancel'): void
+  (e: 'update:modelValue', value: boolean): void
+}>()
+
 
 defineProps<Props>()
-defineEmits<Emits>()
 </script>
 
 <style scoped>

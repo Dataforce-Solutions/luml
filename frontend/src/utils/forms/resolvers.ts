@@ -72,11 +72,11 @@ export const orbitCreatorResolver = (orbitsList: Orbit[]) =>
         }),
       members: z.array(
         z.object({
-          user_id: z.number(),
+          user_id: z.string(),
           role: z.string(),
         }),
       ),
-      bucket_secret_id: z.number(),
+      bucket_secret_id: z.string(),
     }),
   )
 
@@ -114,8 +114,8 @@ export const modelEditorResolver = zodResolver(
 
 export const modelUploadResolver = zodResolver(
   z.object({
-    orbit: z.number(),
-    collection: z.number(),
+    orbit: z.string(),
+    collection: z.string(),
     name: z.string().min(1),
     description: z.string(),
     tags: z.array(z.string()),
@@ -160,9 +160,9 @@ export const createDeploymentResolver = zodResolver(
     name: z.string().min(1),
     description: z.string().optional(),
     tags: z.array(z.string()).optional().default([]),
-    collectionId: z.number(),
-    modelId: z.number(),
-    satelliteId: z.number(),
+    collectionId: z.string(),
+    modelId: z.string(),
+    satelliteId: z.string(),
     secretDynamicAttributes: z.array(valueSchema).optional(),
     secretEnvs: z.array(valueSchema).optional(),
     notSecretEnvs: z.array(valueSchema).optional(),

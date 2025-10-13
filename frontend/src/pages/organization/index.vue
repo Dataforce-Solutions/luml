@@ -42,10 +42,16 @@ const hasPermission = computed(() => {
 })
 
 async function init() {
+  const idParam = route.params.id;
+  const organizationId = Array.isArray(idParam) ? idParam[0] : idParam;
+  if (!organizationId) {
+    toast.add(simpleErrorToast('Organization not found'));
+    return; 
+  }
   try {
-    organizationStore.resetCurrentOrganization()
-    await organizationStore.setCurrentOrganizationId(+route.params.id)
-    organizationStore.getOrganizationDetails(+route.params.id)
+    organizationStore.resetCurrentOrganization();
+    await organizationStore.setCurrentOrganizationId(organizationId);
+    organizationStore.getOrganizationDetails(organizationId);
   } catch (e: any) {
     toast.add(simpleErrorToast(e.details || 'Unable to retrieve organization data'))
   }
@@ -58,7 +64,7 @@ onBeforeMount(() => {
 watch(
   () => organizationStore.currentOrganization?.id,
   async (id) => {
-    if (!id || +route.params.id === id) return
+    if (!id || route.params.id === id) return
 
     await router.push({
       name: route.name,

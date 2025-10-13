@@ -90,12 +90,14 @@ const initialValues = ref({
 })
 
 const organizationId = computed(() => {
-  if (!route.params.organizationId) throw new Error('Current organization was not found')
-  return +route.params.organizationId
+  const id = route.params.organizationId
+  if (!id || Array.isArray(id)) throw new Error('Current organization was not found')
+  return id
 })
 const orbitId = computed(() => {
-  if (!route.params.id) throw new Error('Current orbit was not found')
-  return +route.params.id
+  const id = route.params.id
+  if (!id || Array.isArray(id)) throw new Error('Current orbit was not found')
+  return id
 })
 
 async function onDelete() {

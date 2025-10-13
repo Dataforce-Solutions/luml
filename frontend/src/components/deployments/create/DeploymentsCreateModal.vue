@@ -66,8 +66,8 @@ import DeploymentsFormModelSettings from '../form/DeploymentsFormModelSettings.v
 import DeploymentsFormSatelliteSettings from '../form/DeploymentsFormSatelliteSettings.vue'
 
 type Props = {
-  initialCollectionId?: number
-  initialModelId?: number
+  initialCollectionId?: string
+  initialModelId?: string
 }
 
 const props = defineProps<Props>()
@@ -120,8 +120,8 @@ function getPayload(form: CreateDeploymentForm): CreateDeploymentPayload {
     satellite_id: form.satelliteId,
     model_artifact_id: form.modelId,
     satellite_parameters: fieldsToRecord(form.satelliteFields, getNumberOrString),
-    dynamic_attributes_secrets: fieldsToRecord(form.secretDynamicAttributes, (v) => v),
-    env_variables_secrets: fieldsToRecord(form.secretEnvs, (v) => v),
+    dynamic_attributes_secrets: fieldsToRecord(form.secretDynamicAttributes, (v) => v) as unknown as Record<string, string>,
+    env_variables_secrets: fieldsToRecord<string>(form.secretEnvs, (v) => String(v)),
     env_variables: fieldsToRecord(form.notSecretEnvs, getNumberOrString),
     tags: form.tags,
   }

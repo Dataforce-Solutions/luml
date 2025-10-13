@@ -12,7 +12,7 @@
   <ExperimentSnapshot
     v-if="modelsStore.experimentSnapshotProvider && currentModel"
     :provider="modelsStore.experimentSnapshotProvider"
-    :models-ids="[currentModel.id]"
+    :models-ids="[String(currentModel.id)]"
     :models-info="modelsInfo"
   ></ExperimentSnapshot>
 </template>
@@ -35,7 +35,7 @@ const loading = ref(false)
 
 const currentModel = computed(() => {
   if (typeof route.params.modelId !== 'string') return undefined
-  return modelsStore.modelsList.find((model) => model.id === +route.params.modelId)
+  return modelsStore.modelsList.find((model) => model.id === route.params.modelId)
 })
 
 const modelsInfo = computed(() => {
