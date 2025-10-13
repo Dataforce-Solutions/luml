@@ -11,9 +11,9 @@ export interface CreateDeploymentForm {
   collectionId: string
   modelId: string
   satelliteId: string
-  secretDynamicAttributes: FieldInfo<number>[]
+  secretDynamicAttributes: FieldInfo<string>[]
   dynamicAttributes: FieldInfo<string>[]
-  secretEnvs: FieldInfo<number>[]
+  secretEnvs: FieldInfo<string>[]
   notSecretEnvs: FieldInfo<string>[]
   customVariables: Omit<FieldInfo<string>, 'label'>[]
   satelliteFields: FieldInfo<string | number>[]

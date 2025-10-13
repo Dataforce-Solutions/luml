@@ -57,7 +57,7 @@ export interface ScoreInfo {
 }
 
 export interface ModelScores {
-  modelId: string | string
+  modelId: string
   scores: ScoreInfo[]
 }
 
