@@ -32,7 +32,9 @@ async function leave() {
     await organizationStore.leaveOrganization(props.organizationId)
     toast.add(simpleSuccessToast('You’ve successfully left the organization.'))
   } catch (e: any) {
-    toast.add(simpleErrorToast(e?.response?.data?.detail || 'Failed to log out of the organization'))
+    toast.add(
+      simpleErrorToast(e?.response?.data?.detail || 'Failed to log out of the organization'),
+    )
   }
 }
 </script>

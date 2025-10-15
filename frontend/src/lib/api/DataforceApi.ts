@@ -155,7 +155,10 @@ export class DataforceApiClass {
   }
 
   public async createInvite(organizationId: string, data: CreateInvitePayload) {
-    const { data: responseData } = await this.api.post<Invitation>(`/organizations/${organizationId}/invitations`, data)
+    const { data: responseData } = await this.api.post<Invitation>(
+      `/organizations/${organizationId}/invitations`,
+      data,
+    )
     return responseData
   }
 
@@ -177,12 +180,18 @@ export class DataforceApiClass {
   }
 
   public async createOrganization(data: CreateOrganizationPayload) {
-    const { data: responseData } = await this.api.post<CreateOrganizationResponse>('/organizations', data)
+    const { data: responseData } = await this.api.post<CreateOrganizationResponse>(
+      '/organizations',
+      data,
+    )
     return responseData
   }
 
   public async updateOrganization(organizationId: string, data: CreateOrganizationPayload) {
-    const { data: responseData } = await this.api.patch<OrganizationDetails>(`/organizations/${organizationId}`, data)
+    const { data: responseData } = await this.api.patch<OrganizationDetails>(
+      `/organizations/${organizationId}`,
+      data,
+    )
     return responseData
   }
 
@@ -200,67 +209,107 @@ export class DataforceApiClass {
   }
 
   public async getOrganizationMembers(organizationId: string) {
-    const { data: responseData } = await this.api.get<Member>(`/organizations/${organizationId}/members`)
+    const { data: responseData } = await this.api.get<Member>(
+      `/organizations/${organizationId}/members`,
+    )
     return responseData
   }
 
   public async addMemberToOrganization(organizationId: string, data: AddMemberPayload) {
-    const { data: responseData } = await this.api.post<Member>(`/organizations/${organizationId}/members`, data)
+    const { data: responseData } = await this.api.post<Member>(
+      `/organizations/${organizationId}/members`,
+      data,
+    )
     return responseData
   }
 
-  public async updateOrganizationMember(organizationId: string, memberId: string, data: UpdateMemberPayload) {
-    const { data: responseData } = await this.api.patch<Member>(`/organizations/${organizationId}/members/${memberId}`, data)
+  public async updateOrganizationMember(
+    organizationId: string,
+    memberId: string,
+    data: UpdateMemberPayload,
+  ) {
+    const { data: responseData } = await this.api.patch<Member>(
+      `/organizations/${organizationId}/members/${memberId}`,
+      data,
+    )
     return responseData
   }
 
   public async deleteMemberFormOrganization(organizationId: string, memberId: string) {
-   const { data: responseData } = await this.api.delete<BaseDetailResponse>(`/organizations/${organizationId}/members/${memberId}`)
-   return responseData
+    const { data: responseData } = await this.api.delete<BaseDetailResponse>(
+      `/organizations/${organizationId}/members/${memberId}`,
+    )
+    return responseData
   }
 
   public async getOrganizationOrbits(organizationId: string) {
-    const { data: responseData } = await this.api.get<Orbit[]>(`/organizations/${organizationId}/orbits`)
+    const { data: responseData } = await this.api.get<Orbit[]>(
+      `/organizations/${organizationId}/orbits`,
+    )
     return responseData
   }
 
   public async createOrbit(organization_id: string, data: CreateOrbitPayload) {
-    const { data: responseData } = await this.api.post<Orbit>(`/organizations/${organization_id}/orbits`, data)
+    const { data: responseData } = await this.api.post<Orbit>(
+      `/organizations/${organization_id}/orbits`,
+      data,
+    )
     return responseData
   }
 
   public async getOrbitDetails(organizationId: string, orbitId: string) {
-    const { data: responseData } = await this.api.get<OrbitDetails>(`/organizations/${organizationId}/orbits/${orbitId}`)
+    const { data: responseData } = await this.api.get<OrbitDetails>(
+      `/organizations/${organizationId}/orbits/${orbitId}`,
+    )
     return responseData
   }
 
   public async updateOrbit(organizationId: string, data: UpdateOrbitPayload) {
-    const { data: responseData } = await this.api.patch<Orbit>(`/organizations/${organizationId}/orbits/${data.id}`, data)
+    const { data: responseData } = await this.api.patch<Orbit>(
+      `/organizations/${organizationId}/orbits/${data.id}`,
+      data,
+    )
     return responseData
   }
 
   public async deleteOrbit(organizationId: string, orbitId: string) {
-    const { data: responseData } = await this.api.delete<BaseDetailResponse>(`/organizations/${organizationId}/orbits/${orbitId}`)
+    const { data: responseData } = await this.api.delete<BaseDetailResponse>(
+      `/organizations/${organizationId}/orbits/${orbitId}`,
+    )
     return responseData
   }
 
   public async getOrbitMembers(organizationId: string, orbitId: string) {
-    const { data: responseData } = await this.api.get<OrbitMember>(`/organizations/${organizationId}/orbits/${orbitId}/members`)
+    const { data: responseData } = await this.api.get<OrbitMember>(
+      `/organizations/${organizationId}/orbits/${orbitId}/members`,
+    )
     return responseData
   }
 
   public async addMemberToOrbit(organizationId: string, data: AddMemberToOrbitPayload) {
-    const { data: responseData } = await this.api.post<OrbitMember>(`/organizations/${organizationId}/orbits/${data.orbit_id}/members`, data);
+    const { data: responseData } = await this.api.post<OrbitMember>(
+      `/organizations/${organizationId}/orbits/${data.orbit_id}/members`,
+      data,
+    )
     return responseData
   }
 
-  public async updateOrbitMember(organizationId: string, orbitId: string, data: { id: string, role: OrbitRoleEnum }) {
-    const { data: responseData } = await this.api.patch<OrbitMember>(`/organizations/${organizationId}/orbits/${orbitId}/members/${data.id}`, data)
+  public async updateOrbitMember(
+    organizationId: string,
+    orbitId: string,
+    data: { id: string; role: OrbitRoleEnum },
+  ) {
+    const { data: responseData } = await this.api.patch<OrbitMember>(
+      `/organizations/${organizationId}/orbits/${orbitId}/members/${data.id}`,
+      data,
+    )
     return responseData
   }
 
   public async deleteOrbitMember(organizationId: string, orbitId: string, memberId: string) {
-    const { data: responseData } = await this.api.delete<BaseDetailResponse>(`/organizations/${organizationId}/orbits/${orbitId}/members/${memberId}`)
+    const { data: responseData } = await this.api.delete<BaseDetailResponse>(
+      `/organizations/${organizationId}/orbits/${orbitId}/members/${memberId}`,
+    )
     return responseData
   }
 }

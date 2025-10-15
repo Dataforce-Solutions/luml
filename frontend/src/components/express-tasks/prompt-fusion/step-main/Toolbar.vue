@@ -2,48 +2,89 @@
   <div class="toolbar">
     <div class="toolbar-body">
       <div class="toolbar-zoom">
-        <d-button class="smallest-button" variant="text" severity="secondary" size="small" @click="zoomOutFunction">
+        <d-button
+          class="smallest-button"
+          variant="text"
+          severity="secondary"
+          size="small"
+          @click="zoomOutFunction"
+        >
           <template #icon>
             <zoom-out :size="14" />
           </template>
         </d-button>
         <div class="toolbar-zoom-value">
-          <input v-model="zoomValue" type="number" class="toolbar-zoom-input" @input="changeZoom">
+          <input v-model="zoomValue" type="number" class="toolbar-zoom-input" @input="changeZoom" />
           <span class="toolbar-zoom-value">%</span>
         </div>
-        <d-button class="smallest-button" variant="text" severity="secondary" size="small" @click="zoomInFunction">
+        <d-button
+          class="smallest-button"
+          variant="text"
+          severity="secondary"
+          size="small"
+          @click="zoomInFunction"
+        >
           <template #icon>
             <zoom-in :size="14" />
           </template>
         </d-button>
       </div>
       <div class="pointers">
-        <d-button class="small-button" variant="text" :severity="cursorMode === 'hand' ? 'primary' : 'secondary'" size="small" @click="cursorMode = 'hand'">
+        <d-button
+          class="small-button"
+          variant="text"
+          :severity="cursorMode === 'hand' ? 'primary' : 'secondary'"
+          size="small"
+          @click="cursorMode = 'hand'"
+        >
           <template #icon>
             <pointer :size="14" />
           </template>
         </d-button>
-        <d-button class="small-button" variant="text" :severity="cursorMode === 'pointer' ? 'primary' : 'secondary'" size="small" @click="cursorMode = 'pointer'">
+        <d-button
+          class="small-button"
+          variant="text"
+          :severity="cursorMode === 'pointer' ? 'primary' : 'secondary'"
+          size="small"
+          @click="cursorMode = 'pointer'"
+        >
           <template #icon>
             <mouse-pointer-2 :size="14" />
           </template>
         </d-button>
       </div>
       <d-divider layout="vertical" class="divider" />
-      <d-button ref="toggleMenuButton" v-tooltip.top="'Add card'" class="small-button" variant="text" severity="secondary" size="small" @click="toggleMenu">
+      <d-button
+        ref="toggleMenuButton"
+        v-tooltip.top="'Add card'"
+        class="small-button"
+        variant="text"
+        severity="secondary"
+        size="small"
+        @click="toggleMenu"
+      >
         <template #icon>
           <circle-plus :size="14" />
         </template>
       </d-button>
     </div>
-    <on-click-outside v-if="isMenuOpen" :options="{ ignore: [toggleMenuButton] }" class="menu" @trigger="onMenuOutsideClick">
+    <on-click-outside
+      v-if="isMenuOpen"
+      :options="{ ignore: [toggleMenuButton] }"
+      class="menu"
+      @trigger="onMenuOutsideClick"
+    >
       <button class="menu-item" @click.stop="addNode(NodeTypeEnum.gate)">
-        <component :is="PROMPT_NODES_ICONS.gate" :size="14" color="var(--p-badge-success-background)"/>
+        <component
+          :is="PROMPT_NODES_ICONS.gate"
+          :size="14"
+          color="var(--p-badge-success-background)"
+        />
         <span>Gate</span>
       </button>
       <d-divider :style="{ margin: '2px 0' }" />
       <button class="menu-item" @click.stop="addNode(NodeTypeEnum.processor)">
-        <component :is="PROMPT_NODES_ICONS.cpu" :size="14" color="var(--p-badge-warn-background)"/>
+        <component :is="PROMPT_NODES_ICONS.cpu" :size="14" color="var(--p-badge-warn-background)" />
         <span>Processor</span>
       </button>
     </on-click-outside>
@@ -58,7 +99,14 @@ import { NodeTypeEnum, PROMPT_NODES_ICONS } from '../interfaces'
 import { OnClickOutside } from '@vueuse/components'
 import { getEmptyGateNode, getEmptyProcessorNode } from '@/constants/prompt-fusion'
 
-const { zoomIn: zoomInFunction, zoomOut: zoomOutFunction, zoomTo, viewport, addNodes, panOnDrag } = useVueFlow()
+const {
+  zoomIn: zoomInFunction,
+  zoomOut: zoomOutFunction,
+  zoomTo,
+  viewport,
+  addNodes,
+  panOnDrag,
+} = useVueFlow()
 
 const zoomValue = ref((viewport.value.zoom * 100).toFixed())
 const cursorMode = ref<'pointer' | 'hand'>('pointer')
@@ -86,12 +134,19 @@ function addNode(node: NodeTypeEnum) {
   }
 }
 
-watch(() => viewport.value.zoom, (value) => {
-  zoomValue.value = (value * 100).toFixed()
-})
-watch(isViewportLocked, (val) => {
-  panOnDrag.value = !val
-}, { immediate: true })
+watch(
+  () => viewport.value.zoom,
+  (value) => {
+    zoomValue.value = (value * 100).toFixed()
+  },
+)
+watch(
+  isViewportLocked,
+  (val) => {
+    panOnDrag.value = !val
+  },
+  { immediate: true },
+)
 </script>
 
 <style scoped>
@@ -159,7 +214,9 @@ watch(isViewportLocked, (val) => {
   border: 1px solid var(--p-menu-border-color);
   border-radius: var(--p-menu-border-radius);
   padding: 4px;
-  box-shadow: 0px 4px 6px -1px rgba(0, 0, 0, 0.10), 0px 2px 4px -2px rgba(0, 0, 0, 0.10);
+  box-shadow:
+    0px 4px 6px -1px rgba(0, 0, 0, 0.1),
+    0px 2px 4px -2px rgba(0, 0, 0, 0.1);
   position: absolute;
   bottom: calc(100% + 7px);
   right: 0;
@@ -168,7 +225,9 @@ watch(isViewportLocked, (val) => {
   padding: 8px 12px;
   color: var(--p-menu-item-color);
   width: 100%;
-  transition: background-color var(--p-menu-transition-duration), color var(--p-menu-transition-duration);
+  transition:
+    background-color var(--p-menu-transition-duration),
+    color var(--p-menu-transition-duration);
   border-radius: var(--p-menu-item-border-radius);
   cursor: pointer;
   font-size: 12px;

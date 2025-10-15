@@ -12,7 +12,7 @@ export interface CreateDeploymentPayload {
   satellite_id: string
   model_artifact_id: string
   satellite_parameters: Record<string, string | number>
-  dynamic_attributes_secrets: Record<string, string> 
+  dynamic_attributes_secrets: Record<string, string>
   env_variables_secrets: Record<string, string>
   env_variables: Record<string, string | number>
   tags: string[]
@@ -42,5 +42,5 @@ export interface UpdateDeploymentPayload {
   name: string
   description: string
   tags: string[]
-  dynamic_attributes_secrets: Record<string, string> 
+  dynamic_attributes_secrets: Record<string, string>
 }

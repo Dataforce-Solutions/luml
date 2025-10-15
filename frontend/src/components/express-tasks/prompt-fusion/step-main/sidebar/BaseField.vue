@@ -3,24 +3,53 @@
     <header class="field-header">
       <h4 class="field-type">{{ typeLabel ? typeLabel : data.variant }}</h4>
       <div class="field-actives">
-        <d-button :severity="data.variadic ? 'primary' : 'secondary'" rounded variant="text" v-tooltip.top="'Set as List'" class="filed-actives-button" @click="onVariadicClick">
+        <d-button
+          :severity="data.variadic ? 'primary' : 'secondary'"
+          rounded
+          variant="text"
+          v-tooltip.top="'Set as List'"
+          class="filed-actives-button"
+          @click="onVariadicClick"
+        >
           <template #icon>
             <brackets width="14" height="14" />
           </template>
         </d-button>
         <span class="divider"></span>
-        <d-button severity="secondary" rounded variant="text" class="filed-actives-button" @click="onTrashClick">
+        <d-button
+          severity="secondary"
+          rounded
+          variant="text"
+          class="filed-actives-button"
+          @click="onTrashClick"
+        >
           <template #icon>
-            <trash width="14" height="14"/>
+            <trash width="14" height="14" />
           </template>
         </d-button>
       </div>
     </header>
     <div class="field-body">
-      <d-select v-model="data.type" :options="options" option-label="name" option-value="value" size="small" placeholder="Data type" class="select"/>
+      <d-select
+        v-model="data.type"
+        :options="options"
+        option-label="name"
+        option-value="value"
+        size="small"
+        placeholder="Data type"
+        class="select"
+      />
       <div class="input-wrapper">
-        <d-input-text v-model="data.value" placeholder="Field name" size="small" class="input" :invalid="isDuplicate"/>
-        <d-message v-if="isDuplicate" severity="error" size="small" variant="simple" class="error">Not a unique name</d-message>
+        <d-input-text
+          v-model="data.value"
+          placeholder="Field name"
+          size="small"
+          class="input"
+          :invalid="isDuplicate"
+        />
+        <d-message v-if="isDuplicate" severity="error" size="small" variant="simple" class="error"
+          >Not a unique name</d-message
+        >
       </div>
     </div>
   </div>
@@ -28,7 +57,7 @@
 
 <script setup lang="ts">
 import { Brackets, Trash } from 'lucide-vue-next'
-import { PromptFieldTypeEnum, type NodeField } from '../../interfaces';
+import { PromptFieldTypeEnum, type NodeField } from '../../interfaces'
 
 type Props = {
   data: NodeField

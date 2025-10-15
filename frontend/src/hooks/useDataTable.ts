@@ -15,7 +15,11 @@ type InitialTableData = {
 export type ColumnType = 'number' | 'string' | 'date'
 export type PromptFusionColumn = { name: string; variant: 'input' | 'output' }
 
-export type ValidatorFunction = (size?: number, columns?: number, rows?: number) => { size: boolean, columns: boolean, rows: boolean }
+export type ValidatorFunction = (
+  size?: number,
+  columns?: number,
+  rows?: number,
+) => { size: boolean; columns: boolean; rows: boolean }
 
 const initialState = {
   startedTableData: null,
@@ -69,14 +73,26 @@ export const useDataTable = (validator: ValidatorFunction) => {
   const getTarget = computed(() => target.value)
   const getGroup = computed(() => group.value)
   const getFilters = computed(() => filters.value)
-  const getInputsColumns = computed(() => inputsOutputsColumns.value.filter(column => {
-    const isColumnAvailable = selectedColumns.value.length ? selectedColumns.value.includes(column.name) : true
-    return isColumnAvailable && column.variant === 'input'
-  }).map(column => column.name))
-  const getOutputsColumns = computed(() => inputsOutputsColumns.value.filter(column => {
-    const isColumnAvailable = selectedColumns.value.length ? selectedColumns.value.includes(column.name) : true
-    return isColumnAvailable && column.variant === 'output'
-  }).map(column => column.name))
+  const getInputsColumns = computed(() =>
+    inputsOutputsColumns.value
+      .filter((column) => {
+        const isColumnAvailable = selectedColumns.value.length
+          ? selectedColumns.value.includes(column.name)
+          : true
+        return isColumnAvailable && column.variant === 'input'
+      })
+      .map((column) => column.name),
+  )
+  const getOutputsColumns = computed(() =>
+    inputsOutputsColumns.value
+      .filter((column) => {
+        const isColumnAvailable = selectedColumns.value.length
+          ? selectedColumns.value.includes(column.name)
+          : true
+        return isColumnAvailable && column.variant === 'output'
+      })
+      .map((column) => column.name),
+  )
 
   async function onSelectFile(file: File) {
     await dataTable.createFormCSV(file)
@@ -134,7 +150,7 @@ export const useDataTable = (validator: ValidatorFunction) => {
       toast.add(incorrectGroupWarning)
       return
     }
-    const columnExist = group.value.includes(column);
+    const columnExist = group.value.includes(column)
     if (columnExist) {
       group.value = group.value.filter((item) => item !== column)
     } else {

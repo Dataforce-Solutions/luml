@@ -69,7 +69,7 @@ onBeforeMount(async () => {
     }
     const list = await satellitesStore.loadSatellites(
       String(route.params.organizationId),
-      String(route.params.id)
+      String(route.params.id),
     )
     satellitesStore.setList(list)
   } catch (e: any) {

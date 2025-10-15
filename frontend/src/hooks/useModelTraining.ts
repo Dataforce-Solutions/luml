@@ -28,7 +28,7 @@ export const useModelTraining = (service: 'tabular' | 'prompt_optimization') => 
     trainingData.value ? toPercent(trainingData.value.test_metrics.SC_SCORE) : 0,
   )
   const getTestMetrics = computed(() => {
-    if (!trainingData.value) return [];
+    if (!trainingData.value) return []
 
     if (currentTask.value === Tasks.TABULAR_CLASSIFICATION) {
       return getMetrics(trainingData.value, Tasks.TABULAR_CLASSIFICATION, 'test_metrics')
@@ -37,7 +37,7 @@ export const useModelTraining = (service: 'tabular' | 'prompt_optimization') => 
     }
   })
   const getTrainingMetrics = computed(() => {
-    if (!trainingData.value) return [];
+    if (!trainingData.value) return []
 
     if (currentTask.value === Tasks.TABULAR_CLASSIFICATION) {
       return getMetrics(trainingData.value, Tasks.TABULAR_CLASSIFICATION, 'train_metrics')
@@ -81,9 +81,15 @@ export const useModelTraining = (service: 'tabular' | 'prompt_optimization') => 
 
   async function startPredict(request: PredictRequestData) {
     isLoading.value = true
-    const route = service === 'tabular' ? WEBWORKER_ROUTES_ENUM.TABULAR_PREDICT : WEBWORKER_ROUTES_ENUM.PROMPT_OPTIMIZATION_PREDICT
+    const route =
+      service === 'tabular'
+        ? WEBWORKER_ROUTES_ENUM.TABULAR_PREDICT
+        : WEBWORKER_ROUTES_ENUM.PROMPT_OPTIMIZATION_PREDICT
     try {
-      const result = await DataProcessingWorker.startPredict(JSON.parse(JSON.stringify(request)), route)
+      const result = await DataProcessingWorker.startPredict(
+        JSON.parse(JSON.stringify(request)),
+        route,
+      )
 
       if (result.status === 'success') {
         return result
@@ -112,7 +118,10 @@ export const useModelTraining = (service: 'tabular' | 'prompt_optimization') => 
   }
 
   async function deleteModels() {
-    const route = service === 'prompt_optimization' ? WEBWORKER_ROUTES_ENUM.TABULAR_DEALLOCATE : WEBWORKER_ROUTES_ENUM.STORE_DEALLOCATE
+    const route =
+      service === 'prompt_optimization'
+        ? WEBWORKER_ROUTES_ENUM.TABULAR_DEALLOCATE
+        : WEBWORKER_ROUTES_ENUM.STORE_DEALLOCATE
     await DataProcessingWorker.deallocateModels(modelsIdList.value, route)
   }
 

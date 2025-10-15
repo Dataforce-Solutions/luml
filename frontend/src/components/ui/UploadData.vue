@@ -13,7 +13,8 @@
         accept-text="Supports CSV file format"
         upload-text="upload CSV"
         @select-file="(e) => $emit('selectFile', e)"
-        @remove-file="$emit('removeFile')"/>
+        @remove-file="$emit('removeFile')"
+      />
       <div class="info">
         <h3 class="info-title">File Requirements</h3>
         <ul class="info-list">
@@ -53,9 +54,7 @@
           <img :src="CSVIcon" alt="CSV File" />
           <span>Sample Dataset</span>
         </div>
-        <div class="sample-text">
-          Use our sample dataset to explore how the model training.
-        </div>
+        <div class="sample-text">Use our sample dataset to explore how the model training.</div>
         <d-button label="use sample" @click="selectSample" />
       </div>
       <div class="info">
@@ -64,7 +63,7 @@
           <li v-for="resource in resources" class="info-item">
             <a :href="resource.link" target="_blank" class="info-item-body link">
               <span>{{ resource.label }}</span>
-              <external-link width="14" height="14" class="link-icon"/>
+              <external-link width="14" height="14" class="link-icon" />
             </a>
           </li>
         </ul>
@@ -92,7 +91,7 @@ type Props = {
   }
   minColumnsCount: number
   minRowsCount: number
-  resources: { label: string, link: string }[]
+  resources: { label: string; link: string }[]
   sampleFileName: string
 }
 
@@ -114,7 +113,7 @@ const hasError = computed(() => {
 })
 
 async function selectSample() {
-  const fileUrl = `/data/${props.sampleFileName}`;
+  const fileUrl = `/data/${props.sampleFileName}`
   const response = await fetch(fileUrl)
   const text = await response.text()
   const file = new File([text], props.sampleFileName, { type: 'text/csv' })

@@ -1,14 +1,26 @@
 <template>
-  <Dialog :visible="props.visible" @update:visible="emit('update:visible', $event)" position="topright"
-    :draggable="false" style="margin-top: 80px; height: 86%; width: 420px" :pt="dialogPt">
+  <Dialog
+    :visible="props.visible"
+    @update:visible="emit('update:visible', $event)"
+    position="topright"
+    :draggable="false"
+    style="margin-top: 80px; height: 86%; width: 420px"
+    :pt="dialogPt"
+  >
     <template #header>
       <h2 class="dialog-title">
         <Bolt :size="20" color="var(--p-primary-color)" />
         <span>Secret settings</span>
       </h2>
     </template>
-    <Form id="secret-edit-form" :initial-values="formData" :resolver="updateSecretResolver" @submit="onSubmit"
-      class="form" validate-on-submit>
+    <Form
+      id="secret-edit-form"
+      :initial-values="formData"
+      :resolver="updateSecretResolver"
+      @submit="onSubmit"
+      class="form"
+      validate-on-submit
+    >
       <div class="form-item">
         <label for="name" class="label">Name</label>
         <InputText v-model="formData.name" id="name" name="name" fluid />
@@ -16,14 +28,29 @@
 
       <div class="form-item">
         <label for="value" class="label">Secret key</label>
-        <Password v-model="formData.value" id="value" name="value" :feedback="false" toggleMask fluid
-          :key="props.secret?.id" />
+        <Password
+          v-model="formData.value"
+          id="value"
+          name="value"
+          :feedback="false"
+          toggleMask
+          fluid
+          :key="props.secret?.id"
+        />
       </div>
 
       <div class="form-item">
         <label for="tags" class="label">Tags</label>
-        <AutoComplete v-model="formData.tags" id="tags" name="tags" placeholder="Type to add tags" fluid multiple
-          :suggestions="autocompleteItems" @complete="searchTags" />
+        <AutoComplete
+          v-model="formData.tags"
+          id="tags"
+          name="tags"
+          placeholder="Type to add tags"
+          fluid
+          multiple
+          :suggestions="autocompleteItems"
+          @complete="searchTags"
+        />
       </div>
     </Form>
     <template #footer>
@@ -50,7 +77,7 @@ import { useSecretsStore } from '@/stores/orbit-secrets'
 import { useOrbitsStore } from '@/stores/orbits'
 import type { OrbitSecret, UpdateSecretPayload } from '@/lib/api/orbit-secrets/interfaces'
 import type { AutoCompleteCompleteEvent } from 'primevue'
-import { deleteSecretConfirmation } from "@/lib/primevue/data/confirm"
+import { deleteSecretConfirmation } from '@/lib/primevue/data/confirm'
 
 interface Props {
   visible: boolean
@@ -87,7 +114,7 @@ async function loadSecretDetails() {
     const fullSecret = await secretsStore.getSecretById(
       orbit.organization_id,
       orbit.id,
-      props.secret.id
+      props.secret.id,
     )
 
     if (fullSecret) {
@@ -99,10 +126,7 @@ async function loadSecretDetails() {
       }
     }
   } catch (error) {
-    toast.add(
-      simpleErrorToast('Failed to load secret details'
-      )
-    )
+    toast.add(simpleErrorToast('Failed to load secret details'))
   }
 }
 
@@ -120,7 +144,7 @@ watch(
       }
     }
   },
-  { immediate: true }
+  { immediate: true },
 )
 
 watch(
@@ -129,7 +153,7 @@ watch(
     if (visible && props.secret?.id) {
       await loadSecretDetails()
     }
-  }
+  },
 )
 
 const updateLoading = ref(false)
@@ -141,9 +165,7 @@ const autocompleteItems = ref<string[]>([])
 function searchTags(event: AutoCompleteCompleteEvent) {
   autocompleteItems.value = [
     event.query,
-    ...existingTags.value.filter((tag) =>
-      tag.toLowerCase().includes(event.query.toLowerCase())
-    ),
+    ...existingTags.value.filter((tag) => tag.toLowerCase().includes(event.query.toLowerCase())),
   ]
 }
 
@@ -175,11 +197,7 @@ async function onSubmit({ valid }: FormSubmitEvent) {
     toast.add(simpleSuccessToast('Secret updated successfully'))
     emit('update:visible', false)
   } catch (e: any) {
-    toast.add(
-      simpleErrorToast(
-        e?.response?.data?.detail || e.message || 'Failed to update secret'
-      )
-    )
+    toast.add(simpleErrorToast(e?.response?.data?.detail || e.message || 'Failed to update secret'))
   } finally {
     updateLoading.value = false
   }
@@ -192,7 +210,7 @@ function onComponentDelete() {
     ...deleteSecretConfirmation,
     accept: async () => {
       await onDelete()
-    }
+    },
   })
 }
 
@@ -208,8 +226,12 @@ async function onDelete() {
     emit('update:visible', false)
   } catch (e: any) {
     const errorMessage = e?.response?.data?.detail || e.message || 'Failed to delete secret'
-    
-    if (errorMessage.includes('used') || errorMessage.includes('deployment') || errorMessage.includes('active')) {
+
+    if (
+      errorMessage.includes('used') ||
+      errorMessage.includes('deployment') ||
+      errorMessage.includes('active')
+    ) {
       toast.add(simpleErrorToast('The secret is currently used by active deployments'))
     } else {
       toast.add(simpleErrorToast(errorMessage))

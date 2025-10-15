@@ -46,7 +46,7 @@ const items = [
     label: 'Secrets',
     routeName: 'orbit-secrets',
     icon: Lock,
-  }
+  },
 ]
 </script>
 

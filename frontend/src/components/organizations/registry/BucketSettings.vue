@@ -89,9 +89,7 @@ async function onFormSubmit(formData: BucketSecretCreator) {
       toast.add(simpleErrorToast(err.getMessage()))
     } else {
       toast.add(
-        simpleErrorToast(
-          err?.response?.data?.detail || err.message || 'Failed to update bucket',
-        ),
+        simpleErrorToast(err?.response?.data?.detail || err.message || 'Failed to update bucket'),
       )
     }
   } finally {

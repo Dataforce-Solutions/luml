@@ -11,7 +11,8 @@
         :loading="isModelLoading"
         loading-message="Model creating..."
         @select-file="selectFile"
-        @remove-file="removeFile"/>
+        @remove-file="removeFile"
+      />
       <span class="middle-divider">or</span>
       <div class="sample">
         <div class="sample-title">

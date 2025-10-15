@@ -6,7 +6,8 @@
           <d-input-text
             v-model="manualValues[field as keyof typeof manualValues]"
             :id="field"
-            fluid/>
+            fluid
+          />
           <label class="label" :for="field">{{ cutStringOnMiddle(field, 24) }}</label>
         </d-float-label>
       </div>
@@ -17,7 +18,8 @@
       fluid
       rounded
       :disabled="isPredictButtonDisabled"
-      @click="submit"/>
+      @click="submit"
+    />
     <Textarea
       class="prediction"
       id="prediction"
@@ -26,7 +28,8 @@
       rows="4"
       :style="{ resize: 'none' }"
       disabled
-      placeholder="Prediction"></Textarea>
+      placeholder="Prediction"
+    ></Textarea>
   </div>
 </template>
 
@@ -66,7 +69,7 @@ function createManualValuesObject(inputs: string[]) {
 async function submit() {
   isLoading.value = true
   try {
-    const data: Record<string, (string | number)[]> = {};
+    const data: Record<string, (string | number)[]> = {}
     for (const key in manualValues.value) {
       data[key] = [manualValues.value[key]]
     }

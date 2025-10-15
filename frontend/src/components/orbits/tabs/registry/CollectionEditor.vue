@@ -12,7 +12,13 @@
         <span>Collection settings</span>
       </h2>
     </template>
-    <Form id="orbit-edit-form" :initialValues :resolver="collectionEditorResolver" class="form" @submit="saveChanges">
+    <Form
+      id="orbit-edit-form"
+      :initialValues
+      :resolver="collectionEditorResolver"
+      class="form"
+      @submit="saveChanges"
+    >
       <div class="form-item">
         <label for="name" class="label">Name</label>
         <InputText v-model="initialValues.name" name="name" id="name" />
@@ -43,7 +49,13 @@
     </Form>
     <template #footer>
       <div>
-        <Button v-if="orbitsStore.getCurrentOrbitPermissions?.collection.includes(PermissionEnum.delete)" variant="outlined" severity="warn" :disabled="loading" @click="onDeleteClick">
+        <Button
+          v-if="orbitsStore.getCurrentOrbitPermissions?.collection.includes(PermissionEnum.delete)"
+          variant="outlined"
+          severity="warn"
+          :disabled="loading"
+          @click="onDeleteClick"
+        >
           delete collection
         </Button>
       </div>

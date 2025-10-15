@@ -1,4 +1,4 @@
-import type { AnalyticsInterface } from "./lib/analytics/AnalyticsService"
+import type { AnalyticsInterface } from './lib/analytics/AnalyticsService'
 
 export {}
 

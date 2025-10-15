@@ -1,6 +1,11 @@
 <template>
   <div ref="wrapperRef">
-    <Textarea v-bind="attrs" class="textarea" :class="{ scrollable: isScrollable }" :style="{maxHeight: props.maxHeight + 'px'}"></Textarea>
+    <Textarea
+      v-bind="attrs"
+      class="textarea"
+      :class="{ scrollable: isScrollable }"
+      :style="{ maxHeight: props.maxHeight + 'px' }"
+    ></Textarea>
   </div>
 </template>
 

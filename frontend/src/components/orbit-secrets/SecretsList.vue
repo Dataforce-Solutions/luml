@@ -11,14 +11,20 @@
     </div>
     <div class="simple-table__rows">
       <div v-if="!secretsStore.secretsList.length" class="simple-table__placeholder">
-        You don’t have any secrets yet. Add one to make them available for tasks or model deployments.
+        You don’t have any secrets yet. Add one to make them available for tasks or model
+        deployments.
       </div>
       <div v-for="secret in secretsStore.secretsList" :key="secret.id" class="simple-table__row">
         <div class="secret-name">
           {{ secret.name }}
         </div>
         <div class="secret-key">
-          <Button variant="text" severity="secondary" class="eye-button" @click="showSecretModal(secret)">
+          <Button
+            variant="text"
+            severity="secondary"
+            class="eye-button"
+            @click="showSecretModal(secret)"
+          >
             <template #icon>
               <Eye :size="15" />
             </template>
@@ -90,7 +96,7 @@ const editSecret = (secret: OrbitSecret) => {
 
 function showSecretModal(secret: OrbitSecret) {
   currentSecret.value = secret
-  secretModalVisible.value = true 
+  secretModalVisible.value = true
 }
 
 function maskSecret(value?: string): string {
@@ -101,9 +107,7 @@ function maskSecret(value?: string): string {
 function normalizeTags(tags: any): string[] {
   if (!tags) return []
   if (Array.isArray(tags)) {
-    return tags.map((tag) =>
-      typeof tag === 'string' ? tag : tag.name ?? ''
-    )
+    return tags.map((tag) => (typeof tag === 'string' ? tag : (tag.name ?? '')))
   }
   if (typeof tags === 'string') {
     return tags.split(',').map((tag) => tag.trim())

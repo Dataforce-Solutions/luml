@@ -1,20 +1,29 @@
 <template>
   <div class="wrapper" :style="{ paddingLeft: sidebarWidth + 'px' }">
-    <UiClosablePlug v-if="plugStore.visible" text="Some operations involving models may not behave correctly on mobile." :style="{
-      position: 'fixed',
-      top: headerSizes.height + 'px',
-      left: sidebarSizes.width + 'px',
-      right: 0,
-      zIndex: 100,
-    }" @close="plugStore.close"/>
-    <layout-header class="header" :is-burger-open="isBurgerOpen" @burger-click="() => (isBurgerOpen = !isBurgerOpen)"/>
+    <UiClosablePlug
+      v-if="plugStore.visible"
+      text="Some operations involving models may not behave correctly on mobile."
+      :style="{
+        position: 'fixed',
+        top: headerSizes.height + 'px',
+        left: sidebarSizes.width + 'px',
+        right: 0,
+        zIndex: 100,
+      }"
+      @close="plugStore.close"
+    />
+    <layout-header
+      class="header"
+      :is-burger-open="isBurgerOpen"
+      @burger-click="() => (isBurgerOpen = !isBurgerOpen)"
+    />
     <transition>
-      <layout-sidebar v-show="isBurgerAvailable ? isBurgerOpen : true" class="sidebar"/>
+      <layout-sidebar v-show="isBurgerAvailable ? isBurgerOpen : true" class="sidebar" />
     </transition>
     <layout-footer class="footer" :style="`left:${sidebarWidth}px`" />
     <main class="page">
-      <MobileNotAvailablePlug v-if="showMobileNotAvailablePlug" class="mobile-not-available-plug"/>
-      <slot v-else/>
+      <MobileNotAvailablePlug v-if="showMobileNotAvailablePlug" class="mobile-not-available-plug" />
+      <slot v-else />
     </main>
   </div>
 </template>
@@ -41,7 +50,9 @@ const isBurgerOpen = ref(false)
 
 const isBurgerAvailable = computed(() => windowWidth.value <= 768)
 const mobileNotAvailable = computed(() => route.meta.mobileAvailable === false)
-const showMobileNotAvailablePlug = computed(() => mobileNotAvailable.value && windowWidth.value <= 768)
+const showMobileNotAvailablePlug = computed(
+  () => mobileNotAvailable.value && windowWidth.value <= 768,
+)
 const sidebarWidth = computed(() => sidebarSizes.value.width)
 
 router.afterEach(() => {

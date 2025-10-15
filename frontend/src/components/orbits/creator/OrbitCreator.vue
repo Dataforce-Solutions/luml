@@ -68,7 +68,7 @@
                 <d-button variant="text" as-child v-slot="slotProps" size="small">
                   <RouterLink
                     :to="{
-                    name: 'organization-buckets',
+                      name: 'organization-buckets',
                       params: { id: +route.params.organizationId },
                     }"
                     :class="slotProps.class"

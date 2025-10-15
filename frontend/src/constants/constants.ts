@@ -1,5 +1,13 @@
 import type { TaskData } from '@/components/homepage-tasks/interfaces'
-import { CirclePlay, Zap, File, Orbit, Notebook, BotMessageSquare, MessageCircleCode } from 'lucide-vue-next'
+import {
+  CirclePlay,
+  Zap,
+  File,
+  Orbit,
+  Notebook,
+  BotMessageSquare,
+  MessageCircleCode,
+} from 'lucide-vue-next'
 import TabularClassificationIcon from '@/assets/img/cards-icons/tabular-classification.svg'
 import TabularRegressionIcon from '@/assets/img/cards-icons/tabular-regression.svg'
 import ForecastingIcon from '@/assets/img/cards-icons/forecasting.svg'

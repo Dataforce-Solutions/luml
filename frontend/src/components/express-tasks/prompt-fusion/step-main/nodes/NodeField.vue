@@ -56,7 +56,7 @@ const connectingHandles = computed(() => {
     return acc
   }, new Set() as Set<string>)
 })
-const label = computed(() => props.index ? `CONDITION ${props.index}` : null)
+const label = computed(() => (props.index ? `CONDITION ${props.index}` : null))
 
 function calcHandlePosition() {
   if (!fieldRef.value) return

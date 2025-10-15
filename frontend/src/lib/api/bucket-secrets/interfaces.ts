@@ -30,4 +30,3 @@ export interface BucketConnectionUrls {
 export interface BucketSecretValidator extends BucketSecretCreator {
   id: string
 }
-

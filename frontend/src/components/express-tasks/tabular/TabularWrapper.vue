@@ -69,7 +69,7 @@
           :test-metrics="getTestMetrics"
           :training-metrics="getTrainingMetrics"
           :features="getTop5Feature"
-          :predicted-data="(getPredictedData as Record<string, []>)"
+          :predicted-data="getPredictedData as Record<string, []>"
           :is-train-mode="isTrainMode"
           :download-model-callback="downloadModel"
           :training-model-id="trainingModelId"
@@ -157,8 +157,12 @@ const {
 } = useModelTraining('tabular')
 
 const currentStep = ref(1)
-const sampleFileName = computed(() => props.task === Tasks.TABULAR_CLASSIFICATION ? 'iris.csv' : 'insurance.csv')
-const resources = computed(() => props.task === Tasks.TABULAR_CLASSIFICATION ? classificationResources : regressionResources)
+const sampleFileName = computed(() =>
+  props.task === Tasks.TABULAR_CLASSIFICATION ? 'iris.csv' : 'insurance.csv',
+)
+const resources = computed(() =>
+  props.task === Tasks.TABULAR_CLASSIFICATION ? classificationResources : regressionResources,
+)
 const isStepAvailable = computed(() => (id: number) => {
   if (currentStep.value === 3) return
 

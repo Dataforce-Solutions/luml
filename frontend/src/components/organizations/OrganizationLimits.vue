@@ -4,18 +4,38 @@
     <p class="limits-text">
       Limits are based on the current plan. Upgrades will be available soon.
     </p>
-    <div  class="items">
+    <div class="items">
       <div class="item">
-        <UiCircleProgress :progress="((organizationStore.organizationDetails.total_members || 0) / organizationStore.organizationDetails.members_limit) * 100"></UiCircleProgress>
+        <UiCircleProgress
+          :progress="
+            ((organizationStore.organizationDetails.total_members || 0) /
+              organizationStore.organizationDetails.members_limit) *
+            100
+          "
+        ></UiCircleProgress>
         <div class="item-content">
-          <div class="item-values">{{ organizationStore.organizationDetails?.members.length }}/{{ organizationStore.organizationDetails.members_limit }}</div>
+          <div class="item-values">
+            {{ organizationStore.organizationDetails?.members.length }}/{{
+              organizationStore.organizationDetails.members_limit
+            }}
+          </div>
           <div class="item-label">users limit per organization</div>
         </div>
       </div>
       <div class="item">
-        <UiCircleProgress :progress="((organizationStore.organizationDetails.total_orbits || 0) / organizationStore.organizationDetails.orbits_limit) * 100"></UiCircleProgress>
+        <UiCircleProgress
+          :progress="
+            ((organizationStore.organizationDetails.total_orbits || 0) /
+              organizationStore.organizationDetails.orbits_limit) *
+            100
+          "
+        ></UiCircleProgress>
         <div class="item-content">
-          <div class="item-values">{{ organizationStore.organizationDetails.total_orbits }}/{{ organizationStore.organizationDetails.orbits_limit }}</div>
+          <div class="item-values">
+            {{ organizationStore.organizationDetails.total_orbits }}/{{
+              organizationStore.organizationDetails.orbits_limit
+            }}
+          </div>
           <div class="item-label">orbits limit per organization</div>
         </div>
       </div>

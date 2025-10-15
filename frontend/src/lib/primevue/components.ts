@@ -1,5 +1,29 @@
 import type { App } from 'vue'
-import { Button, Card, InputText, Message, Popover, ToggleButton, FloatLabel, Dialog, Password, Menu, Avatar, Toast, FileUpload, IconField, InputIcon, ConfirmDialog, Badge, OverlayBadge, Divider, Select, RadioButton, Checkbox, ToggleSwitch } from 'primevue'
+import {
+  Button,
+  Card,
+  InputText,
+  Message,
+  Popover,
+  ToggleButton,
+  FloatLabel,
+  Dialog,
+  Password,
+  Menu,
+  Avatar,
+  Toast,
+  FileUpload,
+  IconField,
+  InputIcon,
+  ConfirmDialog,
+  Badge,
+  OverlayBadge,
+  Divider,
+  Select,
+  RadioButton,
+  Checkbox,
+  ToggleSwitch,
+} from 'primevue'
 import { Form, FormField } from '@primevue/forms'
 
 export const addComponents = (app: App) => {

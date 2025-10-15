@@ -1,92 +1,75 @@
-import { ref, computed } from "vue";
-import { defineStore } from "pinia";
-import { dataforceApi } from "@/lib/api";
-import type { OrbitSecret, CreateSecretPayload, UpdateSecretPayload } from "@/lib/api/orbit-secrets/interfaces";
+import { ref, computed } from 'vue'
+import { defineStore } from 'pinia'
+import { dataforceApi } from '@/lib/api'
+import type {
+  OrbitSecret,
+  CreateSecretPayload,
+  UpdateSecretPayload,
+} from '@/lib/api/orbit-secrets/interfaces'
 
-export const useSecretsStore = defineStore("secrets", () => {
-	const secretsList = ref < OrbitSecret[] > ([]);
-	const creatorVisible = ref(false);
+export const useSecretsStore = defineStore('secrets', () => {
+  const secretsList = ref<OrbitSecret[]>([])
+  const creatorVisible = ref(false)
 
-	const existingTags = computed((): string[] => {
-		const tagsSet = secretsList.value.reduce((acc: Set < string > , item) => {
-			item.tags?.forEach((tag: string) => acc.add(tag));
-			return acc;
-		}, new Set < string > ());
-		return Array.from(tagsSet);
-	});
+  const existingTags = computed((): string[] => {
+    const tagsSet = secretsList.value.reduce((acc: Set<string>, item) => {
+      item.tags?.forEach((tag: string) => acc.add(tag))
+      return acc
+    }, new Set<string>())
+    return Array.from(tagsSet)
+  })
 
-	function showCreator() {
-		creatorVisible.value = true;
-	}
+  function showCreator() {
+    creatorVisible.value = true
+  }
 
-	function hideCreator() {
-		creatorVisible.value = false;
-	}
+  function hideCreator() {
+    creatorVisible.value = false
+  }
 
-	async function loadSecrets(organizationId: string, orbitId: string) {
-		secretsList.value = await dataforceApi.orbitSecrets.getSecrets(
-			organizationId,
-			orbitId,
-		);
-	}
+  async function loadSecrets(organizationId: string, orbitId: string) {
+    secretsList.value = await dataforceApi.orbitSecrets.getSecrets(organizationId, orbitId)
+  }
 
-	async function addSecret(
-		organizationId: string,
-		orbitId: string,
-		payload: CreateSecretPayload,
-	) {
-		await dataforceApi.orbitSecrets.createSecret(organizationId, orbitId, payload);
-		await loadSecrets(organizationId, orbitId);
-	}
+  async function addSecret(organizationId: string, orbitId: string, payload: CreateSecretPayload) {
+    await dataforceApi.orbitSecrets.createSecret(organizationId, orbitId, payload)
+    await loadSecrets(organizationId, orbitId)
+  }
 
-	async function updateSecret(
-		organizationId: string,
-		orbitId: string,
-		payload: UpdateSecretPayload,
-	) {
-		await dataforceApi.orbitSecrets.updateSecret(organizationId, orbitId, payload);
-		await loadSecrets(organizationId, orbitId);
-	}
+  async function updateSecret(
+    organizationId: string,
+    orbitId: string,
+    payload: UpdateSecretPayload,
+  ) {
+    await dataforceApi.orbitSecrets.updateSecret(organizationId, orbitId, payload)
+    await loadSecrets(organizationId, orbitId)
+  }
 
-	async function deleteSecret(
-		organizationId: string,
-		orbitId: string,
-		secretId: string,
-	) {
-		await dataforceApi.orbitSecrets.deleteSecret(organizationId, orbitId, secretId);
-		secretsList.value = secretsList.value.filter(
-			(secret) => secret.id !== secretId,
-		);
-	}
+  async function deleteSecret(organizationId: string, orbitId: string, secretId: string) {
+    await dataforceApi.orbitSecrets.deleteSecret(organizationId, orbitId, secretId)
+    secretsList.value = secretsList.value.filter((secret) => secret.id !== secretId)
+  }
 
-	async function getSecretById(
-		organizationId: string,
-		orbitId: string,
-		secretId: string,
-	) {
-		return await dataforceApi.orbitSecrets.getSecretById(
-			organizationId,
-			orbitId,
-			secretId,
-		);
-	}
+  async function getSecretById(organizationId: string, orbitId: string, secretId: string) {
+    return await dataforceApi.orbitSecrets.getSecretById(organizationId, orbitId, secretId)
+  }
 
-	function reset() {
-		secretsList.value = [];
-		creatorVisible.value = false;
-	}
+  function reset() {
+    secretsList.value = []
+    creatorVisible.value = false
+  }
 
-	return {
-		secretsList,
-		creatorVisible,
-		existingTags,
-		showCreator,
-		hideCreator,
-		loadSecrets,
-		addSecret,
-		updateSecret,
-		deleteSecret,
-		getSecretById,
-		reset,
-	};
-});
+  return {
+    secretsList,
+    creatorVisible,
+    existingTags,
+    showCreator,
+    hideCreator,
+    loadSecrets,
+    addSecret,
+    updateSecret,
+    deleteSecret,
+    getSecretById,
+    reset,
+  }
+})

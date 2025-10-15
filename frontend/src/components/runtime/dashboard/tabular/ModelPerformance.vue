@@ -5,14 +5,16 @@
         type="radialBar"
         :series="[totalScore]"
         :options="totalScoreOptions"
-        :style="{ pointerEvents: 'none', marginTop: '-30px', height: '135px' }"/>
+        :style="{ pointerEvents: 'none', marginTop: '-30px', height: '135px' }"
+      />
     </div>
     <div class="metrics">
       <metric-card
         v-for="card in metrics"
         :key="card.title"
         :title="card.title"
-        :items="card.items"/>
+        :items="card.items"
+      />
     </div>
   </div>
 </template>

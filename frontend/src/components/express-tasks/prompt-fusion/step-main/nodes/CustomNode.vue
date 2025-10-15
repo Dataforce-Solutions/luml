@@ -6,12 +6,25 @@
         <h3 class="header-title">{{ data.label }}</h3>
       </div>
       <template v-if="data.showMenu">
-        <d-button ref="toggleMenuButton" severity="secondary" variant="text" rounded class="button" @click.stop="toggleMenu">
+        <d-button
+          ref="toggleMenuButton"
+          severity="secondary"
+          variant="text"
+          rounded
+          class="button"
+          @click.stop="toggleMenu"
+        >
           <template #icon>
             <ellipsis width="20" height="20" />
           </template>
         </d-button>
-        <on-click-outside v-if="isMenuOpen" :options="{ ignore: [toggleMenuButton] }" class="menu" :style="{left: `${menuPosition.left}px`, top: `${menuPosition.top}px`}" @trigger="onMenuOutsideClick">
+        <on-click-outside
+          v-if="isMenuOpen"
+          :options="{ ignore: [toggleMenuButton] }"
+          class="menu"
+          :style="{ left: `${menuPosition.left}px`, top: `${menuPosition.top}px` }"
+          @trigger="onMenuOutsideClick"
+        >
           <button class="menu-item" @click.stop="onDuplicateClick">Duplicate</button>
           <d-divider :style="{ margin: '2px 0' }" />
           <button class="menu-item" @click.stop="onDeleteClick">Delete</button>
@@ -22,12 +35,17 @@
       <div v-if="inputFields.length" class="fields input-fields">
         <node-field v-for="field in inputFields" :key="field.id" :field="field" />
       </div>
-      <d-divider v-if="inputFields.length && outputFields.length" style="margin: 8px 0"/>
+      <d-divider v-if="inputFields.length && outputFields.length" style="margin: 8px 0" />
       <div v-if="outputFields.length" class="fields output-fields">
         <node-field v-for="field in outputFields" :key="field.id" :field="field" />
       </div>
       <div v-if="conditionFields.length" class="fields condition-fields">
-        <node-field v-for="(field, index) in conditionFields" :index="index + 1" :key="field.id" :field="field" />
+        <node-field
+          v-for="(field, index) in conditionFields"
+          :index="index + 1"
+          :key="field.id"
+          :field="field"
+        />
       </div>
     </div>
   </div>
@@ -57,11 +75,13 @@ const toggleMenuButton = ref<HTMLButtonElement>()
 const isMenuOpen = ref(false)
 
 const icon = computed(() => PROMPT_NODES_ICONS[props.data.icon])
-const inputFields = computed(() => props.data.fields.filter(field => field.variant === 'input'))
-const outputFields = computed(() => props.data.fields.filter(field => field.variant === 'output'))
-const conditionFields = computed(() => props.data.fields.filter(field => field.variant === 'condition'))
+const inputFields = computed(() => props.data.fields.filter((field) => field.variant === 'input'))
+const outputFields = computed(() => props.data.fields.filter((field) => field.variant === 'output'))
+const conditionFields = computed(() =>
+  props.data.fields.filter((field) => field.variant === 'condition'),
+)
 const menuPosition = computed(() => {
-  if (!nodeRef.value) return {left: 0, top: 0};
+  if (!nodeRef.value) return { left: 0, top: 0 }
   const nodePosition = { left: nodeRef.value.offsetLeft, top: nodeRef.value.offsetTop }
   return { left: nodePosition.left + 48, top: nodePosition.top + 36 }
 })
@@ -130,14 +150,18 @@ function onMenuOutsideClick() {
   border: 1px solid var(--p-menu-border-color);
   border-radius: var(--p-menu-border-radius);
   padding: 4px;
-  box-shadow: 0px 4px 6px -1px rgba(0, 0, 0, 0.10), 0px 2px 4px -2px rgba(0, 0, 0, 0.10);
+  box-shadow:
+    0px 4px 6px -1px rgba(0, 0, 0, 0.1),
+    0px 2px 4px -2px rgba(0, 0, 0, 0.1);
   z-index: 10;
 }
 .menu-item {
   padding: 8px 12px;
   color: var(--p-menu-item-color);
   width: 100%;
-  transition: background-color var(--p-menu-transition-duration), color var(--p-menu-transition-duration);
+  transition:
+    background-color var(--p-menu-transition-duration),
+    color var(--p-menu-transition-duration);
   border-radius: var(--p-menu-item-border-radius);
   cursor: pointer;
   text-align: left;

@@ -3,7 +3,12 @@
     <header class="header">
       <div class="header-main">
         <div class="header-left">
-          <component width="20" height="20" :is="PROMPT_NODES_ICONS[data.icon]" :color="data.iconColor"></component>
+          <component
+            width="20"
+            height="20"
+            :is="PROMPT_NODES_ICONS[data.icon]"
+            :color="data.iconColor"
+          ></component>
           <input v-model="data.label" type="text" class="title-input" />
         </div>
         <d-button severity="secondary" rounded variant="text" @click="$emit('close')">
@@ -12,22 +17,58 @@
           </template>
         </d-button>
       </div>
-      <d-message v-if="duplicatedFieldsIds.length" severity="error">A card cannot contain two fields with the same name.</d-message>
+      <d-message v-if="duplicatedFieldsIds.length" severity="error"
+        >A card cannot contain two fields with the same name.</d-message
+      >
     </header>
     <div class="body">
-      <CustomTextarea v-if="hintVisible" v-model="data.hint" fluid rows="1" placeholder="Hint" size="small" autoResize :maxHeight="75" class="hint"/>
+      <CustomTextarea
+        v-if="hintVisible"
+        v-model="data.hint"
+        fluid
+        rows="1"
+        placeholder="Hint"
+        size="small"
+        autoResize
+        :maxHeight="75"
+        class="hint"
+      />
       <div class="all-fields">
         <div v-if="inputsVisible" class="inputs fields">
-          <base-field v-for="field in inputFields" :data="field" :is-duplicate="isDuplicate(field.id)" @delete="onDeleteField(field.id)"/>
-          <d-button label="Add input field" variant="text" size="small" class="add-button" @click="addField('input')">
+          <base-field
+            v-for="field in inputFields"
+            :data="field"
+            :is-duplicate="isDuplicate(field.id)"
+            @delete="onDeleteField(field.id)"
+          />
+          <d-button
+            label="Add input field"
+            variant="text"
+            size="small"
+            class="add-button"
+            @click="addField('input')"
+          >
             <template #icon>
               <plus width="14" height="14" />
             </template>
           </d-button>
         </div>
         <div v-if="outputsVisible" class="outputs fields">
-          <base-field v-for="field in outputFields" :data="field" :is-duplicate="isDuplicate(field.id)" :type-label="props.data.type === NodeTypeEnum.gate ? 'input' : undefined" @delete="onDeleteField(field.id)"/>
-          <d-button v-if="availableAddOutput" :label="addOutputLabel" variant="text" size="small" class="add-button" @click="addField('output')">
+          <base-field
+            v-for="field in outputFields"
+            :data="field"
+            :is-duplicate="isDuplicate(field.id)"
+            :type-label="props.data.type === NodeTypeEnum.gate ? 'input' : undefined"
+            @delete="onDeleteField(field.id)"
+          />
+          <d-button
+            v-if="availableAddOutput"
+            :label="addOutputLabel"
+            variant="text"
+            size="small"
+            class="add-button"
+            @click="addField('output')"
+          >
             <template #icon>
               <plus width="14" height="14" />
             </template>
@@ -35,8 +76,19 @@
         </div>
         <div v-if="conditionsVisible" class="conditions fields">
           <h3 class="field-title">Conditions</h3>
-          <condition-field v-for="(field, index) in conditionFields" :data="field" :index="index + 1" @delete="onDeleteField(field.id)"/>
-          <d-button label="Add condition" variant="text" size="small" class="add-button" @click="addField('condition')">
+          <condition-field
+            v-for="(field, index) in conditionFields"
+            :data="field"
+            :index="index + 1"
+            @delete="onDeleteField(field.id)"
+          />
+          <d-button
+            label="Add condition"
+            variant="text"
+            size="small"
+            class="add-button"
+            @click="addField('condition')"
+          >
             <template #icon>
               <plus width="14" height="14" />
             </template>
@@ -48,21 +100,21 @@
 </template>
 
 <script setup lang="ts">
-import type { NodeData, FieldVariant, NodeField } from '../../interfaces';
-import { computed } from 'vue';
-import { PROMPT_NODES_ICONS, NodeTypeEnum } from '../../interfaces';
-import { v4 as uuidv4 } from 'uuid';
-import { Position } from '@vue-flow/core';
+import type { NodeData, FieldVariant, NodeField } from '../../interfaces'
+import { computed } from 'vue'
+import { PROMPT_NODES_ICONS, NodeTypeEnum } from '../../interfaces'
+import { v4 as uuidv4 } from 'uuid'
+import { Position } from '@vue-flow/core'
 import { X, Plus } from 'lucide-vue-next'
-import BaseField from './BaseField.vue';
-import ConditionField from './ConditionField.vue';
-import CustomTextarea from '@/components/ui/CustomTextarea.vue';
-import { useVueFlow } from '@vue-flow/core';
+import BaseField from './BaseField.vue'
+import ConditionField from './ConditionField.vue'
+import CustomTextarea from '@/components/ui/CustomTextarea.vue'
+import { useVueFlow } from '@vue-flow/core'
 
-const { getEdges, removeEdges } = useVueFlow();
+const { getEdges, removeEdges } = useVueFlow()
 
 type Props = {
- data: NodeData
+  data: NodeData
 }
 type Emits = {
   close: []
@@ -71,29 +123,56 @@ type Emits = {
 const props = defineProps<Props>()
 defineEmits<Emits>()
 
-const inputFields = computed(() => props.data.fields.filter(field => field.variant === 'input'))
-const outputFields = computed(() => props.data.fields.filter(field => field.variant === 'output'))
-const conditionFields = computed(() => props.data.fields.filter(field => field.variant === 'condition'))
-const hintVisible = computed(() => props.data.type === NodeTypeEnum.gate || props.data.type === NodeTypeEnum.processor)
-const inputsVisible = computed(() => props.data.type === NodeTypeEnum.input || props.data.type === NodeTypeEnum.processor)
-const outputsVisible = computed(() => props.data.type === NodeTypeEnum.output || props.data.type === NodeTypeEnum.processor || props.data.type === NodeTypeEnum.gate)
+const inputFields = computed(() => props.data.fields.filter((field) => field.variant === 'input'))
+const outputFields = computed(() => props.data.fields.filter((field) => field.variant === 'output'))
+const conditionFields = computed(() =>
+  props.data.fields.filter((field) => field.variant === 'condition'),
+)
+const hintVisible = computed(
+  () => props.data.type === NodeTypeEnum.gate || props.data.type === NodeTypeEnum.processor,
+)
+const inputsVisible = computed(
+  () => props.data.type === NodeTypeEnum.input || props.data.type === NodeTypeEnum.processor,
+)
+const outputsVisible = computed(
+  () =>
+    props.data.type === NodeTypeEnum.output ||
+    props.data.type === NodeTypeEnum.processor ||
+    props.data.type === NodeTypeEnum.gate,
+)
 const conditionsVisible = computed(() => props.data.type === NodeTypeEnum.gate)
-const availableAddOutput = computed(() => !(props.data.type === NodeTypeEnum.gate) || outputFields.value.length === 0)
-const addOutputLabel = computed(() => props.data.type === NodeTypeEnum.gate ? 'Add input field' : 'Add output field')
+const availableAddOutput = computed(
+  () => !(props.data.type === NodeTypeEnum.gate) || outputFields.value.length === 0,
+)
+const addOutputLabel = computed(() =>
+  props.data.type === NodeTypeEnum.gate ? 'Add input field' : 'Add output field',
+)
 const duplicatedFieldsIds = computed(() => {
-  const inputDuplicates = inputFields.value.filter((item, index, self) => item.value && self.find(searchedItem => searchedItem.value === item.value && searchedItem.id !== item.id));
-  const outputDuplicates = inputFields.value.filter((item, index, self) => item.value && self.find(searchedItem => searchedItem.value === item.value && searchedItem.id !== item.id));
-  return [...inputDuplicates.map(item => item.id), ...outputDuplicates.map(item => item.id)];
+  const inputDuplicates = inputFields.value.filter(
+    (item, index, self) =>
+      item.value &&
+      self.find((searchedItem) => searchedItem.value === item.value && searchedItem.id !== item.id),
+  )
+  const outputDuplicates = inputFields.value.filter(
+    (item, index, self) =>
+      item.value &&
+      self.find((searchedItem) => searchedItem.value === item.value && searchedItem.id !== item.id),
+  )
+  return [...inputDuplicates.map((item) => item.id), ...outputDuplicates.map((item) => item.id)]
 })
-const isDuplicate = computed(() => (id: string) => !!duplicatedFieldsIds.value.find(searchedId => searchedId === id))
+const isDuplicate = computed(
+  () => (id: string) => !!duplicatedFieldsIds.value.find((searchedId) => searchedId === id),
+)
 
 function onDeleteField(id: string) {
-  const fieldEdges = getEdges.value.filter(edge => edge.targetHandle === id || edge.sourceHandle === id);
-  removeEdges(fieldEdges);
-  props.data.fields = props.data.fields.filter(field => field.id !== id)
+  const fieldEdges = getEdges.value.filter(
+    (edge) => edge.targetHandle === id || edge.sourceHandle === id,
+  )
+  removeEdges(fieldEdges)
+  props.data.fields = props.data.fields.filter((field) => field.id !== id)
 }
 function addField(variant: FieldVariant) {
-  let handlePosition: Position.Left | Position.Right;
+  let handlePosition: Position.Left | Position.Right
   if (props.data.type === NodeTypeEnum.processor) {
     handlePosition = variant === 'output' ? Position.Right : Position.Left
   } else {

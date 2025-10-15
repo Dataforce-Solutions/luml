@@ -216,12 +216,11 @@ onBeforeMount(async () => {
   }
 }
 
-@media (min-width:768px){
+@media (min-width: 768px) {
   .body {
     min-height: 640px;
   }
 }
-
 
 @media (max-width: 768px) {
   .body {

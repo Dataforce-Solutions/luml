@@ -12,7 +12,12 @@
         </div>
       </div>
       <div class="header-right">
-        <table-input-outputs v-if="inputsOutputsColumns" :columns="inputsOutputsColumns" :column-types="columnTypes" :selected-columns="selectedColumns"/>
+        <table-input-outputs
+          v-if="inputsOutputsColumns"
+          :columns="inputsOutputsColumns"
+          :column-types="columnTypes"
+          :selected-columns="selectedColumns"
+        />
         <table-sort :columns="currentColumns" v-model:multiSortMeta="multiSortMeta" />
         <table-filters
           v-if="filters"

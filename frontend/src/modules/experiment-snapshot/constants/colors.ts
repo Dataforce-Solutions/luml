@@ -14,4 +14,3 @@ export const MODELS_COLORS = [
   'var(--p-charts-color-13)',
   'var(--p-charts-color-14)',
 ]
-

@@ -3,7 +3,7 @@
     <span class="button-label">Output fields</span>
     <bolt width="14" height="14" />
   </d-button>
-  <d-popover ref="popover" style="width: 100%;max-width: 398px;" @hide="onPopoverHide">
+  <d-popover ref="popover" style="width: 100%; max-width: 398px" @hide="onPopoverHide">
     <div class="popover-wrapper">
       <div class="main">
         <h4 class="title">Set type for each column</h4>
@@ -12,9 +12,15 @@
           <div v-for="column in searchedColumns" :key="column.name" class="column">
             <div class="item-title">
               <span class="label">{{ cutStringOnMiddle(column.name, 24) }}</span>
-              <component :is="typesIcons[column.type]" width="16" height="16" color="var(--p-icon-muted-color)" class="variant-icon"></component>
+              <component
+                :is="typesIcons[column.type]"
+                width="16"
+                height="16"
+                color="var(--p-icon-muted-color)"
+                class="variant-icon"
+              ></component>
             </div>
-            <ui-custom-radio v-model="column.variant" :options="['input', 'output']"/>
+            <ui-custom-radio v-model="column.variant" :options="['input', 'output']" />
           </div>
         </div>
       </div>
@@ -34,9 +40,9 @@ import { cutStringOnMiddle } from '@/helpers/helpers'
 import UiCustomRadio from '@/components/ui/UiCustomRadio.vue'
 
 const typesIcons: Record<ColumnType, FunctionalComponent> = {
-  'number': Hash,
-  'date': CalendarFold,
-  'string': CaseUpper,
+  number: Hash,
+  date: CalendarFold,
+  string: CaseUpper,
 }
 
 type Props = {
@@ -51,21 +57,27 @@ const popover = ref()
 const searchValue = ref('')
 const columnsState = ref(fillColumnsState())
 
-const searchedColumns = computed(() => columnsState.value.filter(column => column.name.toLowerCase().includes(searchValue.value.toLowerCase())))
+const searchedColumns = computed(() =>
+  columnsState.value.filter((column) =>
+    column.name.toLowerCase().includes(searchValue.value.toLowerCase()),
+  ),
+)
 
 function togglePopover(event: any) {
   popover.value.toggle(event)
 }
 function apply() {
-  columnsState.value.map(column => {
-    const currentColumn = props.columns.find(c => c.name === column.name)
+  columnsState.value.map((column) => {
+    const currentColumn = props.columns.find((c) => c.name === column.name)
     if (currentColumn) currentColumn.variant = column.variant
   })
   popover.value.toggle()
 }
 function fillColumnsState() {
-  const availableColumns = props.selectedColumns.length ? props.columns.filter(column => props.selectedColumns.includes(column.name)) : props.columns
-  return availableColumns.map(column => ({
+  const availableColumns = props.selectedColumns.length
+    ? props.columns.filter((column) => props.selectedColumns.includes(column.name))
+    : props.columns
+  return availableColumns.map((column) => ({
     name: column.name,
     type: props.columnTypes[column.name],
     variant: column.variant,
@@ -76,9 +88,13 @@ function onPopoverHide() {
   columnsState.value = fillColumnsState()
 }
 
-watch(() => props.selectedColumns, (val) => {
-  columnsState.value = fillColumnsState()
-}, { deep: true })
+watch(
+  () => props.selectedColumns,
+  (val) => {
+    columnsState.value = fillColumnsState()
+  },
+  { deep: true },
+)
 </script>
 
 <style scoped>

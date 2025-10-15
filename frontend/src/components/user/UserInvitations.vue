@@ -48,7 +48,10 @@
                   <Trash2 :size="12" />
                 </template>
               </d-button>
-              <d-button :disabled="loading" @click="accept(invitation.id, invitation.organization_id)">
+              <d-button
+                :disabled="loading"
+                @click="accept(invitation.id, invitation.organization_id)"
+              >
                 <template #icon>
                   <Check :size="12" />
                 </template>

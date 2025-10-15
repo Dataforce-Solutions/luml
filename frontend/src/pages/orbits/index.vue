@@ -71,16 +71,16 @@ watch(
 )
 
 onBeforeMount(async () => {
-  const idParam = route.params.organizationId;
-  const organizationId = Array.isArray(idParam) ? idParam[0] : idParam;
+  const idParam = route.params.organizationId
+  const organizationId = Array.isArray(idParam) ? idParam[0] : idParam
   if (!organizationId) {
-    toast.add(simpleErrorToast('Organization ID is missing in the URL.'));
-    loading.value = false;
-    return;
+    toast.add(simpleErrorToast('Organization ID is missing in the URL.'))
+    loading.value = false
+    return
   }
   try {
-    await loadOrbits(organizationId, true);
-    await organizationStore.getOrganizationDetails(organizationId);
+    await loadOrbits(organizationId, true)
+    await organizationStore.getOrganizationDetails(organizationId)
   } catch (e: any) {
     console.error(e?.response?.data?.detail, e?.message)
   } finally {

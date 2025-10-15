@@ -68,7 +68,11 @@
             </a>
           </li>
           <li class="item">
-            <a href="https://github.com/Dataforce-Solutions/dataforce.studio" target="_blank" class="menu-link menu-link--github">
+            <a
+              href="https://github.com/Dataforce-Solutions/dataforce.studio"
+              target="_blank"
+              class="menu-link menu-link--github"
+            >
               <Github :size="14" class="icon"></Github>
               <span class="menu-link__text">GitHub</span>
               <div v-if="getFormattedGithubStars !== null" class="menu-link__info">
@@ -129,7 +133,7 @@ function getRouteParams(routeName: string) {
   if (!requiresOrgId(routeName)) {
     return baseRoute
   }
-  
+
   const orgId = organizationsStore.currentOrganization?.id
   if (!orgId) {
     console.warn(`Route "${routeName}" requires organizationId but none is selected`)
@@ -138,19 +142,19 @@ function getRouteParams(routeName: string) {
   if (routeName === 'orbits') {
     return {
       ...baseRoute,
-      params: { organizationId: orgId }
+      params: { organizationId: orgId },
     }
   }
-  
+
   if (routeName === 'organization') {
     return {
       ...baseRoute,
-      params: { id: orgId }
+      params: { id: orgId },
     }
   }
   return {
     ...baseRoute,
-    params: { organizationId: orgId }
+    params: { organizationId: orgId },
   }
 }
 

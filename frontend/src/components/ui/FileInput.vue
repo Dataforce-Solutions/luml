@@ -6,7 +6,8 @@
     @dragenter="onDragenter"
     @dragover.prevent="onDragover"
     @dragleave.prevent="onDragleave"
-    @drop.prevent="onDrop">
+    @drop.prevent="onDrop"
+  >
     <div v-if="loading" class="loading-view">
       <progress-spinner style="width: 48px; height: 48px" />
       <div>{{ loadingMessage ? loadingMessage : 'Loading' }}</div>

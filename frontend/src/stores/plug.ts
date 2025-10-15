@@ -10,7 +10,11 @@ export const usePlugStore = defineStore('plug', () => {
   const closed = ref(false)
 
   const visible = computed(() => {
-    return !!(!closed.value && route.meta.showInvalidMessage && width.value < route.meta.showInvalidMessage)
+    return !!(
+      !closed.value &&
+      route.meta.showInvalidMessage &&
+      width.value < route.meta.showInvalidMessage
+    )
   })
 
   function close() {

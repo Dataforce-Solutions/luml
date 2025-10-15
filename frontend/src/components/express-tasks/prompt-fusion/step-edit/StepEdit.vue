@@ -12,11 +12,11 @@
 </template>
 
 <script setup lang="ts">
-import { ArrowRight } from 'lucide-vue-next';
+import { ArrowRight } from 'lucide-vue-next'
 
 type Emits = {
- back: []
- continue: []
+  back: []
+  continue: []
 }
 
 defineEmits<Emits>()

@@ -1,12 +1,20 @@
 import { Position, type Node } from '@vue-flow/core'
-import { CaseUpper, Hash, Braces, CircleArrowDown, CircleArrowUp, Cpu, BetweenHorizonalStart } from 'lucide-vue-next'
+import {
+  CaseUpper,
+  Hash,
+  Braces,
+  CircleArrowDown,
+  CircleArrowUp,
+  Cpu,
+  BetweenHorizonalStart,
+} from 'lucide-vue-next'
 import type { FunctionalComponent } from 'vue'
 
 export const PROMPT_FIELDS_ICONS: Record<string, FunctionalComponent> = {
   string: CaseUpper,
   integer: Hash,
   float: Hash,
-  complex: Braces
+  complex: Braces,
 }
 
 export const PROMPT_NODES_ICONS = {
@@ -57,4 +65,7 @@ export interface NodeField {
 
 export type FieldVariant = 'input' | 'output' | 'condition'
 
-type NodeIconColor = 'var(--p-primary-color)' | 'var(--p-badge-warn-background)' | 'var(--p-badge-success-background)'
+type NodeIconColor =
+  | 'var(--p-primary-color)'
+  | 'var(--p-badge-warn-background)'
+  | 'var(--p-badge-success-background)'

@@ -13,7 +13,8 @@
       filter
       fluid
       size="small"
-      filterPlaceholder="Search model">
+      filterPlaceholder="Search model"
+    >
       <template #option="slotProps">
         <div class="option">
           <img :alt="slotProps.option.label" :src="slotProps.option.icon" />
@@ -22,9 +23,14 @@
       </template>
       <template #footer>
         <div class="footer">
-          <d-button class="settings-button" variant="text" size="small" @click="promptFusionService.openSettings()">
+          <d-button
+            class="settings-button"
+            variant="text"
+            size="small"
+            @click="promptFusionService.openSettings()"
+          >
             Model provider settings
-            <bolt :size="14"/>
+            <bolt :size="14" />
           </d-button>
         </div>
       </template>
@@ -33,7 +39,11 @@
 </template>
 
 <script setup lang="ts">
-import { ModelTypeEnum, ProviderModelsEnum, type ProviderWithModels } from '@/lib/promt-fusion/prompt-fusion.interfaces'
+import {
+  ModelTypeEnum,
+  ProviderModelsEnum,
+  type ProviderWithModels,
+} from '@/lib/promt-fusion/prompt-fusion.interfaces'
 import { computed, onBeforeMount, onBeforeUnmount, ref, watch } from 'vue'
 import { Bolt } from 'lucide-vue-next'
 import { promptFusionService } from '@/lib/promt-fusion/PromptFusionService'
@@ -56,14 +66,20 @@ function changeOptions(models: ProviderWithModels[]) {
 }
 
 watch(selectedModel, (value) => {
-  const modelInService = isTeacherModel.value ? promptFusionService.teacherModel : promptFusionService.studentModel
+  const modelInService = isTeacherModel.value
+    ? promptFusionService.teacherModel
+    : promptFusionService.studentModel
   if (value !== modelInService) {
-    isTeacherModel.value ? promptFusionService.updateTeacherModel(value) : promptFusionService.updateStudentModel(value)
+    isTeacherModel.value
+      ? promptFusionService.updateTeacherModel(value)
+      : promptFusionService.updateStudentModel(value)
   }
 })
 
 onBeforeMount(() => {
-  selectedModel.value = isTeacherModel.value ? promptFusionService.teacherModel : promptFusionService.studentModel
+  selectedModel.value = isTeacherModel.value
+    ? promptFusionService.teacherModel
+    : promptFusionService.studentModel
   promptFusionService.on('CHANGE_AVAILABLE_MODELS', changeOptions)
 })
 onBeforeUnmount(() => {

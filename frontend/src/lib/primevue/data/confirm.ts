@@ -132,7 +132,8 @@ export const deleteModelConfirmOptions = (
 })
 
 export const deleteBucketConfirmOptions = (accept: () => void): ConfirmationOptions => ({
-  message: 'This bucket and all its contents will be deleted. It will also be removed from all Orbits where it is used.',
+  message:
+    'This bucket and all its contents will be deleted. It will also be removed from all Orbits where it is used.',
   header: 'Delete bucket?',
   rejectProps: {
     label: 'cancel',
@@ -146,7 +147,8 @@ export const deleteBucketConfirmOptions = (accept: () => void): ConfirmationOpti
 })
 
 export const deleteAPIKeyConfirmOptions = (accept: () => void): ConfirmationOptions => ({
-  message: 'This key will be permanently deleted. You’ll still be able to generate a new one at any time.',
+  message:
+    'This key will be permanently deleted. You’ll still be able to generate a new one at any time.',
   header: 'Delete API key?',
   rejectProps: {
     label: 'cancel',
@@ -168,4 +170,4 @@ export const deleteSecretConfirmation: ConfirmationOptions = {
     severity: 'warn',
     variant: 'outlined',
   },
-};
+}

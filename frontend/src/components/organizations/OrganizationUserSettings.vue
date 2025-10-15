@@ -19,7 +19,12 @@
     </template>
     <div class="dialog-content">
       <div class="user-info">
-        <Avatar :label="member.user.photo ? undefined : member.user.full_name[0]" shape="circle" size="xlarge" :image="member.user.photo" />
+        <Avatar
+          :label="member.user.photo ? undefined : member.user.full_name[0]"
+          shape="circle"
+          size="xlarge"
+          :image="member.user.photo"
+        />
         <div>
           <div class="user-name">{{ member.user.full_name }}</div>
           <div class="user-email">{{ member.user.email }}</div>
@@ -128,9 +133,12 @@ async function deleteUser() {
   }
 }
 
-watch(() => props.member.role, (role) => {
-  initialValues.value.role = role;
-})
+watch(
+  () => props.member.role,
+  (role) => {
+    initialValues.value.role = role
+  },
+)
 </script>
 
 <style scoped>

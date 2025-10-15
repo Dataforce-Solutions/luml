@@ -63,9 +63,9 @@
           v-model:selection="selectedModels"
           :value="tableData"
           :pt="{
-          emptyMessageCell: {
-            style: 'padding: 25px 16px;',
-          },
+            emptyMessageCell: {
+              style: 'padding: 25px 16px;',
+            },
           }"
           selection-mode="multiple"
           data-key="id"

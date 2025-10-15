@@ -1,6 +1,6 @@
 export interface FieldInfo<T = string> {
   key: string
-  value: T | null 
+  value: T | null
   label: string
 }
 

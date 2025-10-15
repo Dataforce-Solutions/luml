@@ -9,7 +9,7 @@
     <RuntimeDashboard
       v-else-if="getModel && currentTag"
       :current-tag="currentTag"
-      :model="(getModel as Model)"
+      :model="getModel as Model"
       :model-id="modelId"
       @exit="currentStep = 1"
     />

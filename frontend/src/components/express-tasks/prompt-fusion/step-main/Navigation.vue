@@ -9,10 +9,10 @@
 </template>
 
 <script setup lang="ts">
-import { AnalyticsService, AnalyticsTrackKeysEnum } from '@/lib/analytics/AnalyticsService';
-import { dashboardFinishConfirmOptions } from '@/lib/primevue/data/confirm';
+import { AnalyticsService, AnalyticsTrackKeysEnum } from '@/lib/analytics/AnalyticsService'
+import { dashboardFinishConfirmOptions } from '@/lib/primevue/data/confirm'
 import { ArrowLeft } from 'lucide-vue-next'
-import { useConfirm } from 'primevue';
+import { useConfirm } from 'primevue'
 import { useRoute, useRouter } from 'vue-router'
 
 type Emits = {
