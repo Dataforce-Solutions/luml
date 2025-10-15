@@ -19,7 +19,11 @@ export const useOrganizationStore = defineStore('organization', () => {
   const loading = ref(false)
 
   const currentOrganization = computed(() => {
-    return availableOrganizations.value.find(organization => organization.id === currentOrganizationId.value) || null
+    return (
+      availableOrganizations.value.find(
+        (organization) => organization.id === currentOrganizationId.value,
+      ) || null
+    )
   })
 
   function setLoading(value: boolean) {
@@ -39,8 +43,10 @@ export const useOrganizationStore = defineStore('organization', () => {
 
   async function updateOrganization(organizationId: string, payload: CreateOrganizationPayload) {
     const details = await dataforceApi.updateOrganization(organizationId, payload)
-    availableOrganizations.value = availableOrganizations.value.map(organization => {
-      return organization.id === organizationId ? { ...details, role: organization.role } : organization
+    availableOrganizations.value = availableOrganizations.value.map((organization) => {
+      return organization.id === organizationId
+        ? { ...details, role: organization.role }
+        : organization
     })
     organizationDetails.value = details
   }
@@ -93,13 +99,15 @@ export const useOrganizationStore = defineStore('organization', () => {
     payload: UpdateMemberPayload,
   ) {
     const info = await dataforceApi.updateOrganizationMember(organizationId, memberId, payload)
-    const currentOrganizationDetails = organizationDetails.value;
-    if (!currentOrganizationDetails) return;
-    currentOrganizationDetails.members = currentOrganizationDetails.members.map(member => {
-      if (member.id !== memberId) return member;
-      currentOrganizationDetails.members_by_role[member.role] = currentOrganizationDetails.members_by_role[member.role] - 1;
-      currentOrganizationDetails.members_by_role[info.role] = currentOrganizationDetails.members_by_role[info.role] + 1;
-      return info;
+    const currentOrganizationDetails = organizationDetails.value
+    if (!currentOrganizationDetails) return
+    currentOrganizationDetails.members = currentOrganizationDetails.members.map((member) => {
+      if (member.id !== memberId) return member
+      currentOrganizationDetails.members_by_role[member.role] =
+        currentOrganizationDetails.members_by_role[member.role] - 1
+      currentOrganizationDetails.members_by_role[info.role] =
+        currentOrganizationDetails.members_by_role[info.role] + 1
+      return info
     })
   }
 

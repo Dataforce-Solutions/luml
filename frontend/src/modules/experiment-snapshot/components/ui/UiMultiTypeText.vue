@@ -40,7 +40,7 @@
 </template>
 
 <script setup lang="ts">
-import 'github-markdown-css/github-markdown.css';
+import 'github-markdown-css/github-markdown.css'
 import { computed, ref } from 'vue'
 import { Select, Button } from 'primevue'
 import { Copy, CopyCheck } from 'lucide-vue-next'

@@ -3,22 +3,38 @@
     <h3 class="title">evaluation Metrics</h3>
     <div class="description">Choose a model evaluation metric</div>
     <div class="modes">
-      <ui-custom-radio v-model="mode" :options="Object.values(EvaluationModesEnum)" :disabled="disabledMetrics" style="display: inline-flex;"/>
+      <ui-custom-radio
+        v-model="mode"
+        :options="Object.values(EvaluationModesEnum)"
+        :disabled="disabledMetrics"
+        style="display: inline-flex"
+      />
     </div>
     <div v-if="mode === EvaluationModesEnum.llmBased" class="based-info">
       <ul class="criteria-list">
         <li v-for="criteria in criteriaList" :key="criteria.id" class="criteria-item">
-          <d-input-text v-model="criteria.value" placeholder="Criteria" size="small" class="criteria-input"/>
-          <d-button severity="secondary" variant="text" rounded class="criteria-trash" @click="() => removeCriteria(criteria.id)">
+          <d-input-text
+            v-model="criteria.value"
+            placeholder="Criteria"
+            size="small"
+            class="criteria-input"
+          />
+          <d-button
+            severity="secondary"
+            variant="text"
+            rounded
+            class="criteria-trash"
+            @click="() => removeCriteria(criteria.id)"
+          >
             <template #icon>
-              <trash2 :size="14"/>
+              <trash2 :size="14" />
             </template>
           </d-button>
         </li>
       </ul>
       <d-button label="Add evaluation criteria" variant="text" size="small" @click="addCriteria">
         <template #icon>
-          <plus :size="14"/>
+          <plus :size="14" />
         </template>
       </d-button>
     </div>
@@ -26,17 +42,17 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue';
-import { EvaluationModesEnum } from '@/lib/promt-fusion/prompt-fusion.interfaces';
-import { Trash2, Plus } from 'lucide-vue-next';
-import { v4 as uuid4 } from 'uuid';
-import { promptFusionService } from '@/lib/promt-fusion/PromptFusionService';
-import UiCustomRadio from '@/components/ui/UiCustomRadio.vue';
-import { useRoute } from 'vue-router';
+import { computed, ref, watch } from 'vue'
+import { EvaluationModesEnum } from '@/lib/promt-fusion/prompt-fusion.interfaces'
+import { Trash2, Plus } from 'lucide-vue-next'
+import { v4 as uuid4 } from 'uuid'
+import { promptFusionService } from '@/lib/promt-fusion/PromptFusionService'
+import UiCustomRadio from '@/components/ui/UiCustomRadio.vue'
+import { useRoute } from 'vue-router'
 
 type CriteriaItem = {
-  id: string,
-  value: string,
+  id: string
+  value: string
 }
 
 const route = useRoute()
@@ -44,10 +60,16 @@ const route = useRoute()
 const mode = ref<EvaluationModesEnum>(promptFusionService.evaluationMode)
 const criteriaList = ref<CriteriaItem[]>(getInitialCriteriaList())
 
-const disabledMetrics = computed(() => route.params.mode === 'data-driven' ? [] : [EvaluationModesEnum.exactMatch, EvaluationModesEnum.llmBased])
+const disabledMetrics = computed(() =>
+  route.params.mode === 'data-driven'
+    ? []
+    : [EvaluationModesEnum.exactMatch, EvaluationModesEnum.llmBased],
+)
 
 function getInitialCriteriaList() {
-  return promptFusionService.evaluationCriteriaList.length ? promptFusionService.evaluationCriteriaList.map(value => createCriteria(value)) : [createCriteria()]
+  return promptFusionService.evaluationCriteriaList.length
+    ? promptFusionService.evaluationCriteriaList.map((value) => createCriteria(value))
+    : [createCriteria()]
 }
 function createCriteria(value = '') {
   return { id: uuid4(), value }
@@ -56,16 +78,26 @@ function addCriteria() {
   criteriaList.value.push(createCriteria())
 }
 function removeCriteria(id: string) {
-  criteriaList.value = criteriaList.value.filter(criteria => criteria.id !== id)
+  criteriaList.value = criteriaList.value.filter((criteria) => criteria.id !== id)
 }
 
-watch(mode, (val) => {
-  promptFusionService.evaluationMode = val
-  val === EvaluationModesEnum.llmBased ? criteriaList.value = [createCriteria()] : criteriaList.value = []
-}, {})
-watch(criteriaList, (val) => {
-  promptFusionService.evaluationCriteriaList = val.map(criteria => criteria.value)
-}, { deep: true })
+watch(
+  mode,
+  (val) => {
+    promptFusionService.evaluationMode = val
+    val === EvaluationModesEnum.llmBased
+      ? (criteriaList.value = [createCriteria()])
+      : (criteriaList.value = [])
+  },
+  {},
+)
+watch(
+  criteriaList,
+  (val) => {
+    promptFusionService.evaluationCriteriaList = val.map((criteria) => criteria.value)
+  },
+  { deep: true },
+)
 </script>
 
 <style scoped>

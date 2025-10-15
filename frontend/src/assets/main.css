@@ -135,7 +135,8 @@
 }
 
 .p-avatar {
-  background: linear-gradient(226deg, #add8fb 28%, #dfa3f0 98.72%),
+  background:
+    linear-gradient(226deg, #add8fb 28%, #dfa3f0 98.72%),
     linear-gradient(226deg, #dfa3f0 28%, #add8fb 98.72%) !important;
 }
 

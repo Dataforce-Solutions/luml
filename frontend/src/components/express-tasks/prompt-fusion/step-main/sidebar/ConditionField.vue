@@ -3,21 +3,35 @@
     <header class="field-header">
       <h4 class="field-type">condition {{ index }}</h4>
       <div class="field-actives">
-        <d-button severity="secondary" rounded variant="text" class="filed-actives-button" @click="onTrashClick">
+        <d-button
+          severity="secondary"
+          rounded
+          variant="text"
+          class="filed-actives-button"
+          @click="onTrashClick"
+        >
           <template #icon>
-            <trash width="14" height="14"/>
+            <trash width="14" height="14" />
           </template>
         </d-button>
       </div>
     </header>
-    <CustomTextarea v-model="data.value" fluid rows="1" placeholder="Hint" size="small" autoResize :maxHeight="75"/>
+    <CustomTextarea
+      v-model="data.value"
+      fluid
+      rows="1"
+      placeholder="Hint"
+      size="small"
+      autoResize
+      :maxHeight="75"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
-import type { NodeField } from '../../interfaces';
-import { Trash } from 'lucide-vue-next';
-import CustomTextarea from '@/components/ui/CustomTextarea.vue';
+import type { NodeField } from '../../interfaces'
+import { Trash } from 'lucide-vue-next'
+import CustomTextarea from '@/components/ui/CustomTextarea.vue'
 
 type Props = {
   data: NodeField
@@ -61,5 +75,4 @@ function onTrashClick() {
   height: 16px;
   padding: 0;
 }
-
 </style>

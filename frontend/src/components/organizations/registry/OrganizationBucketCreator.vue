@@ -61,9 +61,9 @@ async function create(data: BucketSecretCreator) {
     if (e instanceof BucketValidationError) {
       toast.add(simpleErrorToast(e.getMessage()))
     } else {
-      toast.add(simpleErrorToast(
-        e?.response?.data?.detail || e.message || 'Failed to create bucket'
-      ))
+      toast.add(
+        simpleErrorToast(e?.response?.data?.detail || e.message || 'Failed to create bucket'),
+      )
     }
   } finally {
     loading.value = false

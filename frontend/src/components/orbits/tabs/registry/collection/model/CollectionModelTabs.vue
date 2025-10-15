@@ -51,7 +51,7 @@ const items = computed(() => [
     label: 'Experiment snapshot',
     routeName: 'model-snapshot',
     icon: ScanEye,
-    disabled: !props.showExperimentSnapshot
+    disabled: !props.showExperimentSnapshot,
   },
 ])
 </script>

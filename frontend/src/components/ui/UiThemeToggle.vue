@@ -41,8 +41,8 @@ function click() {
   cursor: pointer;
   position: relative;
 }
-.custom-toggle-wrapper::before{
-  content:'';
+.custom-toggle-wrapper::before {
+  content: '';
   width: 18px;
   height: 18px;
   border-radius: 50%;
@@ -51,7 +51,7 @@ function click() {
   right: 4px;
   background-color: var(--p-toggleswitch-background);
   z-index: 2;
-  transition: right .5s;
+  transition: right 0.5s;
 }
 .dark .custom-toggle-wrapper::before {
   right: 28px;

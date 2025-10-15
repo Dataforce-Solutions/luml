@@ -6,8 +6,15 @@
       <span v-if="provider.disabled" class="disabled-label">(Not Available)</span>
     </div>
     <div v-if="!provider.disabled" class="right">
-      <div class="status" :class="{connected: provider.status === ProviderStatus.connected}">{{ provider.status }}</div>
-      <d-button severity="secondary" variant="text" rounded @click.stop="promptFusionService.openProviderSettings(provider.id)">
+      <div class="status" :class="{ connected: provider.status === ProviderStatus.connected }">
+        {{ provider.status }}
+      </div>
+      <d-button
+        severity="secondary"
+        variant="text"
+        rounded
+        @click.stop="promptFusionService.openProviderSettings(provider.id)"
+      >
         <template #icon>
           <bolt :size="14" color="var(--p-button-text-secondary-color)" />
         </template>
@@ -38,7 +45,7 @@ defineProps<Props>()
   border-radius: 8px;
   border: 1px solid transparent;
   background-color: var(--p-content-background);
-  transition: border-color .2s;
+  transition: border-color 0.2s;
 }
 .item.selected {
   border-color: var(--p-primary-color);
@@ -55,9 +62,8 @@ defineProps<Props>()
 .image {
   width: 25px;
   display: flex;
-  justify-content:center;
+  justify-content: center;
   align-items: center;
-
 }
 .title {
   font-size: 18px;
@@ -88,7 +94,7 @@ defineProps<Props>()
   border-radius: 50%;
   flex: 0 0 auto;
   background-color: var(--p-badge-danger-background);
-  box-shadow: 0px 2px 8px 0px rgba(239, 68, 68, 0.50);
+  box-shadow: 0px 2px 8px 0px rgba(239, 68, 68, 0.5);
 }
 .status.connected {
   border-color: var(--p-toast-success-border-color);
@@ -96,7 +102,7 @@ defineProps<Props>()
 }
 .status.connected::before {
   background-color: var(--p-badge-success-background);
-  box-shadow: 0px 2px 8px 0px rgba(34, 197, 94, 0.50);
+  box-shadow: 0px 2px 8px 0px rgba(34, 197, 94, 0.5);
 }
 .disabled-label {
   font-size: 12px;

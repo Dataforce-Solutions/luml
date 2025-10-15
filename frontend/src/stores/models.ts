@@ -58,8 +58,8 @@ interface ModelStore {
   ) => Promise<void>
   resetList: () => void
   deleteModels: (modelsIds: string[]) => Promise<{
-  deleted: string[]
-  failed: string[]
+    deleted: string[]
+    failed: string[]
   }>
   downloadModel: (modelId: string, name: string) => Promise<void>
   getDownloadUrl: (modelId: string) => Promise<string>
@@ -155,20 +155,20 @@ export const useModelsStore = defineStore('models', (): ModelStore => {
     modelsList.value = []
   }
 
-async function deleteModels(modelsIds: string[]) {
-  const results = await Promise.allSettled(modelsIds.map((id) => deleteModel(id).then(() => id)))
-  const deleted: string[] = []
-  const failed: string[] = []
-  results.forEach((result, index) => {
-    if (result.status === 'fulfilled') {
-      deleted.push(result.value)
-    } else {
-      failed.push(modelsIds[index])
-    }
-  })
-  modelsList.value = modelsList.value.filter((model) => !deleted.includes(model.id))
-  return { deleted, failed }
-}
+  async function deleteModels(modelsIds: string[]) {
+    const results = await Promise.allSettled(modelsIds.map((id) => deleteModel(id).then(() => id)))
+    const deleted: string[] = []
+    const failed: string[] = []
+    results.forEach((result, index) => {
+      if (result.status === 'fulfilled') {
+        deleted.push(result.value)
+      } else {
+        failed.push(modelsIds[index])
+      }
+    })
+    modelsList.value = modelsList.value.filter((model) => !deleted.includes(model.id))
+    return { deleted, failed }
+  }
 
   async function deleteModel(modelId: string) {
     const { url } = await dataforceApi.mlModels.getModelDeleteUrl(
@@ -245,7 +245,7 @@ async function deleteModels(modelsIds: string[]) {
       payload.id,
       payload,
     )
-    modelsList.value = modelsList.value.map(model => {
+    modelsList.value = modelsList.value.map((model) => {
       return model.id === result.id ? result : model
     })
   }

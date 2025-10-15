@@ -81,14 +81,9 @@ async function getSatellites() {
     const orbitIdParam = route.params.id
 
     const organizationId =
-      typeof organizationIdParam === 'string'
-        ? organizationIdParam
-        : organizationIdParam[0]
+      typeof organizationIdParam === 'string' ? organizationIdParam : organizationIdParam[0]
 
-    const orbitId =
-      typeof orbitIdParam === 'string'
-        ? orbitIdParam
-        : orbitIdParam[0]
+    const orbitId = typeof orbitIdParam === 'string' ? orbitIdParam : orbitIdParam[0]
 
     const list = await satellitesStore.loadSatellites(organizationId, orbitId)
     satellitesStore.setList(list)

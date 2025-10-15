@@ -34,7 +34,9 @@
           </template>
         </Button>
       </div>
-      <div class="message">For security reasons, this key is no longer visible. Generate a new one if needed.</div>
+      <div class="message">
+        For security reasons, this key is no longer visible. Generate a new one if needed.
+      </div>
     </div>
     <div v-else class="description">
       No API key yet. Click the button below to generate your first one.

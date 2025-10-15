@@ -1,17 +1,41 @@
 <template>
-  <d-form class="form" v-slot="$form" :initialValues :resolver :validateOnValueUpdate="false" :validateOnSubmit="true" :validateOnBlur="true" @submit="onFormSubmit">
+  <d-form
+    class="form"
+    v-slot="$form"
+    :initialValues
+    :resolver
+    :validateOnValueUpdate="false"
+    :validateOnSubmit="true"
+    :validateOnBlur="true"
+    @submit="onFormSubmit"
+  >
     <div class="input-wrapper">
       <d-float-label variant="on">
-        <d-input-text id="email" name="email" type="email" autocomplete="off" fluid v-model="initialValues.email" class="input" variant="filled"/>
+        <d-input-text
+          id="email"
+          name="email"
+          type="email"
+          autocomplete="off"
+          fluid
+          v-model="initialValues.email"
+          class="input"
+          variant="filled"
+        />
         <label for="email" class="label">Email</label>
       </d-float-label>
-      <d-message v-if="$form.email?.invalid" severity="error" size="small" variant="simple" class="message">
+      <d-message
+        v-if="$form.email?.invalid"
+        severity="error"
+        size="small"
+        variant="simple"
+        class="message"
+      >
         {{ $form.email.error?.message }}
       </d-message>
     </div>
     <d-button type="submit" class="button" :loading="loading">
       <span>Get early access</span>
-      <arrow-right :size="14"/>
+      <arrow-right :size="14" />
     </d-button>
   </d-form>
 </template>
@@ -28,9 +52,9 @@ import { useRoute } from 'vue-router'
 import { dataforceApi } from '@/lib/api'
 
 const toast = useToast()
-const route = useRoute();
+const route = useRoute()
 
-const initialValues = ref({...forgotPasswordInitialValues})
+const initialValues = ref({ ...forgotPasswordInitialValues })
 const resolver = ref(forgotPasswordResolver)
 const loading = ref(false)
 
@@ -40,9 +64,12 @@ const onFormSubmit = async ({ valid, values }: FormSubmitEvent) => {
   try {
     const currentPage = route.name
     await dataforceApi.sendEmail({ email: values.email, description: currentPage as string })
-    initialValues.value = {...forgotPasswordInitialValues};
+    initialValues.value = { ...forgotPasswordInitialValues }
     toast.add(
-      simpleSuccessToast(`We’ll notify you as soon as ${currentPage?.toString()} is ready for early access.`, 'You’re on the list!')
+      simpleSuccessToast(
+        `We’ll notify you as soon as ${currentPage?.toString()} is ready for early access.`,
+        'You’re on the list!',
+      ),
     )
   } catch {
     toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to send email' })
@@ -80,7 +107,7 @@ const onFormSubmit = async ({ valid, values }: FormSubmitEvent) => {
   height: 40px;
 }
 
-@media (max-width:768px){
+@media (max-width: 768px) {
   .form {
     flex-direction: column;
     align-items: stretch;

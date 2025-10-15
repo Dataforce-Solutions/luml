@@ -1,14 +1,23 @@
 <template>
   <div class="app-custom-radio">
     <label v-for="option in options" :for="id + option" class="app-custom-radio-label">
-      <input type="radio" :name="id" :id="id + option" :value="option" :disabled="disabled.includes(option)" :checked="option === modelValue" class="app-custom-radio-input" @change="$emit('update:modelValue', option)">
+      <input
+        type="radio"
+        :name="id"
+        :id="id + option"
+        :value="option"
+        :disabled="disabled.includes(option)"
+        :checked="option === modelValue"
+        class="app-custom-radio-input"
+        @change="$emit('update:modelValue', option)"
+      />
       <span class="app-custom-radio-value">{{ option }}</span>
     </label>
   </div>
 </template>
 
 <script setup lang="ts">
-import { useId } from 'vue';
+import { useId } from 'vue'
 
 const id = useId()
 
@@ -69,7 +78,7 @@ defineEmits<Emits>()
   left: 0;
   width: 100%;
   height: 100%;
-  transition: opacity .3s;
+  transition: opacity 0.3s;
   opacity: 0;
   background-color: var(--p-togglebutton-content-checked-background);
 }

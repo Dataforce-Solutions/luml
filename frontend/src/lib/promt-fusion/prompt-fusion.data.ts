@@ -1,4 +1,11 @@
-import { ProviderModelsEnum, ProvidersEnum, ProviderStatus, type BaseProviderInfo, type ProviderModel, type ProviderWithModels } from './prompt-fusion.interfaces'
+import {
+  ProviderModelsEnum,
+  ProvidersEnum,
+  ProviderStatus,
+  type BaseProviderInfo,
+  type ProviderModel,
+  type ProviderWithModels,
+} from './prompt-fusion.interfaces'
 import OpenAi from '@/assets/img/providers/open-ai.svg'
 import Ollama from '@/assets/img/providers/ollama.svg'
 import { LocalStorageService } from '@/utils/services/LocalStorageService'
@@ -42,15 +49,17 @@ export const getProviders = (): BaseProviderInfo[] => {
       ],
     },
   ]
-  return data.map(provider => {
+  return data.map((provider) => {
     return {
       ...provider,
-      status: provider.disabled ? ProviderStatus.disconnected : provider.settings.reduce((acc: ProviderStatus, setting) => {
-        if (setting.required && !setting.value) return ProviderStatus.disconnected;
-        return acc;
-      }, ProviderStatus.connected),
-    };
-  });
+      status: provider.disabled
+        ? ProviderStatus.disconnected
+        : provider.settings.reduce((acc: ProviderStatus, setting) => {
+            if (setting.required && !setting.value) return ProviderStatus.disconnected
+            return acc
+          }, ProviderStatus.connected),
+    }
+  })
 }
 
 export const openAiModels: ProviderModel[] = [

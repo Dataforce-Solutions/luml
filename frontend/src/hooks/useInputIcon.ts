@@ -1,7 +1,12 @@
 import { X, PencilLine } from 'lucide-vue-next'
 import { computed, onMounted, ref, type Ref } from 'vue'
 
-export const useInputIcon = (inputs: Ref[], formRef: any, values: Ref, isShowEditIcon: boolean = true) => {
+export const useInputIcon = (
+  inputs: Ref[],
+  formRef: any,
+  values: Ref,
+  isShowEditIcon: boolean = true,
+) => {
   const inputsStates = ref<Record<string, boolean>>({})
   const inputsRefs = ref<Record<string, HTMLInputElement>>({})
 
@@ -18,10 +23,9 @@ export const useInputIcon = (inputs: Ref[], formRef: any, values: Ref, isShowEdi
 
   function onIconClick(inputName: string) {
     if (getCurrentInputIcon.value(inputName) === X && formRef.value?.states[inputName]) {
+      formRef.value.states[inputName] = { ...formRef.value.states[inputName], value: '' }
 
-      formRef.value.states[inputName] = {...formRef.value.states[inputName], value: ''}
-
-      values.value[inputName] ? values.value[inputName] = '' : null
+      values.value[inputName] ? (values.value[inputName] = '') : null
     }
   }
 

@@ -100,7 +100,11 @@ async function onFormSubmit({ values, valid }: FormSubmitEvent) {
     loading.value = true
     if (!organizationStore.currentOrganization) throw new Error('Current organization not found')
     await organizationStore.updateOrganization(organizationStore.currentOrganization.id, payload)
-    toast.add(simpleSuccessToast('Your organization is ready. You can now switch to it from the organization menu.'))
+    toast.add(
+      simpleSuccessToast(
+        'Your organization is ready. You can now switch to it from the organization menu.',
+      ),
+    )
     visible.value = false
   } catch (e: any) {
     toast.add(simpleErrorToast(e.message || 'Could not create organization'))

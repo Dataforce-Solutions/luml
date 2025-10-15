@@ -18,7 +18,7 @@ import { Button } from 'primevue'
 import { Plus } from 'lucide-vue-next'
 
 type Props = {
-    createAvailable: boolean
+  createAvailable: boolean
 }
 
 type Emits = {

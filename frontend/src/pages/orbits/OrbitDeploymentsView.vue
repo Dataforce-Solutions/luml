@@ -58,7 +58,7 @@ onBeforeMount(async () => {
     }
     const deployments = await deploymentsStore.getDeployments(
       String(route.params.organizationId),
-      String(route.params.id)
+      String(route.params.id),
     )
     deploymentsStore.setDeployments(deployments)
   } catch (e: any) {

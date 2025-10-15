@@ -8,7 +8,7 @@
 </template>
 
 <script setup lang="ts">
-import type { TrainingImportance } from '@/lib/data-processing/interfaces';
+import type { TrainingImportance } from '@/lib/data-processing/interfaces'
 
 type Props = {
   features: TrainingImportance[]

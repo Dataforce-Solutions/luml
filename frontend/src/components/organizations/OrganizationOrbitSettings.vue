@@ -4,7 +4,13 @@
       <UserCog :size="14" />
     </template>
   </Button>
-  <Dialog v-model:visible="visible" :draggable="false" modal :pt="dialogPt" header="Manage Orbit Members">
+  <Dialog
+    v-model:visible="visible"
+    :draggable="false"
+    modal
+    :pt="dialogPt"
+    header="Manage Orbit Members"
+  >
     <div class="dialog-content">
       <p class="text">Add or remove members and assign roles within this orbit.</p>
       <div class="form">
@@ -38,7 +44,12 @@
           <div class="table-body">
             <div v-for="member in orbitMembers" class="table-row">
               <div class="cell cell-user">
-                <Avatar :label="member.user.photo ? undefined : member.user.full_name[0]" shape="circle" :image="member.user.photo" class="avatar"/>
+                <Avatar
+                  :label="member.user.photo ? undefined : member.user.full_name[0]"
+                  shape="circle"
+                  :image="member.user.photo"
+                  class="avatar"
+                />
                 <div>
                   <h4>{{ member.user.full_name }}</h4>
                 </div>
@@ -201,7 +212,12 @@ async function getOrbitDetails() {
 }
 
 function onTrashClick(memberId: string) {
-  confirm.require(deleteUserConfirmOptions(() => deleteMember(memberId), 'You can add a user to your orbit at any time.'))
+  confirm.require(
+    deleteUserConfirmOptions(
+      () => deleteMember(memberId),
+      'You can add a user to your orbit at any time.',
+    ),
+  )
 }
 
 async function deleteMember(memberId: string) {

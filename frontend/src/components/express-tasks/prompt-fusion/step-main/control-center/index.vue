@@ -48,7 +48,7 @@ const EXPORT_ITEMS = [
     command: () => {
       modelUploadVisible.value = true
     },
-    disabled: () => !organizationStore.currentOrganization
+    disabled: () => !organizationStore.currentOrganization,
   },
   {
     label: 'Download model',

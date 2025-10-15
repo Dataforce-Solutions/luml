@@ -1,20 +1,33 @@
 <template>
-  <d-dialog :visible="modelValue" modal style="width:100%;max-width:597px;" dismissable-mask @update:visible="(value: boolean) => $emit('update:modelValue', value)">
+  <d-dialog
+    :visible="modelValue"
+    modal
+    style="width: 100%; max-width: 597px"
+    dismissable-mask
+    @update:visible="(value: boolean) => $emit('update:modelValue', value)"
+  >
     <template #header>
       <h2 class="dialog-title">setup {{ providerName }}</h2>
     </template>
     <div class="items">
       <div v-for="setting in settingsState" class="item">
-        <label :for="setting.id" class="label" :class="{required: setting.required}">{{ setting.label }}</label>
-        <d-input-text :id="setting.id" v-model="setting.value" :placeholder="setting.placeholder" fluid/>
+        <label :for="setting.id" class="label" :class="{ required: setting.required }">{{
+          setting.label
+        }}</label>
+        <d-input-text
+          :id="setting.id"
+          v-model="setting.value"
+          :placeholder="setting.placeholder"
+          fluid
+        />
       </div>
     </div>
     <div class="save-key">
-      <d-checkbox v-model="saveApiKey" inputId="saveKey" class="checkbox" binary/>
+      <d-checkbox v-model="saveApiKey" inputId="saveKey" class="checkbox" binary />
       <label for="saveKey" class="label">Allow storing API key in browser's local storage</label>
     </div>
     <template #footer>
-      <d-button label="Save" @click="onSave"/>
+      <d-button label="Save" @click="onSave" />
     </template>
   </d-dialog>
 </template>

@@ -1,5 +1,11 @@
 <template>
-  <d-dialog :visible="modelValue" modal style="width: 100%; max-width: 604px; margin: 0 15px;" dismissable-mask @update:visible="(value: boolean) => $emit('update:modelValue', value)">
+  <d-dialog
+    :visible="modelValue"
+    modal
+    style="width: 100%; max-width: 604px; margin: 0 15px"
+    dismissable-mask
+    @update:visible="(value: boolean) => $emit('update:modelValue', value)"
+  >
     <template #header>
       <h2 class="dialog-title">PROMPT OPTIMIZATION</h2>
     </template>
@@ -7,16 +13,33 @@
     <ul class="prompt-menu">
       <li class="prompt-menu-item">
         <h3 class="prompt-menu-item-title">Free-form Optimization</h3>
-        <p class="prompt-menu-item-description">Zero-shot prompt optimization based on the pipeline structure and the task description.</p>
+        <p class="prompt-menu-item-description">
+          Zero-shot prompt optimization based on the pipeline structure and the task description.
+        </p>
         <d-button asChild severity="secondary" v-slot="slotProps">
-          <router-link :to="{ name: 'prompt-fusion' }" class="prompt-menu-item-button" :class="slotProps.class" @click="() => onLinkClick('free_form')">Select option</router-link>
+          <router-link
+            :to="{ name: 'prompt-fusion' }"
+            class="prompt-menu-item-button"
+            :class="slotProps.class"
+            @click="() => onLinkClick('free_form')"
+            >Select option</router-link
+          >
         </d-button>
       </li>
       <li class="prompt-menu-item">
         <h3 class="prompt-menu-item-title">Data-Driven Optimization</h3>
-        <p class="prompt-menu-item-description">Multi-iteration prompt optimization incorporating both the pipeline structure and the labelled data.</p>
+        <p class="prompt-menu-item-description">
+          Multi-iteration prompt optimization incorporating both the pipeline structure and the
+          labelled data.
+        </p>
         <d-button asChild severity="secondary" v-slot="slotProps">
-          <router-link :to="{ name: 'prompt-fusion', params: { mode: 'data-driven' } }" class="prompt-menu-item-button" :class="slotProps.class" @click="() => onLinkClick('data_driven')">Select option</router-link>
+          <router-link
+            :to="{ name: 'prompt-fusion', params: { mode: 'data-driven' } }"
+            class="prompt-menu-item-button"
+            :class="slotProps.class"
+            @click="() => onLinkClick('data_driven')"
+            >Select option</router-link
+          >
         </d-button>
       </li>
     </ul>
@@ -24,7 +47,7 @@
 </template>
 
 <script setup lang="ts">
-import { AnalyticsService, AnalyticsTrackKeysEnum } from '@/lib/analytics/AnalyticsService';
+import { AnalyticsService, AnalyticsTrackKeysEnum } from '@/lib/analytics/AnalyticsService'
 
 type Props = {
   modelValue: boolean
@@ -42,7 +65,6 @@ function onLinkClick(option: string) {
 </script>
 
 <style scoped>
-
 .dialog-title {
   font-size: 20px;
   font-weight: 600;

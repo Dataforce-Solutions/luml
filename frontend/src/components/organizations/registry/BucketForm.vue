@@ -1,11 +1,21 @@
 <template>
-  <Form id="bucketForm" v-slot="$form" :initialValues="initialValues" :resolver="resolver" @submit="onSubmit">
+  <Form
+    id="bucketForm"
+    v-slot="$form"
+    :initialValues="initialValues"
+    :resolver="resolver"
+    @submit="onSubmit"
+  >
     <div class="inputs">
       <div class="field">
-        <label for="endpoint" :class="{
-          'label required': !update,
-          'label--medium': update,
-        }">Endpoint</label>
+        <label
+          for="endpoint"
+          :class="{
+            'label required': !update,
+            'label--medium': update,
+          }"
+          >Endpoint</label
+        >
         <InputText
           v-model="initialValues.endpoint"
           id="endpoint"
@@ -14,13 +24,19 @@
           placeholder="e.g. s3.amazonaws.com"
           fluid
         />
-        <div v-if="($form as any).endpoint?.invalid" class="message">Please enter a valid endpoint URL</div>
+        <div v-if="($form as any).endpoint?.invalid" class="message">
+          Please enter a valid endpoint URL
+        </div>
       </div>
       <div class="field">
-        <label for="bucket_name" :class="{
-          'label required': !update,
-          'label--medium': update,
-        }">Bucket name</label>
+        <label
+          for="bucket_name"
+          :class="{
+            'label required': !update,
+            'label--medium': update,
+          }"
+          >Bucket name</label
+        >
         <InputText
           v-model="initialValues.bucket_name"
           id="bucket_name"
@@ -29,13 +45,19 @@
           placeholder="e.g. dataforce-storage"
           fluid
         />
-        <div v-if="($form as any).bucket_name?.invalid" class="message">Please enter a name for the bucket</div>
+        <div v-if="($form as any).bucket_name?.invalid" class="message">
+          Please enter a name for the bucket
+        </div>
       </div>
       <div class="field">
-        <label for="access_key" :class="{
-          'label': !update,
-          'label--medium': update,
-        }">Access key</label>
+        <label
+          for="access_key"
+          :class="{
+            label: !update,
+            'label--medium': update,
+          }"
+          >Access key</label
+        >
         <InputText
           v-model="initialValues.access_key"
           id="access_key"
@@ -46,10 +68,14 @@
         />
       </div>
       <div class="field">
-        <label for="secret_key" :class="{
-          'label': !update,
-          'label--medium': update,
-        }">Secret key</label>
+        <label
+          for="secret_key"
+          :class="{
+            label: !update,
+            'label--medium': update,
+          }"
+          >Secret key</label
+        >
         <InputText
           v-model="initialValues.secret_key"
           id="secret_key"
@@ -60,10 +86,14 @@
         />
       </div>
       <div class="field">
-        <label for="region" :class="{
-          'label': !update,
-          'label--medium': update,
-        }">Region</label>
+        <label
+          for="region"
+          :class="{
+            label: !update,
+            'label--medium': update,
+          }"
+          >Region</label
+        >
         <InputText
           v-model="initialValues.region"
           id="region"
@@ -76,10 +106,13 @@
     </div>
 
     <div class="field field--protocol">
-      <label :class="{
-        'label': !update,
-        'label--medium': update,
-      }">Secure (http/https)</label>
+      <label
+        :class="{
+          label: !update,
+          'label--medium': update,
+        }"
+        >Secure (http/https)</label
+      >
       <ToggleSwitch v-model="initialValues.secure" name="secure" />
     </div>
 
@@ -107,7 +140,7 @@ type Emits = {
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  showSubmitButton: true
+  showSubmitButton: true,
 })
 const emits = defineEmits<Emits>()
 
@@ -121,17 +154,20 @@ const initialValues = ref<BucketSecretCreator>({
   region: props.initialData?.region || '',
 })
 
-watch(() => props.initialData, (data) => {
-  if (data) {
-    initialValues.value.endpoint = data.endpoint || ''
-    initialValues.value.bucket_name = data.bucket_name || ''
-    initialValues.value.access_key = data.access_key || ''
-    initialValues.value.secret_key = data.secret_key || ''
-    initialValues.value.session_token = data.session_token || ''
-    initialValues.value.secure = data.secure ?? true
-    initialValues.value.region = data.region || ''
-  }
-})
+watch(
+  () => props.initialData,
+  (data) => {
+    if (data) {
+      initialValues.value.endpoint = data.endpoint || ''
+      initialValues.value.bucket_name = data.bucket_name || ''
+      initialValues.value.access_key = data.access_key || ''
+      initialValues.value.secret_key = data.secret_key || ''
+      initialValues.value.session_token = data.session_token || ''
+      initialValues.value.secure = data.secure ?? true
+      initialValues.value.region = data.region || ''
+    }
+  },
+)
 
 const createBucketResolver = zodResolver(
   z.object({
@@ -155,9 +191,7 @@ const updateBucketResolver = zodResolver(
   }),
 )
 
-const resolver = computed(() =>
-  props.update ? updateBucketResolver : createBucketResolver
-)
+const resolver = computed(() => (props.update ? updateBucketResolver : createBucketResolver))
 
 function onSubmit({ valid }: FormSubmitEvent) {
   if (!valid) return
@@ -184,7 +218,6 @@ function onSubmit({ valid }: FormSubmitEvent) {
     emits('submit', { ...initialValues.value })
   }
 }
-
 </script>
 
 <style scoped>

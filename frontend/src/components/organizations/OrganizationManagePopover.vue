@@ -38,14 +38,24 @@
             <Plus :size="14" />
             <span>Create new</span>
           </d-button>
-          <d-button v-if="organizationStore.currentOrganization" asChild variant="outlined" severity="secondary" :disabled="isSettingsDisabled" v-slot="slotProps">
+          <d-button
+            v-if="organizationStore.currentOrganization"
+            asChild
+            variant="outlined"
+            severity="secondary"
+            :disabled="isSettingsDisabled"
+            v-slot="slotProps"
+          >
             <button v-if="isSettingsDisabled" :class="slotProps.class" disabled>
               <Bolt :size="14" />
               <span>Settings</span>
             </button>
             <router-link
               v-else
-              :to="{ name: 'organization-members', params: { id: organizationStore.currentOrganization.id } }"
+              :to="{
+                name: 'organization-members',
+                params: { id: organizationStore.currentOrganization.id },
+              }"
               :class="slotProps.class"
               @click="toggle"
             >
@@ -84,8 +94,13 @@ const organizationStore = useOrganizationStore()
 const popover = ref()
 const isCreateMode = ref(false)
 
-const isSettingsDisabled = computed(() => !organizationStore.currentOrganization?.permissions.organization.includes(PermissionEnum.read))
-const currentOrganizationAvatarLabel = computed(() => organizationStore.currentOrganization?.name.charAt(0).toUpperCase())
+const isSettingsDisabled = computed(
+  () =>
+    !organizationStore.currentOrganization?.permissions.organization.includes(PermissionEnum.read),
+)
+const currentOrganizationAvatarLabel = computed(() =>
+  organizationStore.currentOrganization?.name.charAt(0).toUpperCase(),
+)
 
 function toggle(event: any) {
   popover.value.toggle(event)

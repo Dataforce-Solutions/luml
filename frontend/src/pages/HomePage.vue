@@ -3,7 +3,8 @@
     <div class="headings">
       <h1 class="main-title">Pick a Machine Learning Task</h1>
       <p class="sub-title">
-        Select a task that aligns with your goals, or explore all options to find the best fit for your needs.
+        Select a task that aligns with your goals, or explore all options to find the best fit for
+        your needs.
       </p>
     </div>
     <div class="body">

@@ -157,12 +157,12 @@ async function saveChanges() {
     loading.value = true
     const dynamic_attributes_secrets = initialValues.value.secretDynamicAttributes.reduce(
       (acc: Record<string, string>, attribute) => {
-     if (!attribute.value) return acc
-     acc[attribute.key] = attribute.value
-     return acc
-   },
-   {},
-)
+        if (!attribute.value) return acc
+        acc[attribute.key] = attribute.value
+        return acc
+      },
+      {},
+    )
     const payload: UpdateDeploymentPayload = {
       name: initialValues.value.name,
       description: initialValues.value.description,

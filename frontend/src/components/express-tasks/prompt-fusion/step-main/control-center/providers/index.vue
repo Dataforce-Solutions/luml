@@ -3,27 +3,38 @@
     <span>providers</span>
     <brain :size="14" />
   </d-button>
-  <d-dialog v-model:visible="visible" modal style="width:100%;max-width:500px;" dismissable-mask>
+  <d-dialog v-model:visible="visible" modal style="width: 100%; max-width: 500px" dismissable-mask>
     <template #header>
       <h2 class="dialog-title">Model Provider</h2>
     </template>
     <div class="providers">
-      <provider-item v-for="provider in providers" :provider="provider"/>
+      <provider-item v-for="provider in providers" :provider="provider" />
     </div>
   </d-dialog>
-  <provider-settings v-if="openedProvider" v-model="isProviderSettingsOpened" :settings="openedProvider.settings" :provider-name="openedProvider.name" @save="saveSettings"/>
+  <provider-settings
+    v-if="openedProvider"
+    v-model="isProviderSettingsOpened"
+    :settings="openedProvider.settings"
+    :provider-name="openedProvider.name"
+    @save="saveSettings"
+  />
 </template>
 
 <script setup lang="ts">
-import { type ProvidersEnum, type BaseProviderInfo, type ProviderSetting, ProviderStatus } from '@/lib/promt-fusion/prompt-fusion.interfaces';
-import { onBeforeMount, onBeforeUnmount, ref, watch } from 'vue';
-import { getProviders } from '@/lib/promt-fusion/prompt-fusion.data';
-import { Brain } from 'lucide-vue-next';
-import { LocalStorageService } from '@/utils/services/LocalStorageService';
-import { promptFusionService } from '@/lib/promt-fusion/PromptFusionService';
-import ProviderItem from './ProviderItem.vue';
-import ProviderSettings from './ProviderSettings.vue';
-import { AnalyticsService, AnalyticsTrackKeysEnum } from '@/lib/analytics/AnalyticsService';
+import {
+  type ProvidersEnum,
+  type BaseProviderInfo,
+  type ProviderSetting,
+  ProviderStatus,
+} from '@/lib/promt-fusion/prompt-fusion.interfaces'
+import { onBeforeMount, onBeforeUnmount, ref, watch } from 'vue'
+import { getProviders } from '@/lib/promt-fusion/prompt-fusion.data'
+import { Brain } from 'lucide-vue-next'
+import { LocalStorageService } from '@/utils/services/LocalStorageService'
+import { promptFusionService } from '@/lib/promt-fusion/PromptFusionService'
+import ProviderItem from './ProviderItem.vue'
+import ProviderSettings from './ProviderSettings.vue'
+import { AnalyticsService, AnalyticsTrackKeysEnum } from '@/lib/analytics/AnalyticsService'
 
 const providers = ref(getProviders())
 const visible = ref(false)
@@ -42,11 +53,14 @@ function saveSettings(settings: ProviderSetting[]) {
   promptFusionService.updateProviderSettings(openedProvider.value.id, settings)
   const isNeedToSaveData = settingsInStorage?.saveApiKeys
   if (isNeedToSaveData) {
-    settingsInStorage[openedProvider.value.id] = settings.reduce((acc: Record<string, string>, setting) => {
-      acc[setting.id] = setting.value
-      return acc
-    }, {})
-    LocalStorageService.set('dataforce.providersSettings' ,settingsInStorage)
+    settingsInStorage[openedProvider.value.id] = settings.reduce(
+      (acc: Record<string, string>, setting) => {
+        acc[setting.id] = setting.value
+        return acc
+      },
+      {},
+    )
+    LocalStorageService.set('dataforce.providersSettings', settingsInStorage)
   }
   promptFusionService.closeProviderSettings()
 }
@@ -63,7 +77,7 @@ function onChangeSettingsStatus(open: boolean) {
   }
 }
 function onOpenProviderSettings(providerId: ProvidersEnum) {
-  const provider = providers.value.find(p => p.id === providerId)
+  const provider = providers.value.find((p) => p.id === providerId)
   if (provider) showSettings(provider)
 }
 function onCloseProviderSettings() {

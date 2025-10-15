@@ -8,7 +8,7 @@ import router from './router'
 
 import { initPrimeVue } from './lib/primevue'
 
-import VueApexCharts from "vue3-apexcharts";
+import VueApexCharts from 'vue3-apexcharts'
 
 const app = createApp(App)
 

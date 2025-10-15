@@ -41,19 +41,18 @@ watch(visible, (val) => {
 
 const dialogPt: DialogPassThroughOptions = {
   root: {
-    style: 'width: 600px;'
+    style: 'width: 600px;',
   },
   header: {
-    style: 'text-transform: uppercase; padding: 36px 36px 28px;'
+    style: 'text-transform: uppercase; padding: 36px 36px 28px;',
   },
   content: {
-    style: 'padding: 0 36px 36px;'
+    style: 'padding: 0 36px 36px;',
   },
   footer: {
-    style: 'display: flex; justify-content: flex-end; padding: 0 36px 36px;'
+    style: 'display: flex; justify-content: flex-end; padding: 0 36px 36px;',
   },
 }
-
 
 async function loadSecretValue(secretId: string) {
   const orbit = orbitsStore.currentOrbitDetails
@@ -61,11 +60,7 @@ async function loadSecretValue(secretId: string) {
 
   try {
     loading.value = true
-    const fullSecret = await secretsStore.getSecretById(
-      orbit.organization_id,
-      orbit.id,
-      secretId
-    )
+    const fullSecret = await secretsStore.getSecretById(orbit.organization_id, orbit.id, secretId)
     secretValue.value = fullSecret?.value || ''
   } catch (error) {
     toast.add(simpleErrorToast('You don’t have access to view this key.'))

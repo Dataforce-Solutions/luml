@@ -145,7 +145,6 @@ export const updateSecretResolver = zodResolver(
   }),
 )
 
-
 const keyValueSchema = z.object({
   key: z.string().min(1),
   value: z.string().min(1),

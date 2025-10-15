@@ -1,5 +1,11 @@
 <template>
-  <d-dialog :visible="modelValue" modal :closable="false" :closeOnEscape="false" @update:visible="(event: boolean) => $emit('update:modelValue', event)">
+  <d-dialog
+    :visible="modelValue"
+    modal
+    :closable="false"
+    :closeOnEscape="false"
+    @update:visible="(event: boolean) => $emit('update:modelValue', event)"
+  >
     <template #container>
       <div class="wrapper">
         <div class="loader">
@@ -33,7 +39,6 @@ const emit = defineEmits<{
   (e: 'cancel'): void
   (e: 'update:modelValue', value: boolean): void
 }>()
-
 
 defineProps<Props>()
 </script>

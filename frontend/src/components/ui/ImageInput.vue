@@ -1,6 +1,12 @@
 <template>
   <div class="area" @click="inputRef?.click()">
-    <d-avatar :image="newImage || image" size="xlarge" :shape="shape" style="object-fit: cover" :class="{square: shape === 'square'}"/>
+    <d-avatar
+      :image="newImage || image"
+      size="xlarge"
+      :shape="shape"
+      style="object-fit: cover"
+      :class="{ square: shape === 'square' }"
+    />
     <input
       ref="inputRef"
       type="file"

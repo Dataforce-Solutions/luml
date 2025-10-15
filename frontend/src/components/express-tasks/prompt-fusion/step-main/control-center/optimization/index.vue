@@ -1,18 +1,33 @@
 <template>
-  <d-button ref="mainButton" severity="secondary" :disabled="disabled" @click="promptFusionService.changeOptimizationState(true)">
+  <d-button
+    ref="mainButton"
+    severity="secondary"
+    :disabled="disabled"
+    @click="promptFusionService.changeOptimizationState(true)"
+  >
     <span>optimization</span>
     <sliders-horizontal :size="14" />
   </d-button>
   <Transition>
     <Teleport to="body">
-      <div v-if="visible" :options="{ ignore: [mainButton] }" class="sidebar-wrapper" @click.self="promptFusionService.changeOptimizationState(false)">
+      <div
+        v-if="visible"
+        :options="{ ignore: [mainButton] }"
+        class="sidebar-wrapper"
+        @click.self="promptFusionService.changeOptimizationState(false)"
+      >
         <div class="sidebar">
           <header class="header">
             <h2 class="dialog-title">
-              <sliders-horizontal :size="20" color="var(--p-badge-secondary-color)"/>
+              <sliders-horizontal :size="20" color="var(--p-badge-secondary-color)" />
               Optimization settings
             </h2>
-            <d-button severity="secondary" rounded variant="text" @click="promptFusionService.changeOptimizationState(false)">
+            <d-button
+              severity="secondary"
+              rounded
+              variant="text"
+              @click="promptFusionService.changeOptimizationState(false)"
+            >
               <template #icon>
                 <x width="16" height="16" color="var(--p-button-text-secondary-color)" />
               </template>
@@ -21,20 +36,41 @@
           <div class="body">
             <div class="description">
               <label class="description-label">task description</label>
-              <CustomTextarea v-model="description" fluid rows="1" placeholder="Provide a short task description" size="small" autoResize :maxHeight="75" class="hint"/>
+              <CustomTextarea
+                v-model="description"
+                fluid
+                rows="1"
+                placeholder="Provide a short task description"
+                size="small"
+                autoResize
+                :maxHeight="75"
+                class="hint"
+              />
             </div>
             <div class="teacher-model">
-              <model-select title="teacher model" description="Model that provides reference outputs" :model-type="ModelTypeEnum.teacher" />
+              <model-select
+                title="teacher model"
+                description="Model that provides reference outputs"
+                :model-type="ModelTypeEnum.teacher"
+              />
             </div>
             <div class="student-model">
-              <model-select title="student model" description="Model being optimized" :model-type="ModelTypeEnum.student" />
+              <model-select
+                title="student model"
+                description="Model being optimized"
+                :model-type="ModelTypeEnum.student"
+              />
             </div>
             <evaluation-metrics />
           </div>
           <footer class="footer">
             <div class="footer">
               <d-button as="a" label="Need help?" :href="helpLink" target="_blank" variant="text" />
-              <d-button label="run optimization" severity="secondary" @click="onRunOptimizationClick"/>
+              <d-button
+                label="run optimization"
+                severity="secondary"
+                @click="onRunOptimizationClick"
+              />
             </div>
           </footer>
         </div>
@@ -100,7 +136,12 @@ async function runOptimization() {
     default:
       evaluation_metrics = 'none'
   }
-  AnalyticsService.track(AnalyticsTrackKeysEnum.run_optimization, { task: 'prompt_optimization', teacher_model, student_model, evaluation_metrics })
+  AnalyticsService.track(AnalyticsTrackKeysEnum.run_optimization, {
+    task: 'prompt_optimization',
+    teacher_model,
+    student_model,
+    evaluation_metrics,
+  })
   try {
     await promptFusionService.runOptimization()
     toast.add(simpleSuccessToast('Your model is successfully trained'))

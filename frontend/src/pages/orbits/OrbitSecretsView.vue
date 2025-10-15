@@ -7,13 +7,12 @@
     />
   </div>
 
-<SecretCreator
-  :organization-id="orbitsStore.currentOrbitDetails!.organization_id"
-  :orbit-id="orbitsStore.currentOrbitDetails!.id"
-  v-model:visible="secretsStore.creatorVisible"
-  @update:visible="(val) => (val ? secretsStore.showCreator() : secretsStore.hideCreator())"
-/>
-
+  <SecretCreator
+    :organization-id="orbitsStore.currentOrbitDetails!.organization_id"
+    :orbit-id="orbitsStore.currentOrbitDetails!.id"
+    v-model:visible="secretsStore.creatorVisible"
+    @update:visible="(val) => (val ? secretsStore.showCreator() : secretsStore.hideCreator())"
+  />
 </template>
 
 <script setup lang="ts">
@@ -22,7 +21,7 @@ import { useToast } from 'primevue'
 import { useOrbitsStore } from '@/stores/orbits'
 import { useSecretsStore } from '@/stores/orbit-secrets'
 import { simpleErrorToast } from '@/lib/primevue/data/toasts'
-import SecretsList from '@/components/orbit-secrets/SecretsList.vue';
+import SecretsList from '@/components/orbit-secrets/SecretsList.vue'
 import SecretCreator from '@/components/orbit-secrets/SecretCreator.vue'
 
 const orbitsStore = useOrbitsStore()
@@ -36,10 +35,7 @@ onBeforeMount(async () => {
     loading.value = true
     const currentOrbit = orbitsStore.currentOrbitDetails
     if (currentOrbit?.organization_id && currentOrbit?.id) {
-      await secretsStore.loadSecrets(
-        currentOrbit.organization_id,
-        currentOrbit.id
-      )
+      await secretsStore.loadSecrets(currentOrbit.organization_id, currentOrbit.id)
     }
   } catch (e) {
     toast.add(simpleErrorToast('Failed to load secrets'))

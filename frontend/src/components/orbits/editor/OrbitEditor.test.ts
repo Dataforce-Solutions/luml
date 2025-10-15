@@ -52,7 +52,8 @@ vi.mock('lucide-vue-next', () => ({
   Orbit: {
     name: 'Orbit',
     props: ['size', 'color'],
-    template: '<svg data-testid="orbit-icon" :style="{ width: size + \'px\', height: size + \'px\', color }"><circle /></svg>'
+    template:
+      '<svg data-testid="orbit-icon" :style="{ width: size + \'px\', height: size + \'px\', color }"><circle /></svg>',
   },
 }))
 
@@ -87,7 +88,7 @@ describe('OrbitSettingsDialog', () => {
         plugins: [pinia],
 
         stubs: {
-          Dialog: { 
+          Dialog: {
             template:
               '<div v-if="visible"><slot name="header"></slot><slot></slot><slot name="footer"></slot></div>',
             props: ['visible', 'position', 'draggable', 'pt'],

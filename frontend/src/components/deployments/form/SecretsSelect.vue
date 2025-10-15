@@ -20,8 +20,12 @@
         </div>
       </template>
     </Select>
-    <SecretCreator v-if="isCreating" v-model:visible="isCreating"
-      :organization-id="String($route.params.organizationId)" :orbit-id="String($route.params.id)"></SecretCreator>
+    <SecretCreator
+      v-if="isCreating"
+      v-model:visible="isCreating"
+      :organization-id="String($route.params.organizationId)"
+      :orbit-id="String($route.params.id)"
+    ></SecretCreator>
   </div>
 </template>
 

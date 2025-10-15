@@ -1,25 +1,55 @@
 <template>
-  <Dialog v-model:visible="visible" header="Create a new secret" modal :draggable="false" :pt="dialogPt">
-    <Form :initial-values="formData" :resolver="createSecretResolver" @submit="onSubmit" class="form">
+  <Dialog
+    v-model:visible="visible"
+    header="Create a new secret"
+    modal
+    :draggable="false"
+    :pt="dialogPt"
+  >
+    <Form
+      :initial-values="formData"
+      :resolver="createSecretResolver"
+      @submit="onSubmit"
+      class="form"
+    >
       <div class="form-item">
-          <label for="name" class="label required">Name</label>
-          <InputText v-model="formData.name" id="name" name="name" placeholder="Name your secret key" fluid />
-        </div>
+        <label for="name" class="label required">Name</label>
+        <InputText
+          v-model="formData.name"
+          id="name"
+          name="name"
+          placeholder="Name your secret key"
+          fluid
+        />
+      </div>
 
-        <div class="form-item">
-          <label for="value" class="label required">Secret key</label>
-          <Password v-model="formData.value" id="value" name="value" :feedback="false" placeholder="Enter secret key"
-            toggleMask fluid />
-        </div>
+      <div class="form-item">
+        <label for="value" class="label required">Secret key</label>
+        <Password
+          v-model="formData.value"
+          id="value"
+          name="value"
+          :feedback="false"
+          placeholder="Enter secret key"
+          toggleMask
+          fluid
+        />
+      </div>
 
-        <div class="form-item">
-          <label for="tags" class="label">Tags</label>
-          <AutoComplete v-model="formData.tags" id="tags" name="tags" fluid multiple placeholder="Type to add tags"
-            :suggestions="autocompleteItems" @complete="searchTags" />
-        </div>
-      <Button type="submit" fluid rounded :loading="loading">
-        Create
-      </Button>
+      <div class="form-item">
+        <label for="tags" class="label">Tags</label>
+        <AutoComplete
+          v-model="formData.tags"
+          id="tags"
+          name="tags"
+          fluid
+          multiple
+          placeholder="Type to add tags"
+          :suggestions="autocompleteItems"
+          @complete="searchTags"
+        />
+      </div>
+      <Button type="submit" fluid rounded :loading="loading"> Create </Button>
     </Form>
   </Dialog>
 </template>
@@ -68,9 +98,7 @@ const autocompleteItems = ref<string[]>([])
 function searchTags(event: AutoCompleteCompleteEvent) {
   autocompleteItems.value = [
     event.query,
-    ...existingTags.value.filter((tag) =>
-      tag.toLowerCase().includes(event.query.toLowerCase()),
-    ),
+    ...existingTags.value.filter((tag) => tag.toLowerCase().includes(event.query.toLowerCase())),
   ]
 }
 
@@ -100,11 +128,7 @@ async function onSubmit({ valid }: FormSubmitEvent) {
     resetForm()
     toast.add(simpleSuccessToast('Secret created successfully'))
   } catch (e: any) {
-    toast.add(
-      simpleErrorToast(
-        e?.response?.data?.detail || e.message || 'Failed to create secret',
-      ),
-    )
+    toast.add(simpleErrorToast(e?.response?.data?.detail || e.message || 'Failed to create secret'))
   } finally {
     loading.value = false
   }
@@ -112,7 +136,6 @@ async function onSubmit({ valid }: FormSubmitEvent) {
 </script>
 
 <style scoped>
-
 .form {
   display: flex;
   flex-direction: column;
@@ -135,5 +158,4 @@ async function onSubmit({ valid }: FormSubmitEvent) {
 .form-item:last-of-type .p-autocomplete {
   margin-bottom: 29px;
 }
-
 </style>

@@ -3,26 +3,47 @@
     <div class="user-buttons">
       <UserInvitations></UserInvitations>
       <d-button severity="help" class="user-open-button" @click="toggleMenu">
-        <d-avatar :label="getUserAvatar ? undefined : mainButtonLabel[0]" :image="getUserAvatar" shape="circle"></d-avatar>
+        <d-avatar
+          :label="getUserAvatar ? undefined : mainButtonLabel[0]"
+          :image="getUserAvatar"
+          shape="circle"
+        ></d-avatar>
         <span>{{ mainButtonLabel }}</span>
         <chevron-down :size="14" />
       </d-button>
     </div>
-    <d-dialog v-model:visible="isDialogVisible" position="topright" :closable="false" :draggable="false" modal dismissableMask :style="{ marginTop: '85px'}" class="modal-transparent-mask">
-       <template #header>
-          <header class="header">
-            <d-avatar :label="getUserAvatar ? undefined : getUserFullName?.[0] || getUserEmail?.[0]" :image="getUserAvatar" shape="circle" size="large"></d-avatar>
-            <div class="user-info">
-              <div class="user-name">{{ getUserFullName }}</div>
-              <div class="user-email">{{ getUserEmail }}</div>
-            </div>
-          </header>
-        </template>
-      <d-menu :model="menuItems" :style="{backgroundColor:'transparent',border:'none',padding:'0',minWidth:'228px'}">
+    <d-dialog
+      v-model:visible="isDialogVisible"
+      position="topright"
+      :closable="false"
+      :draggable="false"
+      modal
+      dismissableMask
+      :style="{ marginTop: '85px' }"
+      class="modal-transparent-mask"
+    >
+      <template #header>
+        <header class="header">
+          <d-avatar
+            :label="getUserAvatar ? undefined : getUserFullName?.[0] || getUserEmail?.[0]"
+            :image="getUserAvatar"
+            shape="circle"
+            size="large"
+          ></d-avatar>
+          <div class="user-info">
+            <div class="user-name">{{ getUserFullName }}</div>
+            <div class="user-email">{{ getUserEmail }}</div>
+          </div>
+        </header>
+      </template>
+      <d-menu
+        :model="menuItems"
+        :style="{ backgroundColor: 'transparent', border: 'none', padding: '0', minWidth: '228px' }"
+      >
         <template #item="{ item, props }">
           <div v-if="item.themeToggle" class="appearance">
             <span>{{ item.label }}</span>
-            <UiThemeToggle v-model="theme"/>
+            <UiThemeToggle v-model="theme" />
           </div>
           <button type="button" v-else class="menu-item" v-bind="props.action" @click="item.action">
             <span>{{ item.label }}</span>
@@ -30,10 +51,10 @@
         </template>
       </d-menu>
       <template #footer>
-          <footer class="footer">
-            <button type="button" class="logout-button" @click="onButtonLogoutClick">Log out</button>
-          </footer>
-        </template>
+        <footer class="footer">
+          <button type="button" class="logout-button" @click="onButtonLogoutClick">Log out</button>
+        </footer>
+      </template>
     </d-dialog>
   </div>
   <d-dialog v-model:visible="isSettingsPopupVisible" modal :style="{ width: '37rem' }">
@@ -51,7 +72,7 @@
     </template>
     <user-change-password @success="onChangePasswordSuccess" />
   </d-dialog>
-  <ApiKeyModal v-model:show="isApiKeyVisible"/>
+  <ApiKeyModal v-model:show="isApiKeyVisible" />
 </template>
 
 <script setup lang="ts">
@@ -143,7 +164,7 @@ const onChangePasswordSuccess = () => {
 }
 
 watch(theme, () => {
-  themeStore.changeTheme();
+  themeStore.changeTheme()
 })
 </script>
 

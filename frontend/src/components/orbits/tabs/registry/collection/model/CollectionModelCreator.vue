@@ -188,7 +188,6 @@ watch(visible, (val) => {
     fileError.value = false
   }
 })
-
 </script>
 
 <style scoped>

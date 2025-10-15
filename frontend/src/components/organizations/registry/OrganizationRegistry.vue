@@ -1,7 +1,9 @@
 <template>
   <div>
     <div class="header">
-      <h3 class="label">List of Buckets for current organization ({{ bucketsStore.buckets.length }})</h3>
+      <h3 class="label">
+        List of Buckets for current organization ({{ bucketsStore.buckets.length }})
+      </h3>
       <OrganizationBucketCreator></OrganizationBucketCreator>
     </div>
     <OrganizationRegistryTable></OrganizationRegistryTable>
@@ -11,7 +13,7 @@
 <script setup lang="ts">
 import OrganizationRegistryTable from './OrganizationRegistryTable.vue'
 import OrganizationBucketCreator from './OrganizationBucketCreator.vue'
-import { useBucketsStore } from '@/stores/buckets';
+import { useBucketsStore } from '@/stores/buckets'
 
 const bucketsStore = useBucketsStore()
 </script>
