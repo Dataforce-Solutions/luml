@@ -1,4 +1,3 @@
-import asyncio
 import json
 import logging
 import os
@@ -8,25 +7,13 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
 
-from fnnx.device import DeviceMap
 from fnnx.handlers._common import unpack_model
-from fnnx.handlers.local import LocalHandlerConfig
-from fnnx.runtime import Runtime
 from pydantic import BaseModel, Field, create_model
 from workers.conda_manager import ModelCondaManager
 
-# from fnnx.envs.conda import install_micromamba, CondaLikeEnvManager
-from .conda_custom import CondaLikeEnvManager, install_micromamba
 from .file_handler import FileHandler
 
 logger = logging.getLogger(__name__)
-
-try:
-    import numpy as _np  # optional
-
-    _HAS_NUMPY = True
-except Exception:
-    _HAS_NUMPY = False
 
 
 class ModelHandler:
@@ -35,23 +22,13 @@ class ModelHandler:
         self._file_handler = FileHandler()
         self._cached_models = {}  # url -> local_path mapping
         self._request_model_schema = None
-        self._model_envs = None
         self._conda_worker = None
         try:
             self.model_path = self.get_model_path()
-
-            logger.info("Unpacking model...")
             self.extracted_path = self.unpacked_model_path()
-            logger.info("Model successfully unpacked.")
-
-            self._model_envs = self.create_model_env()
-
-            if self._model_envs:
-                self._conda_worker = ModelCondaManager(self._model_envs, self.extracted_path)
-                self._conda_worker.start()
-
-                logger.info("Model worker started successfully.")
-
+            self._conda_worker = ModelCondaManager(self.get_env(), self.extracted_path)
+            self._conda_worker.create_model_env()
+            self._conda_worker.start()
         except Exception as error:
             logger.error(
                 f"Model handler initialization failed: {error}\nTraceback: {traceback.format_exc()}"
@@ -100,20 +77,6 @@ class ModelHandler:
             "int64": int,
             "boolean": bool,
         }.get(dtype_inner, Any)
-
-    def to_jsonable(self, obj: Any) -> Any:  # noqa: ANN401
-        if _HAS_NUMPY:
-            if isinstance(obj, _np.ndarray):
-                return obj.tolist()
-            if isinstance(obj, _np.generic):
-                return obj.item()
-        if isinstance(obj, dict):
-            return {k: self.to_jsonable(v) for k, v in obj.items()}
-        if isinstance(obj, list):
-            return [self.to_jsonable(v) for v in obj]
-        if isinstance(obj, tuple):
-            return [self.to_jsonable(v) for v in obj]
-        return obj
 
     @staticmethod
     def create_nested_list_type(base_type: type, shape: list[int | str]) -> type:
@@ -177,13 +140,17 @@ class ModelHandler:
 
     def get_manifest(self) -> dict[str, Any]:
         manifest_path = Path(self.unpacked_model_path()) / "manifest.json"
-        with open(manifest_path) as f:
-            return json.load(f)
+        if manifest_path.exists():
+            with open(manifest_path) as f:
+                return json.load(f)
+        return {}
 
-    def get_env(self) -> dict[str, Any]:
+    def get_env(self) -> dict[str, Any] | None:
         env_path = Path(self.unpacked_model_path()) / "env.json"
-        with open(env_path) as f:
-            return json.load(f)
+        if env_path.exists():
+            with open(env_path) as f:
+                return json.load(f)
+        return None
 
     def load_dtypes_schemas(self) -> dict[str, Any]:
         dtypes_path = Path(self.unpacked_model_path()) / "dtypes.json"
@@ -207,60 +174,3 @@ class ModelHandler:
                 ),
             )
         return self._request_model_schema
-
-    async def compute_result(self, inputs: Any, dynamic_attributes: Any) -> Any:  # noqa: ANN401
-        if self._conda_worker and self._conda_worker.is_alive():
-            return await self._conda_worker.compute(
-                inputs.model_dump(), dynamic_attributes.model_dump()
-            )
-        else:
-            handler = Runtime(
-                bundle_path=self.extracted_path,
-                device_map=DeviceMap(accelerator="cpu", node_device_map={}),
-                handler_config=LocalHandlerConfig(auto_cleanup=False),
-            )
-            try:
-                result = await handler.compute_async(
-                    inputs.model_dump(), dynamic_attributes.model_dump()
-                )
-            except NotImplementedError:
-                result = await asyncio.to_thread(
-                    handler.compute, inputs.model_dump(), dynamic_attributes.model_dump()
-                )
-            return self.to_jsonable(result)
-
-    def create_model_env(self) -> dict[str, Any] | None:
-        try:
-            env_spec = self.get_env()
-            if not env_spec:
-                return None
-
-            install_micromamba()
-            env_name, env_config = next(iter(env_spec.items()))
-
-            if "dependencies" not in env_config:
-                env_config["dependencies"] = []
-
-            existing_packages = set()
-            for dep in env_config["dependencies"]:
-                if isinstance(dep, dict) and "package" in dep:
-                    existing_packages.add(
-                        dep["package"].split("==")[0].split(">=")[0].split("<=")[0].strip()
-                    )
-            # TODO pin version?
-            for pkg_name in ["uvicorn"]:
-                if pkg_name not in existing_packages:
-                    env_config["dependencies"].append({"package": pkg_name})
-
-            env_manager = CondaLikeEnvManager(env_config)
-            env_path = env_manager.ensure()
-            logger.info("[CREATE_ENV] Env created successfully.")
-
-            return {"name": env_name, "path": env_path, "manager": env_manager}
-
-        except Exception as e:
-            logger.error(
-                f"[CREATE_ENV] Failed to create model environment: {e}\n"
-                f"Traceback: {traceback.format_exc()}"
-            )
-            return None

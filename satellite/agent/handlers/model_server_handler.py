@@ -13,19 +13,25 @@ class ModelServerHandler:
         self.deployments: dict[str, LocalDeployment] = {}
         self._openapi_cache_invalidation_callbacks = []
 
-    async def add_deployment(self, deployment: Deployment) -> None:
-        manifest, openapi_schema = None, None
+    async def add_single_deployment(
+        self, deployment_id: str, dynamic_attributes_secrets: dict[str, str] | None
+    ) -> None:
+        manifest = None
+        openapi_schema = None
         with suppress(Exception):
             async with ModelServerClient() as client:
-                manifest = await client.get_manifest(deployment.id)
-                openapi_schema = await client.get_openapi_schema(deployment.id)
+                manifest = await client.get_manifest(deployment_id)
+                openapi_schema = await client.get_openapi_schema(deployment_id)
 
-        self.deployments[str(deployment.id)] = LocalDeployment(
-            deployment_id=deployment.id,
-            dynamic_attributes_secrets=deployment.dynamic_attributes_secrets,
+        self.deployments[deployment_id] = LocalDeployment(
+            deployment_id=deployment_id,
+            dynamic_attributes_secrets=dynamic_attributes_secrets,
             manifest=manifest,
             openapi_schema=openapi_schema,
         )
+
+    async def add_deployment(self, deployment: Deployment) -> None:
+        await self.add_single_deployment(deployment.id, deployment.dynamic_attributes_secrets)
         self._invalidate_openapi_cache()
 
     async def get_deployment(self, deployment_id: str) -> LocalDeployment | None:
@@ -47,31 +53,22 @@ class ModelServerHandler:
     async def sync_deployments(self) -> None:
         logger.info("[ModelServerHandler] sync_deployments")
         async with PlatformClient(
-                str(config.PLATFORM_URL), config.SATELLITE_TOKEN
+            str(config.PLATFORM_URL), config.SATELLITE_TOKEN
         ) as platform_client:
             deployments_db = await platform_client.list_deployments()
-            deployments_db = [dep for dep in deployments_db if dep.get("status", "") == "active"]
+            active_deployments_db = [
+                dep for dep in deployments_db if dep.get("status", "") == "active"
+            ]
 
-            logger.info(f"[deployments_db] {"\n".join([d.get("id", "") for d in deployments_db])}")
-            for dep in deployments_db:
-                try:
-                    async with ModelServerClient() as client:
-                        health_ok = await client.is_healthy(dep["id"])
-                except Exception:
-                    health_ok = False
-                logger.info(f"[dep] {dep['id']} health_ok - {health_ok}")
+            logger.info(
+                f"[active_deployments_db] {[d.get('id', '') for d in active_deployments_db]}"
+            )
+            for dep in active_deployments_db:
+                async with ModelServerClient() as client:
+                    health_ok = await client.is_healthy(dep["id"])
                 if health_ok:
-                    manifest, openapi_schema = None, None
-                    with suppress(Exception):
-                        async with ModelServerClient() as client:
-                            manifest = await client.get_manifest(dep["id"])
-                            openapi_schema = await client.get_openapi_schema(dep["id"])
-
-                    self.deployments[dep["id"]] = LocalDeployment(
-                        deployment_id=dep["id"],
-                        dynamic_attributes_secrets=dep.get("dynamic_attributes_secrets"),
-                        manifest=manifest,
-                        openapi_schema=openapi_schema,
+                    await self.add_single_deployment(
+                        dep["id"], dep.get("dynamic_attributes_secrets")
                     )
 
             logger.info(f"Synced deployments: {list(self.deployments.keys())}")
@@ -80,7 +77,7 @@ class ModelServerHandler:
 
     @staticmethod
     async def get_compute_missing_secrets(
-            deployment: LocalDeployment, compute_dynamic_atr: dict
+        deployment: LocalDeployment, compute_dynamic_atr: dict
     ) -> dict:
         from agent.handlers.handler_instances import secrets_handler
 

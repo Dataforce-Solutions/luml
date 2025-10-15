@@ -11,6 +11,7 @@ class Settings(BaseSettings):
     MODEL_IMAGE: str = "df-random-svc:latest"
     POLL_INTERVAL_SEC: float = 2.0
     CONTAINER_PORT: int = 8080
+    CONDA_PORT: int = 8081
     AUTH_PORT: int = 7000
 
     model_config = SettingsConfigDict(

@@ -1,4 +1,3 @@
-import json
 import logging
 import sys
 from typing import Any
@@ -60,16 +59,14 @@ try:
             raise HTTPException(status_code=400, detail="Missing 'inputs' in request")
 
         try:
-            return await compute_model(inputs, request_data.get("dynamic_attributes") or {})
+            result = await compute_model(inputs, request_data.get("dynamic_attributes") or {})
+            return result
         except Exception as error:
             raise HTTPException(status_code=500, detail=str(error)) from error
 
     if __name__ == "__main__":
-        port = int(sys.argv[2]) if len(sys.argv) > 2 else 8080
+        port = int(sys.argv[2]) if len(sys.argv) > 2 else 8081
+        uvicorn.run(app, host="0.0.0.0", port=port)
 
-        print(json.dumps({"status": "ready", "port": port}), flush=True)
-        uvicorn.run(app, host="127.0.0.1", port=port)
-
-except Exception as error:
-    print(json.dumps({"status": "error", "error": str(error)}), flush=True)
+except Exception:
     sys.exit(1)

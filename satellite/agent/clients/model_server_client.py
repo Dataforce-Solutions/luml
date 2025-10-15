@@ -9,6 +9,7 @@ from agent.settings import config
 
 logger = logging.getLogger(__name__)
 
+
 class ModelServerClient:
     def __init__(self, timeout: float = 45.0) -> None:
         self._timeout: float | httpx.Timeout = timeout
@@ -27,7 +28,9 @@ class ModelServerClient:
             self._session = None
 
     @staticmethod
-    def _url(deployment_id: str) -> str:
+    def _url(deployment_id: str, use_conda: bool = False) -> str:
+        if use_conda:
+            return f"http://sat-{deployment_id}:{config.CONDA_PORT}"
         return f"http://sat-{deployment_id}:{config.CONTAINER_PORT}"
 
     async def compute(
@@ -36,26 +39,25 @@ class ModelServerClient:
         body: dict,
     ) -> dict:
         assert self._session is not None
-        response = await self._session.post(f"{self._url(deployment_id)}/compute", json=body)
+        url = f"{self._url(deployment_id, True)}/compute"
+        response = await self._session.post(url, json=body)
         response.raise_for_status()
         return response.json()
 
     async def is_healthy(self, deployment_id: str, timeout: int = 120) -> bool:
         assert self._session is not None
-        url = f"{self._url(deployment_id)}/healthz"
-        logger.info(
-            f"[HEALTH_CHECK] Starting health check for {deployment_id},"
-            f" URL: {url}, timeout: {timeout}s"
-        )
+        logger.info(f"Starting health check for {deployment_id}...")
 
         for _ in range(timeout):
             with suppress(Exception):
-                response = await self._session.get(url, timeout=5.0)
+                response = await self._session.get(
+                    f"{self._url(deployment_id)}/healthz", timeout=5.0
+                )
                 if response.status_code == 200:
                     return True
             await asyncio.sleep(1)
 
-        logger.error(f"[HEALTH_CHECK] Failed after {timeout} attempts for {deployment_id}")
+        logger.error(f"Failed after {timeout} attempts for {deployment_id}")
         return False
 
     async def get_openapi_schema(self, deployment_id: str) -> dict | None:
@@ -74,7 +76,5 @@ class ModelServerClient:
             if response.status_code == 200:
                 return response.json()
         except Exception as error:
-            logger.info(
-                f"[ModelServerClient] Error getting manifest {error}."
-            )
+            logger.info(f"Error getting manifest {error}.")
         return None
