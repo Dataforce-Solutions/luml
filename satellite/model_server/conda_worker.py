@@ -1,17 +1,31 @@
+import json
 import logging
 import sys
+import traceback
 from typing import Any
 
 import uvicorn
-from services.base_service import HTTPException, UvicornBaseService
+from openapi_generator import OpenAPIGenerator
+from services.base_service import HTTPException
+from services.service import UvicornService
 
 logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(levelname)s - [simple_worker] %(message)s"
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - [conda_worker] %(message)s"
 )
 logger = logging.getLogger(__name__)
 
 
 try:
+    logger.info("[INIT] Starting conda_worker...")
+
+    if len(sys.argv) < 2:
+        logger.error("[INIT] Missing required extracted_path argument")
+        sys.exit(1)
+
+    extracted_path = sys.argv[1]
+    port = int(sys.argv[2]) if len(sys.argv) > 2 else 8081
+    model_data = json.loads(sys.argv[3]) if len(sys.argv) > 3 else {}
+
     import numpy as np
     from fnnx.device import DeviceMap
     from fnnx.handlers.local import LocalHandlerConfig
@@ -31,7 +45,7 @@ try:
         return obj
 
     handler = Runtime(
-        bundle_path=sys.argv[1],  # extracted_path
+        bundle_path=extracted_path,
         device_map=DeviceMap(accelerator="cpu", node_device_map={}),
         handler_config=LocalHandlerConfig(auto_cleanup=False),
     )
@@ -41,16 +55,43 @@ try:
             result = await handler.compute_async(inputs, dynamic_attributes)
         except NotImplementedError:
             result = handler.compute(inputs, dynamic_attributes)
+        except Exception:
+            raise
         return to_jsonable(result)
 
-    app = UvicornBaseService(
+    openapi_gen = None
+    if model_data:
+        openapi_gen = OpenAPIGenerator(
+            title="Model Conda Compute Service",
+            description="Model Conda Compute Service",
+            manifest=model_data.get("manifest"),
+            dtypes_schemas=model_data.get("dtypes_schemas"),
+            request_schema=model_data.get("request_schema"),
+        )
+
+    app = UvicornService(
         title="Model Conda Compute Service",
         description="Model Conda Compute Service",
+        openapi_generator=openapi_gen,
     )
 
-    @app.get("/health")
-    async def health() -> dict[str, str]:
+    @app.get("/healthz")
+    async def healthz() -> dict[str, str]:
         return {"status": "healthy"}
+
+    @app.get(
+        "/manifest",
+        summary="Get Model Manifest",
+        description="Returns the FNNX model manifest with input/output specifications",
+        tags=["model"],
+    )
+    async def get_manifest() -> dict[str, Any]:  # noqa: ANN401
+        try:
+            return model_data.get("manifest", {})
+        except Exception as error:
+            raise HTTPException(
+                status_code=500, detail=f"Failed to get manifest: {str(error)}"
+            ) from error
 
     @app.post("/compute")
     async def compute(request_data: dict) -> dict[str, Any]:  # noqa: ANN401
@@ -65,8 +106,10 @@ try:
             raise HTTPException(status_code=500, detail=str(error)) from error
 
     if __name__ == "__main__":
-        port = int(sys.argv[2]) if len(sys.argv) > 2 else 8081
+        logger.info("[UVICORN] Starting server...")
         uvicorn.run(app, host="0.0.0.0", port=port)
 
-except Exception:
+except Exception as e:
+    logger.error(f"[ERROR] Fatal error in conda worker: {e}")
+    logger.error(f"[ERROR] Traceback: {traceback.format_exc()}")
     sys.exit(1)

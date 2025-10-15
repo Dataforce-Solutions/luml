@@ -3,13 +3,15 @@ import logging
 import os
 import tempfile
 import traceback
+from importlib import metadata as importlib_metadata
 from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
 
+from conda_manager import ModelCondaManager
 from fnnx.handlers._common import unpack_model
+from handlers.conda_custom import CondaLikeEnvManager, install_micromamba
 from pydantic import BaseModel, Field, create_model
-from workers.conda_manager import ModelCondaManager
 
 from .file_handler import FileHandler
 
@@ -22,13 +24,26 @@ class ModelHandler:
         self._file_handler = FileHandler()
         self._cached_models = {}  # url -> local_path mapping
         self._request_model_schema = None
-        self._conda_worker = None
+        self.model_envs = None
+        self.conda_worker = None
+
         try:
             self.model_path = self.get_model_path()
             self.extracted_path = self.unpacked_model_path()
-            self._conda_worker = ModelCondaManager(self.get_env(), self.extracted_path)
-            self._conda_worker.create_model_env()
-            self._conda_worker.start()
+            self.model_envs = self.create_model_env()
+
+            if self.model_envs:
+                model_data = {
+                    "manifest": self.get_manifest(),
+                    "dtypes_schemas": self.load_dtypes_schemas(),
+                    "request_schema": self.get_request_model(),
+                    "model_path": self.extracted_path,
+                }
+
+                self.conda_worker = ModelCondaManager(
+                    self.get_env_name(), self.model_envs["manager"], self.extracted_path, model_data
+                )
+                self.conda_worker.start()
         except Exception as error:
             logger.error(
                 f"Model handler initialization failed: {error}\nTraceback: {traceback.format_exc()}"
@@ -159,7 +174,7 @@ class ModelHandler:
                 return json.load(f)
         return {}
 
-    def get_request_model(self) -> type[BaseModel]:
+    def get_request_model(self) -> dict[str, Any]:
         if self._request_model_schema is None:
             manifest = self.get_manifest()
             input_model = self.create_input_model(manifest)
@@ -173,4 +188,67 @@ class ModelHandler:
                     Field(..., description="Dynamic attributes"),
                 ),
             )
-        return self._request_model_schema
+        return self._request_model_schema.model_json_schema()
+
+    def get_env_name(self) -> str:
+        if self.model_envs["path"]:
+            return self.model_envs["path"].split("/")[-1]
+        else:
+            return self.model_envs["name"]
+
+    @staticmethod
+    def get_default_env_spec() -> dict[str, Any]:
+        return {
+            "python3::conda_pip": {
+                "python_version": "3.12.6",
+                "build_dependencies": [],
+                "dependencies": [
+                    {
+                        "package": f"uvicorn=={importlib_metadata.version('uvicorn')}",
+                        "extra_pip_args": None,
+                        "condition": None,
+                    },
+                    {
+                        "package": f"fnnx[core]=={importlib_metadata.version('fnnx')}",
+                        "extra_pip_args": None,
+                        "condition": None,
+                    },
+                ],
+            }
+        }
+
+    def create_model_env(self) -> dict[str, Any] | None:
+        env_spec = self.get_env()
+        if not env_spec:
+            env_spec = self.get_default_env_spec()
+
+        try:
+            install_micromamba()
+            env_name, env_config = next(iter(env_spec.items()))
+
+            if "dependencies" not in env_config:
+                env_config["dependencies"] = []
+
+            existing_packages = set()
+            for dep in env_config["dependencies"]:
+                if isinstance(dep, dict) and "package" in dep:
+                    existing_packages.add(
+                        dep["package"].split("==")[0].split(">=")[0].split("<=")[0].strip()
+                    )
+            for pkg_name in ["uvicorn"]:
+                if pkg_name not in existing_packages:
+                    version = importlib_metadata.version(pkg_name)
+                    env_config["dependencies"].append({"package": f"{pkg_name}=={version}"})
+
+            env_manager = CondaLikeEnvManager(env_config)
+            env_path = env_manager.ensure()
+            logger.info("[CREATE_ENV] Env created successfully.")
+
+            return {"name": env_name, "path": env_path, "manager": env_manager}
+
+        except Exception as e:
+            logger.error(
+                f"[CREATE_ENV] Failed to create model environment: {e}\n"
+                f"Traceback: {traceback.format_exc()}"
+            )
+            return None

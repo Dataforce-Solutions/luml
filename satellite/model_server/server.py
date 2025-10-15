@@ -1,15 +1,8 @@
-import logging
-from typing import Any
+from handlers.model_handler import ModelHandler
+from services.base_service import UvicornBaseService
 
-from services.base_service import HTTPException
-from services.service import UvicornService
-
-app = UvicornService()
-
-
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
-
-logger = logging.getLogger("satellite")
+app = UvicornBaseService()
+model_handler = ModelHandler()
 
 
 @app.get(
@@ -20,21 +13,6 @@ logger = logging.getLogger("satellite")
 )
 async def healthz() -> dict[str, str]:
     return {"status": "healthy"}
-
-
-@app.get(
-    "/manifest",
-    summary="Get Model Manifest",
-    description="Returns the FNNX model manifest with input/output specifications",
-    tags=["model"],
-)
-async def get_manifest() -> dict[str, Any]:  # noqa: ANN401
-    try:
-        return app.model_handler.get_manifest()
-    except Exception as error:
-        raise HTTPException(
-            status_code=500, detail=f"Failed to get manifest: {str(error)}"
-        ) from error
 
 
 if __name__ == "__main__":

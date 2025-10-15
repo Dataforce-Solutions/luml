@@ -28,10 +28,8 @@ class ModelServerClient:
             self._session = None
 
     @staticmethod
-    def _url(deployment_id: str, use_conda: bool = False) -> str:
-        if use_conda:
-            return f"http://sat-{deployment_id}:{config.CONDA_PORT}"
-        return f"http://sat-{deployment_id}:{config.CONTAINER_PORT}"
+    def _url(deployment_id: str) -> str:
+        return f"http://sat-{deployment_id}:{config.CONDA_PORT}"
 
     async def compute(
         self,
@@ -39,12 +37,12 @@ class ModelServerClient:
         body: dict,
     ) -> dict:
         assert self._session is not None
-        url = f"{self._url(deployment_id, True)}/compute"
+        url = f"{self._url(deployment_id)}/compute"
         response = await self._session.post(url, json=body)
         response.raise_for_status()
         return response.json()
 
-    async def is_healthy(self, deployment_id: str, timeout: int = 120) -> bool:
+    async def is_healthy(self, deployment_id: str, timeout: int = 60) -> bool:
         assert self._session is not None
         logger.info(f"Starting health check for {deployment_id}...")
 

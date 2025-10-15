@@ -1,11 +1,22 @@
 from typing import Any
 
-from handlers.model_handler import ModelHandler
-
 
 class OpenAPIGenerator:
-    def __init__(self, model_handler: ModelHandler) -> None:
-        self.model_handler = model_handler
+    def __init__(
+        self,
+        title: str = "Model API",
+        version: str = "0.1.0",
+        description: str = "model api",
+        manifest: dict | None = None,
+        dtypes_schemas: dict | None = None,
+        request_schema: dict | None = None,
+    ) -> None:
+        self.title = title
+        self.version = version
+        self.description = description
+        self.manifest = manifest
+        self.dtypes_schemas = dtypes_schemas
+        self.request_schema = request_schema
 
     @staticmethod
     def _inject_dtype_schemas(openapi_schema: dict, dtypes_schemas: dict) -> None:
@@ -43,9 +54,7 @@ class OpenAPIGenerator:
         }
         openapi_schema["security"] = [{"BearerAuth": []}]
 
-    def _inject_pydantic_schemas(self, openapi_schema: dict, request_model: Any) -> None:  # noqa: ANN401
-        request_schema = request_model.model_json_schema()
-
+    def _inject_pydantic_schemas(self, openapi_schema: dict, request_schema: Any) -> None:  # noqa: ANN401
         if "components" not in openapi_schema:
             openapi_schema["components"] = {}
         if "schemas" not in openapi_schema["components"]:
@@ -119,52 +128,44 @@ class OpenAPIGenerator:
         openapi_schema["paths"]["/compute"]["post"]["tags"] = ["model"]
         openapi_schema["paths"]["/compute"]["post"]["security"] = [{"BearerAuth": []}]
 
-    def get_openapi_schema(self, title: str, version: str, description: str) -> dict[str, Any]:
-        try:
-            return self.generate_schema(
-                title=title,
-                version=version,
-                description=description,
-            )
-        except Exception:
-            return {
-                "openapi": "3.0.0",
-                "info": {
-                    "title": title,
-                    "version": version,
-                    "description": description,
-                },
-                "paths": {},
-                "components": {"schemas": {}},
-            }
-
-    def generate_schema(
-        self, title: str = "Model API", version: str = "0.1.0", description: str = "model api"
-    ) -> dict[str, Any]:
-        manifest = self.model_handler.get_manifest()
-        dtypes_schemas = self.model_handler.load_dtypes_schemas()
-
-        request_model = self.model_handler.get_request_model()
-
-        openapi_schema = {
+    def get_simple_schema(self) -> dict:
+        return {
             "openapi": "3.0.0",
             "info": {
-                "title": title,
-                "version": version,
-                "description": description,
+                "title": self.title,
+                "version": self.version,
+                "description": self.description,
             },
             "paths": {},
-            "components": {
-                "schemas": {},
-                "securitySchemes": {
-                    "BearerAuth": {"type": "http", "scheme": "bearer", "bearerFormat": "JWT"}
-                },
-            },
+            "components": {"schemas": {}},
         }
 
-        self._inject_pydantic_schemas(openapi_schema, request_model)
-        self._inject_dtype_schemas(openapi_schema, dtypes_schemas)
-        self._update_input_references(openapi_schema, manifest, dtypes_schemas)
-        self._add_compute_endpoint(openapi_schema, manifest, dtypes_schemas)
+    def get_openapi_schema(self) -> dict[str, Any]:  # noqa: ANN401
+        if not self.manifest or not self.dtypes_schemas or not self.request_schema:
+            return self.get_simple_schema()
 
-        return openapi_schema
+        try:
+            openapi_schema = {
+                "openapi": "3.0.0",
+                "info": {
+                    "title": self.title,
+                    "version": self.version,
+                    "description": self.description,
+                },
+                "paths": {},
+                "components": {
+                    "schemas": {},
+                    "securitySchemes": {
+                        "BearerAuth": {"type": "http", "scheme": "bearer", "bearerFormat": "JWT"}
+                    },
+                },
+            }
+
+            self._inject_pydantic_schemas(openapi_schema, self.request_schema)
+            self._inject_dtype_schemas(openapi_schema, self.dtypes_schemas)
+            self._update_input_references(openapi_schema, self.manifest, self.dtypes_schemas)
+            self._add_compute_endpoint(openapi_schema, self.manifest, self.dtypes_schemas)
+
+            return openapi_schema
+        except Exception:
+            return self.get_simple_schema()
