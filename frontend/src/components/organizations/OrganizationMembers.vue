@@ -40,7 +40,7 @@
             </div>
           </div>
           <div class="cell">{{ member.role }}</div>
-          <div class="cell">-</div>
+          <div class="cell">{{ new Date(member.created_at).toLocaleDateString() }}</div>
           <div class="cell">
             <OrganizationUserSettings v-if="member.role === OrganizationRoleEnum.member || (member.role === OrganizationRoleEnum.admin && isUserOwner)" :member="member"></OrganizationUserSettings>
           </div>
