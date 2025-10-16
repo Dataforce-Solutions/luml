@@ -101,7 +101,7 @@ def create_agent_app(authorize_access: Callable[[str], Awaitable[bool]]) -> Fast
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"Compute failed: {str(e)}") from e
 
-    def custom_openapi():
+    def custom_openapi() -> dict[str, Any]:
         if app.openapi_schema:
             return app.openapi_schema
 

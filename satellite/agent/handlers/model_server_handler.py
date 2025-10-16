@@ -1,5 +1,7 @@
 import logging
+from collections.abc import Callable
 from contextlib import suppress
+from uuid import UUID
 
 from agent.clients import ModelServerClient, PlatformClient
 from agent.schemas import Deployment, LocalDeployment
@@ -33,6 +35,10 @@ class ModelServerHandler:
 
     async def add_deployment(self, deployment: Deployment) -> None:
         await self.add_single_deployment(deployment.id, deployment.dynamic_attributes_secrets)
+        self._invalidate_openapi_cache()
+
+    async def remove_deployment(self, deployment_id: UUID) -> None:
+        self.deployments.pop(str(deployment_id), None)
         self._invalidate_openapi_cache()
 
     async def get_deployment(self, deployment_id: str) -> LocalDeployment | None:
@@ -83,16 +89,11 @@ class ModelServerHandler:
         missing_secrets: dict[str, str] = {}
         deployment_secrets = deployment.dynamic_attributes_secrets or {}
 
-        secrets_to_fetch: list[tuple[str, int]] = []
+        secrets_to_fetch: list[tuple[str, UUID]] = []
         for attr_name, secret_id in deployment_secrets.items():
             if attr_name in compute_dynamic_atr:
                 continue
-            try:
-                normalized_id = int(secret_id)
-            except (TypeError, ValueError):
-                logger.warning("Skipping secret %s due to invalid id: %s", attr_name, secret_id)
-                continue
-            secrets_to_fetch.append((attr_name, normalized_id))
+            secrets_to_fetch.append((attr_name, secret_id))
 
         if not secrets_to_fetch:
             return compute_dynamic_atr
@@ -130,7 +131,7 @@ class ModelServerHandler:
         except Exception as e:
             raise RuntimeError(f"Model server request failed: {str(e)}") from e
 
-    def register_openapi_cache_invalidation_callback(self, callback) -> None:
+    def register_openapi_cache_invalidation_callback(self, callback: Callable) -> None:
         self._openapi_cache_invalidation_callbacks.append(callback)
 
     def _invalidate_openapi_cache(self) -> None:

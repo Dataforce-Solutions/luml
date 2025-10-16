@@ -1,7 +1,10 @@
+import contextlib
 from typing import Self
+from uuid import UUID
 
 import aiodocker
 from aiodocker.containers import DockerContainer
+from aiodocker.exceptions import DockerError
 
 from agent.settings import config as sat_config
 
@@ -48,3 +51,18 @@ class DockerService:
         await container.start()
 
         return container
+
+    async def remove_model_container(self, *, deployment_id: UUID) -> bool:
+        container_name = f"sat-{deployment_id}"
+        try:
+            container = await self.client.containers.get(container_name)
+        except DockerError:
+            return False
+
+        with contextlib.suppress(DockerError):
+            await container.stop()
+
+        with contextlib.suppress(DockerError):
+            await container.delete(force=True)
+
+        return True

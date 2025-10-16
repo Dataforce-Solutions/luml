@@ -275,7 +275,6 @@ async def test_request_deployment_deletion(
     assert dep2.status == DeploymentStatus.DELETION_PENDING
     assert task2 is None
 
-
 @pytest.mark.asyncio
 async def test_enqueue_undeploy_task(create_satellite: SatelliteFixtureData) -> None:
     data = create_satellite

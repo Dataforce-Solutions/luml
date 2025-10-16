@@ -1,5 +1,6 @@
 import logging
 from typing import Any, Self
+from uuid import UUID
 
 import httpx
 from cashews import cache
@@ -75,6 +76,12 @@ class PlatformClient:
         r.raise_for_status()
         return r.json()
 
+    async def delete_deployment(self, deployment_id: UUID) -> dict[str, Any]:
+        assert self._session is not None
+        r = await self._session.delete(self._url(f"/satellites/deployments/{deployment_id}"))
+        r.raise_for_status()
+        return r.json()
+
     async def pair_satellite(self, base_url: str, capabilities: dict[str, Any]) -> dict[str, Any]:
         assert self._session is not None
         r = await self._session.post(
@@ -95,7 +102,7 @@ class PlatformClient:
         data = r.json()
         return bool(data.get("authorized", False))
 
-    async def get_model_artifact_download_url(self, model_artifact_id: str) -> str:
+    async def get_model_artifact_download_url(self, model_artifact_id: UUID) -> str:
         assert self._session is not None
         r = await self._session.get(
             self._url(f"/satellites/model_artifacts/{model_artifact_id}/download-url")
@@ -104,7 +111,7 @@ class PlatformClient:
         data = r.json()
         return str(data.get("url", ""))
 
-    async def get_model_artifact(self, model_artifact_id: str) -> tuple[dict, str]:
+    async def get_model_artifact(self, model_artifact_id: UUID) -> tuple[dict, str]:
         assert self._session is not None
         r = await self._session.get(self._url(f"/satellites/model_artifacts/{model_artifact_id}"))
         r.raise_for_status()
@@ -112,7 +119,7 @@ class PlatformClient:
         return data.get("model"), str(data.get("url", ""))
 
     @cache(ttl=_SECRETS_CACHE_TTL_SECONDS, key="get_orbit_secret:{secret_id}")
-    async def get_orbit_secret(self, secret_id: str) -> dict[str, Any]:
+    async def get_orbit_secret(self, secret_id: UUID) -> dict[str, Any]:
         assert self._session is not None
         r = await self._session.get(self._url(f"/satellites/secrets/{secret_id}"))
         r.raise_for_status()
@@ -131,25 +138,8 @@ class PlatformClient:
         r.raise_for_status()
         return r.json()
 
-    async def get_deployment(self, deployment_id: str) -> Deployment:
+    async def get_deployment(self, deployment_id: UUID) -> Deployment:
         assert self._session is not None
         r = await self._session.get(self._url(f"/satellites/deployments/{deployment_id}"))
         r.raise_for_status()
         return Deployment.model_validate(r.json())
-
-
-@cache.key_builder(PlatformClient.authorize_inference_access)  # type: ignore[arg-type]
-def _authorize_inference_access_key_builder(
-    _: object, self: PlatformClient, api_key: str
-) -> str:
-    return f"authorize_inference_access:{self.base_url}:{api_key}"
-
-
-@cache.key_builder(PlatformClient.get_orbit_secret)  # type: ignore[arg-type]
-def _get_orbit_secret_key_builder(_: object, self: PlatformClient, secret_id: int) -> str:
-    return f"get_orbit_secret:{self.base_url}:{secret_id}"
-
-
-@cache.key_builder(PlatformClient.get_orbit_secrets)  # type: ignore[arg-type]
-def _get_orbit_secrets_key_builder(_: object, self: PlatformClient) -> str:
-    return f"get_orbit_secrets:{self.base_url}"

@@ -3,6 +3,7 @@ import copy
 from typing import Any
 
 from agent.handlers.model_server_handler import ModelServerHandler
+from agent.schemas import LocalDeployment
 
 
 class OpenAPIHandler:
@@ -11,7 +12,7 @@ class OpenAPIHandler:
 
     def _update_schema_refs(
         self,
-        schema_obj: Any,
+        schema_obj: Any,  # noqa: ANN401
         deployment_id: str,
         original_schemas: set,  # noqa: ANN401
     ) -> Any:  # noqa: ANN401
@@ -36,7 +37,7 @@ class OpenAPIHandler:
 
     def _process_deployment_schemas(
         self,
-        deployment,
+        deployment: LocalDeployment,
         openapi_schema: dict[str, Any],  # noqa: ANN401
     ) -> dict[str, str] | None:
         if not deployment.openapi_schema or "components" not in deployment.openapi_schema:

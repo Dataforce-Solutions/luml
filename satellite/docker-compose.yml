@@ -21,7 +21,7 @@ services:
       - satellite-network
     environment:
       SATELLITE_TOKEN: ${SATELLITE_TOKEN:?Set SATELLITE_TOKEN in .env}
-      PLATFORM_URL: ${PLATFORM_URL:-https://dev-api.dataforce.studio}
+      PLATFORM_URL: ${PLATFORM_URL:-http://localhost:8000}
       BASE_URL: ${BASE_URL:-http://localhost}
       MODEL_IMAGE: ${MODEL_IMAGE:-df-random-svc:latest}
       POLL_INTERVAL_SEC: ${POLL_INTERVAL_SEC:-2}

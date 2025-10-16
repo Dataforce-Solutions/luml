@@ -41,7 +41,10 @@ class DeploymentRepository(RepositoryBase, CrudMixin):
     async def list_deployments(self, orbit_id: UUID) -> list[Deployment]:
         async with self._get_session() as session:
             result = await session.execute(
-                select(DeploymentOrm).where(DeploymentOrm.orbit_id == orbit_id)
+                select(DeploymentOrm).where(
+                    DeploymentOrm.orbit_id == orbit_id,
+                    DeploymentOrm.status != DeploymentStatus.DELETED.value,
+                )
             )
             deployments = result.scalars().all()
             return [d.to_deployment() for d in deployments]
