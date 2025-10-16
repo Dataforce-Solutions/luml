@@ -3,24 +3,46 @@
     <template #header>
       <h3>Create deployment</h3>
       <div class="buttons">
-        <Button form="createDeploymentForm" label="Deploy" :disabled="!isFormValid" :loading="loading"
-          type="submit"></Button>
+        <Button
+          form="createDeploymentForm"
+          label="Deploy"
+          :disabled="!isFormValid"
+          :loading="loading"
+          type="submit"
+        ></Button>
         <Button label="Cancel" severity="secondary" @click="onCancel"></Button>
       </div>
     </template>
     <template #default>
-      <Form v-if="visible" ref="formRef" id="createDeploymentForm" class="content" :initial-values="initialValues"
-        :resolver="createDeploymentResolver" @submit="onSubmit">
-        <DeploymentsFormBasicsSettings v-model:description="initialValues.description" v-model:name="initialValues.name"
-          v-model:tags="initialValues.tags"></DeploymentsFormBasicsSettings>
-        <DeploymentsFormModelSettings :initial-collection-id="initialCollectionId" :initial-model-id="initialModelId"
-          v-model:collection-id="initialValues.collectionId" v-model:model-id="initialValues.modelId"
+      <Form
+        v-if="visible"
+        ref="formRef"
+        id="createDeploymentForm"
+        class="content"
+        :initial-values="initialValues"
+        :resolver="createDeploymentResolver"
+        @submit="onSubmit"
+      >
+        <DeploymentsFormBasicsSettings
+          v-model:description="initialValues.description"
+          v-model:name="initialValues.name"
+          v-model:tags="initialValues.tags"
+        ></DeploymentsFormBasicsSettings>
+        <DeploymentsFormModelSettings
+          :initial-collection-id="initialCollectionId"
+          :initial-model-id="initialModelId"
+          v-model:collection-id="initialValues.collectionId"
+          v-model:model-id="initialValues.modelId"
           v-model:secret-dynamic-attributes="initialValues.secretDynamicAttributes"
-          v-model:dynamic-attributes="initialValues.dynamicAttributes" v-model:secret-envs="initialValues.secretEnvs"
+          v-model:dynamic-attributes="initialValues.dynamicAttributes"
+          v-model:secret-envs="initialValues.secretEnvs"
           v-model:not-secret-envs="initialValues.notSecretEnvs"
-          v-model:custom-variables="initialValues.customVariables"></DeploymentsFormModelSettings>
-        <DeploymentsFormSatelliteSettings v-model:satellite-id="initialValues.satelliteId"
-          v-model:fields="initialValues.satelliteFields"></DeploymentsFormSatelliteSettings>
+          v-model:custom-variables="initialValues.customVariables"
+        ></DeploymentsFormModelSettings>
+        <DeploymentsFormSatelliteSettings
+          v-model:satellite-id="initialValues.satelliteId"
+          v-model:fields="initialValues.satelliteFields"
+        ></DeploymentsFormSatelliteSettings>
       </Form>
     </template>
   </Dialog>
@@ -93,7 +115,7 @@ async function onSubmit({ valid }: FormSubmitEvent) {
         routeParams: {},
       },
       life: 5000,
-      group: 'toast-link'
+      group: 'toast-link',
     } as any)
   } catch (e) {
     toast.add(simpleErrorToast(getErrorMessage(e, 'Failed to create deployment')))
@@ -109,7 +131,10 @@ function getPayload(form: CreateDeploymentForm): CreateDeploymentPayload {
     satellite_id: form.satelliteId,
     model_artifact_id: form.modelId,
     satellite_parameters: fieldsToRecord(form.satelliteFields, getNumberOrString),
-    dynamic_attributes_secrets: fieldsToRecord(form.secretDynamicAttributes, (v) => v) as unknown as Record<string, string>,
+    dynamic_attributes_secrets: fieldsToRecord(
+      form.secretDynamicAttributes,
+      (v) => v,
+    ) as unknown as Record<string, string>,
     env_variables_secrets: fieldsToRecord<string>(form.secretEnvs, (v) => String(v)),
     env_variables: fieldsToRecord(form.notSecretEnvs, getNumberOrString),
     tags: form.tags,
@@ -135,7 +160,7 @@ watch(visible, (val) => {
   resetForm()
 })
 
-onMounted(() => { })
+onMounted(() => {})
 </script>
 
 <style scoped>
