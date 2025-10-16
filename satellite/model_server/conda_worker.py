@@ -23,7 +23,7 @@ try:
         sys.exit(1)
 
     extracted_path = sys.argv[1]
-    port = int(sys.argv[2]) if len(sys.argv) > 2 else 8081
+    port = int(sys.argv[2]) if len(sys.argv) > 2 else 8080
     model_data = json.loads(sys.argv[3]) if len(sys.argv) > 3 else {}
 
     import numpy as np

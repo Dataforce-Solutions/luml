@@ -27,7 +27,7 @@ class ModelCondaManager:
         self.extracted_path = extracted_path
         self.model_data = model_data or {}
         self.process = None
-        self.port = 8081
+        self.port = 8080
         self.worker_script = Path(__file__).parent / "conda_worker.py"
 
     @property

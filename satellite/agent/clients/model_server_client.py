@@ -29,7 +29,7 @@ class ModelServerClient:
 
     @staticmethod
     def _url(deployment_id: str) -> str:
-        return f"http://sat-{deployment_id}:{config.CONDA_PORT}"
+        return f"http://sat-{deployment_id}:{config.CONTAINER_PORT}"
 
     async def compute(
         self,
@@ -42,7 +42,7 @@ class ModelServerClient:
         response.raise_for_status()
         return response.json()
 
-    async def is_healthy(self, deployment_id: str, timeout: int = 60) -> bool:
+    async def is_healthy(self, deployment_id: str, timeout: int = 120) -> bool:
         assert self._session is not None
         logger.info(f"Starting health check for {deployment_id}...")
 

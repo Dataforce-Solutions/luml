@@ -21,4 +21,4 @@ COPY . /app/
 
 ENV PYTHONPATH=/app
 
-CMD ["uv", "run", "python", "-m", "uvicorn", "server:app", "--host", "0.0.0.0", "--port", "8080"]
+CMD ["uv", "run", "python", "main.py"]
