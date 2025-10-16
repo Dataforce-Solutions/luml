@@ -1,3 +1,4 @@
+import contextlib
 from collections.abc import Sequence
 from uuid import UUID
 
@@ -81,22 +82,24 @@ class PermissionsHandler:
         user_id: UUID,
         resource: Resource,
         action: Action,
-    ) -> tuple[None, str] | tuple[str, None]:
-        org_role = await self.check_organization_permission(
-            organization_id,
-            user_id,
-            resource,
-            action,
-        )
+    ) -> tuple[str | None, str] | tuple[str, None]:
+        org_role = None
+        with contextlib.suppress(InsufficientPermissionsError):
+            org_role = await self.check_organization_permission(
+                organization_id,
+                user_id,
+                resource,
+                action,
+            )
 
-        if org_role not in (OrgRole.OWNER, OrgRole.ADMIN):
+        if not org_role or org_role not in (OrgRole.OWNER, OrgRole.ADMIN):
             orbit_role = await self.check_orbit_permission(
                 orbit_id,
                 user_id,
                 resource,
                 action,
             )
-            return None, orbit_role
+            return org_role, orbit_role
 
         return org_role, None
 

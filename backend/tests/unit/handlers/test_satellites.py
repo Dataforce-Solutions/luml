@@ -944,3 +944,110 @@ async def test_delete_satellite_not_found(
         organization_id, orbit_id, user_id, Resource.SATELLITE, Action.DELETE
     )
     mock_get_satellite.assert_awaited_once_with(satellite_id)
+
+
+@patch(
+    "dataforce_studio.handlers.satellites.SatelliteRepository.list_satellites",
+    new_callable=AsyncMock,
+)
+@patch(
+    "dataforce_studio.handlers.satellites.PermissionsHandler._PermissionsHandler__user_repository.get_organization_member_role",
+    new_callable=AsyncMock,
+)
+@patch(
+    "dataforce_studio.handlers.satellites.PermissionsHandler._PermissionsHandler__orbits_repository.get_orbit_member_role",
+    new_callable=AsyncMock,
+)
+@pytest.mark.asyncio
+async def test_list_satellites_orbit_member_permissions(
+    mock_get_orbit_member_role: AsyncMock,
+    mock_get_org_member_role: AsyncMock,
+    mock_list_satellites: AsyncMock,
+) -> None:
+    user_id = UUID("0199c337-09f1-7d8f-b0c4-b68349bbe24b")
+    organization_id = UUID("0199c337-09f2-7af1-af5e-83fd7a5b51a0")
+    orbit_id = UUID("0199c337-09f3-753e-9def-b27745e69be6")
+    satellite_id = UUID("0199c418-8be4-737c-a5e4-997685950d42")
+
+    capabilities: dict[SatelliteCapability, dict[str, Any] | None] = {
+        SatelliteCapability.DEPLOY: {"key": "test"}
+    }
+
+    expected = [
+        Satellite(
+            id=satellite_id,
+            orbit_id=orbit_id,
+            name="test",
+            description=None,
+            base_url="https://url.com",
+            paired=False,
+            capabilities=capabilities,
+            created_at=datetime.datetime.now(),
+            updated_at=None,
+            last_seen_at=None,
+        )
+    ]
+
+    mock_get_org_member_role.return_value = "member"
+    mock_get_orbit_member_role.return_value = "member"
+    mock_list_satellites.return_value = expected
+
+    result = await handler.list_satellites(user_id, organization_id, orbit_id)
+
+    assert result == expected
+    mock_get_org_member_role.assert_awaited_once_with(organization_id, user_id)
+    mock_get_orbit_member_role.assert_awaited_once_with(orbit_id, user_id)
+    mock_list_satellites.assert_awaited_once_with(orbit_id, None)
+
+
+@patch(
+    "dataforce_studio.handlers.satellites.SatelliteRepository.list_satellites",
+    new_callable=AsyncMock,
+)
+@patch(
+    "dataforce_studio.handlers.satellites.PermissionsHandler._PermissionsHandler__user_repository.get_organization_member_role",
+    new_callable=AsyncMock,
+)
+@patch(
+    "dataforce_studio.handlers.satellites.PermissionsHandler._PermissionsHandler__orbits_repository.get_orbit_member_role",
+    new_callable=AsyncMock,
+)
+@pytest.mark.asyncio
+async def test_list_satellites_organization_admin_permissions(
+    mock_get_orbit_member_role: AsyncMock,
+    mock_get_org_member_role: AsyncMock,
+    mock_list_satellites: AsyncMock,
+) -> None:
+    user_id = UUID("0199c337-09f1-7d8f-b0c4-b68349bbe24b")
+    organization_id = UUID("0199c337-09f2-7af1-af5e-83fd7a5b51a0")
+    orbit_id = UUID("0199c337-09f3-753e-9def-b27745e69be6")
+    satellite_id = UUID("0199c418-8be4-737c-a5e4-997685950d42")
+
+    capabilities: dict[SatelliteCapability, dict[str, Any] | None] = {
+        SatelliteCapability.DEPLOY: {"key": "test"}
+    }
+
+    expected = [
+        Satellite(
+            id=satellite_id,
+            orbit_id=orbit_id,
+            name="test",
+            description=None,
+            base_url="https://url.com",
+            paired=False,
+            capabilities=capabilities,
+            created_at=datetime.datetime.now(),
+            updated_at=None,
+            last_seen_at=None,
+        )
+    ]
+
+    mock_get_org_member_role.return_value = "admin"
+    mock_list_satellites.return_value = expected
+
+    result = await handler.list_satellites(user_id, organization_id, orbit_id)
+
+    assert result == expected
+    mock_get_org_member_role.assert_awaited_once_with(organization_id, user_id)
+    mock_get_orbit_member_role.assert_not_awaited()
+    mock_list_satellites.assert_awaited_once_with(orbit_id, None)

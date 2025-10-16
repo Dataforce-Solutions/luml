@@ -197,25 +197,6 @@ organization_permissions = {
     OrgRole.MEMBER: {
         Resource.ORGANIZATION: [Action.LEAVE],
         Resource.ORBIT: [Action.LIST, Action.READ],
-        Resource.MODEL: [
-            Action.LIST,
-            Action.READ,
-            Action.CREATE,
-            Action.UPDATE,
-            Action.DELETE,
-            Action.DEPLOY,
-        ],
-        Resource.COLLECTION: [
-            Action.LIST,
-            Action.READ,
-            Action.CREATE,
-            Action.UPDATE,
-            Action.DELETE,
-            Action.DEPLOY,
-        ],
-        Resource.SATELLITE: [Action.CREATE, Action.LIST, Action.READ],
-        Resource.DEPLOYMENT: [Action.LIST, Action.READ, Action.CREATE, Action.UPDATE],
-        Resource.ORBIT_SECRET: [Action.LIST, Action.READ, Action.CREATE],
     },
 }
 
