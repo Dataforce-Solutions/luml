@@ -115,27 +115,6 @@ _DDL_EXPERIMENT_CREATE_EVAL_TRACES_BRIDGE = """
 """
 
 
-_DDL_EXPERIMENT_CREATE_ADDITIONAL_INDEXES = [
-    # spans
-    "CREATE INDEX IF NOT EXISTS idx_spans_trace_id ON spans (trace_id);",
-    "CREATE INDEX IF NOT EXISTS idx_spans_span_id ON spans (span_id);",
-    "CREATE INDEX IF NOT EXISTS idx_spans_parent_span_id ON spans (parent_span_id);",
-    # evals
-    "CREATE INDEX IF NOT EXISTS idx_evals_dataset_id ON evals (dataset_id);",
-    "CREATE INDEX IF NOT EXISTS idx_evals_id ON evals (id);",
-    "CREATE INDEX IF NOT EXISTS idx_evals_dataset_created ON evals (dataset_id, created_at);",
-    "CREATE INDEX IF NOT EXISTS idx_eval_traces_eval ON eval_traces_bridge (eval_dataset_id, eval_id);",
-    "CREATE INDEX IF NOT EXISTS idx_eval_traces_trace_id ON eval_traces_bridge (trace_id);",
-    "CREATE INDEX IF NOT EXISTS idx_eval_traces_dataset_id ON eval_traces_bridge (eval_dataset_id);",
-    # dynamic metrics
-    "CREATE INDEX IF NOT EXISTS idx_dynamic_metrics_key ON dynamic_metrics (key);",
-    "CREATE INDEX IF NOT EXISTS idx_dynamic_metrics_step ON dynamic_metrics (step);",
-    "CREATE INDEX IF NOT EXISTS idx_dynamic_metrics_key_step ON dynamic_metrics (key, step);",
-    "CREATE INDEX IF NOT EXISTS idx_dynamic_metrics_logged_at ON dynamic_metrics (logged_at);",
-    "CREATE INDEX IF NOT EXISTS idx_dynamic_metrics_key_logged_at ON dynamic_metrics (key, logged_at);",
-]
-
-
 class ConnectionPool:
     def __init__(self, max_connections: int = 10) -> None:
         self.max_connections = max_connections
@@ -283,9 +262,6 @@ class SQLiteBackend(Backend):
         cursor.execute(_DDL_EXPERIMENT_CREATE_SPANS)
         cursor.execute(_DDL_EXPERIMENT_CREATE_EVALS)
         cursor.execute(_DDL_EXPERIMENT_CREATE_EVAL_TRACES_BRIDGE)
-        for ddl in _DDL_EXPERIMENT_CREATE_ADDITIONAL_INDEXES:
-            cursor.execute(ddl)
-
         conn.commit()
 
     def initialize_experiment(
