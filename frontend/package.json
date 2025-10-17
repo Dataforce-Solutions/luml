@@ -71,5 +71,9 @@
     "vite-plugin-vue-devtools": "^7.5.4",
     "vitest": "^3.2.4",
     "vue-tsc": "^2.1.10"
+  },
+  "engines": {
+    "node": "22.20.0",
+    "npm": "10.9.3"
   }
 }
