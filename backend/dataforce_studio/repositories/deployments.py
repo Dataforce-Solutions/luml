@@ -11,7 +11,11 @@ from dataforce_studio.schemas.deployment import (
     DeploymentStatus,
     DeploymentUpdate,
 )
-from dataforce_studio.schemas.satellite import SatelliteQueueTask, SatelliteTaskType
+from dataforce_studio.schemas.satellite import (
+    SatelliteQueueTask,
+    SatelliteTaskStatus,
+    SatelliteTaskType,
+)
 
 
 class DeploymentRepository(RepositoryBase, CrudMixin):
@@ -37,7 +41,10 @@ class DeploymentRepository(RepositoryBase, CrudMixin):
     async def list_deployments(self, orbit_id: UUID) -> list[Deployment]:
         async with self._get_session() as session:
             result = await session.execute(
-                select(DeploymentOrm).where(DeploymentOrm.orbit_id == orbit_id)
+                select(DeploymentOrm).where(
+                    DeploymentOrm.orbit_id == orbit_id,
+                    DeploymentOrm.status != DeploymentStatus.DELETED.value,
+                )
             )
             deployments = result.scalars().all()
             return [d.to_deployment() for d in deployments]
@@ -60,6 +67,19 @@ class DeploymentRepository(RepositoryBase, CrudMixin):
             )
             deployments = result.scalars().all()
             return [d.to_deployment() for d in deployments]
+
+    async def get_satellite_deployment(
+        self, deployment_id: UUID, satellite_id: UUID
+    ) -> Deployment | None:
+        async with self._get_session() as session:
+            result = await session.execute(
+                select(DeploymentOrm).where(
+                    DeploymentOrm.id == deployment_id,
+                    DeploymentOrm.satellite_id == satellite_id,
+                )
+            )
+            dep = result.scalar_one_or_none()
+            return dep.to_deployment() if dep else None
 
     async def update_deployment(
         self,
@@ -134,3 +154,45 @@ class DeploymentRepository(RepositoryBase, CrudMixin):
                 DeploymentOrm.orbit_id == orbit_id,
             )
             return db_dep.to_deployment() if db_dep else None
+
+    async def enqueue_undeploy_task(
+        self, deployment_id: UUID
+    ) -> SatelliteQueueTask | None:
+        async with self._get_session() as session:
+            result = await session.execute(
+                select(DeploymentOrm).where(DeploymentOrm.id == deployment_id)
+            )
+            deployment = result.scalar_one_or_none()
+            if not deployment or deployment.status == DeploymentStatus.DELETED:
+                return None
+
+            existing_task_result = await session.execute(
+                select(SatelliteQueueOrm).where(
+                    SatelliteQueueOrm.satellite_id == deployment.satellite_id,
+                    SatelliteQueueOrm.type == SatelliteTaskType.UNDEPLOY,
+                    SatelliteQueueOrm.status.in_(
+                        [
+                            SatelliteTaskStatus.PENDING,
+                            SatelliteTaskStatus.RUNNING,
+                        ]
+                    ),
+                    SatelliteQueueOrm.payload.contains(
+                        {"deployment_id": str(deployment.id)}
+                    ),
+                )
+            )
+            existing_task = existing_task_result.scalar_one_or_none()
+            if existing_task:
+                await session.refresh(existing_task)
+                return existing_task.to_queue_task()
+
+            task = SatelliteQueueOrm(
+                satellite_id=deployment.satellite_id,
+                orbit_id=deployment.orbit_id,
+                type=SatelliteTaskType.UNDEPLOY,
+                payload={"deployment_id": str(deployment.id)},
+            )
+            session.add(task)
+            await session.commit()
+            await session.refresh(task)
+            return task.to_queue_task()

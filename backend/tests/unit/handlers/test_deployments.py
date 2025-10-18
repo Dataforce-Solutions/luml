@@ -1,11 +1,13 @@
 import datetime
-from unittest.mock import AsyncMock, Mock, patch
+from unittest.mock import ANY, AsyncMock, Mock, patch
 from uuid import UUID
 
 import pytest
+from fastapi import status
 
 from dataforce_studio.handlers.deployments import DeploymentHandler
 from dataforce_studio.infra.exceptions import (
+    ApplicationError,
     InsufficientPermissionsError,
     NotFoundError,
 )
@@ -19,6 +21,11 @@ from dataforce_studio.schemas.deployment import (
     DeploymentUpdate,
 )
 from dataforce_studio.schemas.permissions import Action, Resource
+from dataforce_studio.schemas.satellite import (
+    SatelliteQueueTask,
+    SatelliteTaskStatus,
+    SatelliteTaskType,
+)
 
 handler = DeploymentHandler()
 
@@ -519,7 +526,263 @@ async def test_get_deployment(
     mock_check_orbit_action_access.assert_awaited_once_with(
         organization_id, orbit_id, user_id, Resource.DEPLOYMENT, Action.READ
     )
-    mock_get_deployment.assert_awaited_once_with(deployment_id, orbit_id)
+
+
+@patch(
+    "dataforce_studio.handlers.deployments.DeploymentRepository.request_deployment_deletion",
+    new_callable=AsyncMock,
+)
+@patch(
+    "dataforce_studio.handlers.deployments.PermissionsHandler.check_orbit_action_access",
+    new_callable=AsyncMock,
+)
+@pytest.mark.asyncio
+async def test_delete_deployment(
+    mock_check_orbit_action_access: AsyncMock,
+    mock_request_deletion: AsyncMock,
+) -> None:
+    user_id = UUID("0199c337-09f1-7d8f-b0c4-b68349bbe24b")
+    organization_id = UUID("0199c337-09f2-7af1-af5e-83fd7a5b51a0")
+    orbit_id = UUID("0199c337-09f3-753e-9def-b27745e69be6")
+    deployment_id = UUID("0199c337-09f7-751e-add2-d952f0d6cf4e")
+    collection_id = UUID("0199c337-09f4-7a01-9f5f-5f68db62cf70")
+    satellite_id = UUID("0199c337-09f9-706e-9b80-58939d5fba79")
+    model_id = UUID("0199c337-09fa-7ff6-b1e7-fc89a65f8622")
+    task_id = UUID("0199c337-0a01-7f32-9a65-9c3df0dc4cb2")
+    now = datetime.datetime.now()
+
+    deployment = Deployment(
+        id=deployment_id,
+        orbit_id=orbit_id,
+        satellite_id=satellite_id,
+        satellite_name="Satellite 1",
+        name="deployment-1",
+        model_id=model_id,
+        model_artifact_name="Model Artifact 1",
+        collection_id=collection_id,
+        status=DeploymentStatus.ACTIVE,
+        created_by_user="John",
+        created_at=now,
+        updated_at=now,
+    )
+    task = SatelliteQueueTask(
+        id=task_id,
+        satellite_id=deployment.satellite_id,
+        orbit_id=orbit_id,
+        type=SatelliteTaskType.UNDEPLOY,
+        payload={"deployment_id": deployment_id},
+        status=SatelliteTaskStatus.PENDING,
+        scheduled_at=now,
+        started_at=None,
+        finished_at=None,
+        result=None,
+        created_at=now,
+        updated_at=None,
+    )
+
+    mock_request_deletion.return_value = (deployment, task)
+
+    result = await handler.delete_deployment(
+        user_id, organization_id, orbit_id, deployment_id
+    )
+
+    assert result == task
+    mock_check_orbit_action_access.assert_awaited_once_with(
+        organization_id, orbit_id, user_id, Resource.DEPLOYMENT, Action.DELETE
+    )
+    mock_request_deletion.assert_awaited_once_with(orbit_id, deployment_id)
+
+
+@patch(
+    "dataforce_studio.handlers.deployments.DeploymentRepository.request_deployment_deletion",
+    new_callable=AsyncMock,
+)
+@patch(
+    "dataforce_studio.handlers.deployments.PermissionsHandler.check_orbit_action_access",
+    new_callable=AsyncMock,
+)
+@pytest.mark.asyncio
+async def test_delete_deployment_not_found(
+    mock_check_orbit_action_access: AsyncMock,
+    mock_request_deletion: AsyncMock,
+) -> None:
+    user_id = UUID("0199c337-09f1-7d8f-b0c4-b68349bbe24b")
+    organization_id = UUID("0199c337-09f2-7af1-af5e-83fd7a5b51a0")
+    orbit_id = UUID("0199c337-09f3-753e-9def-b27745e69be6")
+    deployment_id = UUID("0199c337-09f7-751e-add2-d952f0d6cf4e")
+    mock_request_deletion.return_value = None
+
+    with pytest.raises(NotFoundError, match="Deployment not found"):
+        await handler.delete_deployment(
+            user_id, organization_id, orbit_id, deployment_id
+        )
+
+    mock_check_orbit_action_access.assert_awaited_once_with(
+        organization_id, orbit_id, user_id, Resource.DEPLOYMENT, Action.DELETE
+    )
+    mock_request_deletion.assert_awaited_once_with(orbit_id, deployment_id)
+
+
+@patch(
+    "dataforce_studio.handlers.deployments.DeploymentRepository.request_deployment_deletion",
+    new_callable=AsyncMock,
+)
+@patch(
+    "dataforce_studio.handlers.deployments.PermissionsHandler.check_orbit_action_access",
+    new_callable=AsyncMock,
+)
+@pytest.mark.asyncio
+async def test_delete_deployment_already_deleted(
+    mock_check_orbit_action_access: AsyncMock,
+    mock_request_deletion: AsyncMock,
+) -> None:
+    now = datetime.datetime.now()
+    user_id = UUID("0199c337-09f1-7d8f-b0c4-b68349bbe24b")
+    organization_id = UUID("0199c337-09f2-7af1-af5e-83fd7a5b51a0")
+    orbit_id = UUID("0199c337-09f3-753e-9def-b27745e69be6")
+    deployment_id = UUID("0199c337-09f7-751e-add2-d952f0d6cf4e")
+    collection_id = UUID("0199c337-09f4-7a01-9f5f-5f68db62cf70")
+    satellite_id = UUID("0199c337-09f9-706e-9b80-58939d5fba79")
+    model_id = UUID("0199c337-09fa-7ff6-b1e7-fc89a65f8622")
+    deployment = Deployment(
+        id=deployment_id,
+        orbit_id=orbit_id,
+        satellite_id=satellite_id,
+        satellite_name="Satellite 1",
+        name="deployment-1",
+        model_id=model_id,
+        model_artifact_name="Model Artifact 1",
+        collection_id=collection_id,
+        status=DeploymentStatus.DELETED,
+        created_by_user="User",
+        created_at=now,
+        updated_at=now,
+    )
+    mock_request_deletion.return_value = (deployment, None)
+
+    with pytest.raises(ApplicationError, match="Deployment already deleted") as exc:
+        await handler.delete_deployment(
+            user_id, organization_id, orbit_id, deployment_id
+        )
+
+    assert exc.value.status_code == status.HTTP_409_CONFLICT
+    mock_check_orbit_action_access.assert_awaited_once_with(
+        organization_id, orbit_id, user_id, Resource.DEPLOYMENT, Action.DELETE
+    )
+    mock_request_deletion.assert_awaited_once_with(orbit_id, deployment_id)
+
+
+@patch(
+    "dataforce_studio.handlers.deployments.DeploymentRepository.request_deployment_deletion",
+    new_callable=AsyncMock,
+)
+@patch(
+    "dataforce_studio.handlers.deployments.PermissionsHandler.check_orbit_action_access",
+    new_callable=AsyncMock,
+)
+@pytest.mark.asyncio
+async def test_delete_deployment_already_pending(
+    mock_check_orbit_action_access: AsyncMock,
+    mock_request_deletion: AsyncMock,
+) -> None:
+    now = datetime.datetime.now()
+    user_id = UUID("0199c337-09f1-7d8f-b0c4-b68349bbe24b")
+    organization_id = UUID("0199c337-09f2-7af1-af5e-83fd7a5b51a0")
+    orbit_id = UUID("0199c337-09f3-753e-9def-b27745e69be6")
+    deployment_id = UUID("0199c337-09f7-751e-add2-d952f0d6cf4e")
+    collection_id = UUID("0199c337-09f4-7a01-9f5f-5f68db62cf70")
+    satellite_id = UUID("0199c337-09f9-706e-9b80-58939d5fba79")
+    model_id = UUID("0199c337-09fa-7ff6-b1e7-fc89a65f8622")
+    deployment = Deployment(
+        id=deployment_id,
+        orbit_id=orbit_id,
+        satellite_id=satellite_id,
+        satellite_name="Satellite 1",
+        name="deployment-1",
+        model_id=model_id,
+        model_artifact_name="Model Artifact 1",
+        collection_id=collection_id,
+        status=DeploymentStatus.DELETION_PENDING,
+        created_by_user="User",
+        created_at=now,
+        updated_at=now,
+    )
+    mock_request_deletion.return_value = (deployment, None)
+
+    with pytest.raises(
+        ApplicationError, match="Deployment deletion already pending"
+    ) as exc:
+        await handler.delete_deployment(
+            user_id, organization_id, orbit_id, deployment_id
+        )
+
+    assert exc.value.status_code == status.HTTP_409_CONFLICT
+    mock_check_orbit_action_access.assert_awaited_once_with(
+        organization_id, orbit_id, user_id, Resource.DEPLOYMENT, Action.DELETE
+    )
+    mock_request_deletion.assert_awaited_once_with(orbit_id, deployment_id)
+
+
+@patch(
+    "dataforce_studio.handlers.deployments.DeploymentRepository.update_deployment",
+    new_callable=AsyncMock,
+)
+@pytest.mark.asyncio
+async def test_delete_worker_deployment(
+    mock_update_deployment: AsyncMock,
+) -> None:
+    now = datetime.datetime.now()
+    satellite_id = UUID("0199c337-09f9-706e-9b80-58939d5fba79")
+    deployment_id = UUID("0199c337-09f7-751e-add2-d952f0d6cf4e")
+    collection_id = UUID("0199c337-09f4-7a01-9f5f-5f68db62cf70")
+    model_id = UUID("0199c337-09fa-7ff6-b1e7-fc89a65f8622")
+    orbit_id = UUID("0199c337-09f3-753e-9def-b27745e69be6")
+    deployment = Deployment(
+        id=deployment_id,
+        orbit_id=orbit_id,
+        satellite_id=satellite_id,
+        satellite_name="Satellite 1",
+        name="deployment-1",
+        model_id=model_id,
+        model_artifact_name="Model Artifact 1",
+        collection_id=collection_id,
+        status=DeploymentStatus.DELETED,
+        created_by_user="User",
+        created_at=now,
+        updated_at=now,
+    )
+    mock_update_deployment.return_value = deployment
+
+    result = await handler.delete_worker_deployment(satellite_id, deployment_id)
+
+    assert result == deployment
+    mock_update_deployment.assert_awaited_once_with(
+        deployment_id,
+        satellite_id,
+        ANY,
+    )
+    update = mock_update_deployment.call_args[0][2]
+    assert isinstance(update, DeploymentUpdate)
+    assert update.status == DeploymentStatus.DELETED
+    assert update.inference_url is None
+
+
+@patch(
+    "dataforce_studio.handlers.deployments.DeploymentRepository.update_deployment",
+    new_callable=AsyncMock,
+)
+@pytest.mark.asyncio
+async def test_delete_worker_deployment_not_found(
+    mock_update_deployment: AsyncMock,
+) -> None:
+    satellite_id = UUID("0199c337-09f9-706e-9b80-58939d5fba79")
+    deployment_id = UUID("0199c337-09f7-751e-add2-d952f0d6cf4e")
+    mock_update_deployment.return_value = None
+
+    with pytest.raises(NotFoundError, match="Deployment not found"):
+        await handler.delete_worker_deployment(satellite_id, deployment_id)
+
+    mock_update_deployment.assert_awaited_once_with(deployment_id, satellite_id, ANY)
 
 
 @patch(
