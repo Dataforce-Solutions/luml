@@ -43,7 +43,7 @@ class DeploymentRepository(RepositoryBase, CrudMixin):
             result = await session.execute(
                 select(DeploymentOrm).where(
                     DeploymentOrm.orbit_id == orbit_id,
-                    DeploymentOrm.status != DeploymentStatus.DELETED.value,
+                    DeploymentOrm.status != DeploymentStatus.DELETED,
                 )
             )
             deployments = result.scalars().all()
@@ -120,8 +120,8 @@ class DeploymentRepository(RepositoryBase, CrudMixin):
                 return None
 
             if dep.status in (
-                DeploymentStatus.DELETION_PENDING.value,
-                DeploymentStatus.DELETED.value,
+                DeploymentStatus.DELETION_PENDING,
+                DeploymentStatus.DELETED,
             ):
                 return dep.to_deployment(), None
 
