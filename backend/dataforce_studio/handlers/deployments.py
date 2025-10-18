@@ -1,9 +1,12 @@
 from uuid import UUID
 
+from fastapi import status
+
 from dataforce_studio.handlers.api_keys import APIKeyHandler
 from dataforce_studio.handlers.permissions import PermissionsHandler
 from dataforce_studio.infra.db import engine
 from dataforce_studio.infra.exceptions import (
+    ApplicationError,
     InsufficientPermissionsError,
     NotFoundError,
 )
@@ -24,6 +27,7 @@ from dataforce_studio.schemas.deployment import (
     DeploymentUpdate,
 )
 from dataforce_studio.schemas.permissions import Action, Resource
+from dataforce_studio.schemas.satellite import SatelliteQueueTask
 
 
 class DeploymentHandler:
@@ -130,13 +134,44 @@ class DeploymentHandler:
             raise NotFoundError("Deployment not found")
         return deployment
 
+    async def delete_deployment(
+        self, user_id: UUID, organization_id: UUID, orbit_id: UUID, deployment_id: UUID
+    ) -> SatelliteQueueTask:
+        await self.__permissions_handler.check_orbit_action_access(
+            organization_id,
+            orbit_id,
+            user_id,
+            Resource.DEPLOYMENT,
+            Action.DELETE,
+        )
+
+        result = await self.__repo.request_deployment_deletion(orbit_id, deployment_id)
+        if not result:
+            raise NotFoundError("Deployment not found")
+        deployment, task = result
+
+        if task is None:
+            if deployment.status == DeploymentStatus.DELETED:
+                raise ApplicationError(
+                    "Deployment already deleted",
+                    status.HTTP_409_CONFLICT,
+                )
+            raise ApplicationError(
+                "Deployment deletion already pending",
+                status.HTTP_409_CONFLICT,
+            )
+
+        return task
+
     async def list_worker_deployments(self, satellite_id: UUID) -> list[Deployment]:
         return await self.__repo.list_satellite_deployments(satellite_id)
 
     async def get_worker_deployment(
-        self, orbit_id: UUID, deployment_id: UUID
+        self, satellite_id: UUID, deployment_id: UUID
     ) -> Deployment:
-        deployment = await self.__repo.get_deployment(deployment_id, orbit_id)
+        deployment = await self.__repo.get_satellite_deployment(
+            deployment_id, satellite_id
+        )
         if not deployment:
             raise NotFoundError("Deployment not found")
         return deployment
@@ -151,6 +186,22 @@ class DeploymentHandler:
                 id=deployment_id,
                 inference_url=inference_url,
                 status=DeploymentStatus.ACTIVE,
+            ),
+        )
+        if not deployment:
+            raise NotFoundError("Deployment not found")
+        return deployment
+
+    async def delete_worker_deployment(
+        self, satellite_id: UUID, deployment_id: UUID
+    ) -> Deployment:
+        deployment = await self.__repo.update_deployment(
+            deployment_id,
+            satellite_id,
+            DeploymentUpdate(
+                id=deployment_id,
+                inference_url=None,
+                status=DeploymentStatus.DELETED,
             ),
         )
         if not deployment:

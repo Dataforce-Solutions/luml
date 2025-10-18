@@ -10,6 +10,7 @@ from dataforce_studio.schemas.deployment import (
     DeploymentCreateIn,
     DeploymentDetailsUpdateIn,
 )
+from dataforce_studio.schemas.satellite import SatelliteQueueTask
 
 deployments_router = APIRouter(
     prefix="/{organization_id}/orbits/{orbit_id}/deployments",
@@ -71,14 +72,19 @@ async def update_deployment_details(
 
 
 @deployments_router.delete(
-    "/{deployment_id}", responses=endpoint_responses, response_model=Deployment
+    "/{deployment_id}",
+    responses=endpoint_responses,
+    response_model=SatelliteQueueTask,
 )
 async def delete_deployment(
     request: Request,
     organization_id: UUID,
     orbit_id: UUID,
     deployment_id: UUID,
-) -> Deployment:
-    return await handler.request_deployment_deletion(
-        request.user.id, organization_id, orbit_id, deployment_id
+) -> SatelliteQueueTask:
+    return await handler.delete_deployment(
+        request.user.id,
+        organization_id,
+        orbit_id,
+        deployment_id,
     )

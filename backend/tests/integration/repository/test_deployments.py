@@ -11,6 +11,7 @@ from dataforce_studio.schemas.deployment import (
     DeploymentUpdate,
 )
 from dataforce_studio.schemas.satellite import (
+    SatelliteTaskStatus,
     SatelliteTaskType,
 )
 from tests.conftest import SatelliteFixtureData
@@ -273,3 +274,35 @@ async def test_request_deployment_deletion(
     dep2, task2 = result2
     assert dep2.status == DeploymentStatus.DELETION_PENDING
     assert task2 is None
+
+
+@pytest.mark.asyncio
+async def test_enqueue_undeploy_task(create_satellite: SatelliteFixtureData) -> None:
+    data = create_satellite
+    engine, orbit, model, satellite = (
+        data.engine,
+        data.orbit,
+        data.model,
+        data.satellite,
+    )
+    repo = DeploymentRepository(engine)
+
+    deployment, _ = await repo.create_deployment(
+        DeploymentCreate(
+            name="my-deployment",
+            orbit_id=orbit.id,
+            satellite_id=satellite.id,
+            model_id=model.id,
+            status=DeploymentStatus.ACTIVE,
+        )
+    )
+
+    task = await repo.enqueue_undeploy_task(deployment.id)
+    assert task is not None
+    assert task.type == SatelliteTaskType.UNDEPLOY
+    assert task.payload["deployment_id"] == str(deployment.id)
+    assert task.status == SatelliteTaskStatus.PENDING
+
+    duplicate_task = await repo.enqueue_undeploy_task(deployment.id)
+    assert duplicate_task is not None
+    assert duplicate_task.id == task.id

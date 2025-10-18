@@ -72,15 +72,15 @@ class SatelliteQueueOrm(TimestampMixin, Base):
     __table_args__ = ()
 
     id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=False), primary_key=True, default=uuid6.uuid7
+        UUID(as_uuid=True), primary_key=True, default=uuid6.uuid7
     )
     satellite_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=False),
+        UUID(as_uuid=True),
         ForeignKey("satellites.id", ondelete="CASCADE"),
         nullable=False,
     )
     orbit_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=False), ForeignKey("orbits.id", ondelete="CASCADE"), nullable=False
+        UUID(as_uuid=True), ForeignKey("orbits.id", ondelete="CASCADE"), nullable=False
     )
     type: Mapped[SatelliteTaskType] = mapped_column(String, nullable=False)
     payload: Mapped[dict[str, Any]] = mapped_column(

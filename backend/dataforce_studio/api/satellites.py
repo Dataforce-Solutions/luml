@@ -145,7 +145,20 @@ async def update_deployment_status(
 async def get_satellite_deployment(request: Request, deployment_id: UUID) -> Deployment:
     await satellite_handler.touch_last_seen(request.user.id)
     return await deployment_handler.get_worker_deployment(
-        request.user.orbit_id,
+        request.user.id,
+        deployment_id,
+    )
+
+
+@satellite_worker_router.delete(
+    "/deployments/{deployment_id}",
+    responses=endpoint_responses,
+    response_model=Deployment,
+)
+async def delete_deployment(request: Request, deployment_id: UUID) -> Deployment:
+    await satellite_handler.touch_last_seen(request.user.id)
+    return await deployment_handler.delete_worker_deployment(
+        request.user.id,
         deployment_id,
     )
 
