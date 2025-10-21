@@ -108,15 +108,9 @@ async function onSubmit({ valid }: FormSubmitEvent) {
     toast.add({
       severity: 'success',
       summary: 'Success',
-      detail: `Deployment ${payload.name} was successfully created`,
-      data: {
-        linkText: 'Go to Deployments',
-        routeName: 'orbit-deployments',
-        routeParams: {},
-      },
+      detail: `Deployment ${payload.name} was successfully created.<br><a href="#" class="toast-action-link" data-route="orbit-deployments" data-params="{}">Go to Deployments</a>`,
       life: 5000,
-      group: 'toast-link',
-    } as any)
+    })
   } catch (e) {
     toast.add(simpleErrorToast(getErrorMessage(e, 'Failed to create deployment')))
   } finally {

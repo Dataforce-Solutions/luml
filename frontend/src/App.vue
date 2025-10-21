@@ -1,6 +1,5 @@
 <template>
-  <d-toast />
-  <CustomToastLink />
+  <UICustomToast />
   <d-confirm-dialog style="width: 21.75rem" />
   <app-template>
     <RouterView />
@@ -14,7 +13,7 @@ import { onBeforeMount } from 'vue'
 import { useThemeStore } from './stores/theme'
 import { useAppScrollbarFix } from './hooks/useAppScrollbarFix'
 import { DataProcessingWorker } from './lib/data-processing/DataProcessingWorker'
-import CustomToastLink from './components/ui/CustomToastLink.vue'
+import UICustomToast from './components/ui/UICustomToast.vue'
 
 const themeStore = useThemeStore()
 useAppScrollbarFix()
