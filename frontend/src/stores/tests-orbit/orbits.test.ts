@@ -68,6 +68,8 @@ const createMockMember = (
     id: userId,
     has_api_key: false,
   } as any,
+  created_at: new Date(),
+  updated_at: null,
 })
 
 const createMockOrbitDetails = (id: string, overrides: Partial<OrbitDetails> = {}): OrbitDetails =>
