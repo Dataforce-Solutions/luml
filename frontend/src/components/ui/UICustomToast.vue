@@ -1,7 +1,7 @@
 <template>
   <Toast position="top-right">
     <template #message="slotProps">
-      <Check class="p-toast-message-icon" v-if="slotProps.message.severity === 'success'" />
+      <component :is="getIconComponent(slotProps.message.severity)" class="p-toast-message-icon" />
       <div class="p-toast-message-text">
         <span class="p-toast-summary">{{ slotProps.message.summary }}</span>
         <div
@@ -17,7 +17,7 @@
 <script setup lang="ts">
 import Toast from 'primevue/toast'
 import { useRouter } from 'vue-router'
-import { Check } from 'lucide-vue-next'
+import { Check, Info, AlertTriangle, XCircle } from 'lucide-vue-next'
 import DOMPurify from 'dompurify'
 
 const router = useRouter()
@@ -38,6 +38,21 @@ function handleLinkClick(event: MouseEvent) {
         params: routeParams ? JSON.parse(routeParams) : {},
       })
     }
+  }
+}
+
+function getIconComponent(severity: string) {
+  switch (severity) {
+    case 'success':
+      return Check
+    case 'info':
+      return Info
+    case 'warn':
+      return AlertTriangle
+    case 'error':
+      return XCircle
+    default:
+      return Info
   }
 }
 </script>
