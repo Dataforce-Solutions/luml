@@ -5,7 +5,7 @@ WORKDIR /app
 ENV UV_COMPILE_BYTECODE=1
 ENV UV_LINK_MODE=copy
 
-COPY --from=ghcr.io/astral-sh/uv:0.4.18 /uv /bin/uv
+COPY --from=ghcr.io/astral-sh/uv:0.9.5 /uv /bin/uv
 COPY dataforce_studio /app/dataforce_studio
 COPY pyproject.toml /app/pyproject.toml
 COPY migrations /app/migrations
