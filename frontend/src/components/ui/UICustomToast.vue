@@ -63,5 +63,6 @@ function getIconComponent(severity: string) {
   margin-top: 0.6rem;
   text-decoration: underline;
   cursor: pointer;
+  color: var(--primary-color);
 }
 </style>
