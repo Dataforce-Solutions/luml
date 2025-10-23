@@ -44,6 +44,9 @@ class DockerService:
             "HostConfig": {
                 "RestartPolicy": {"Name": restart},
                 "NetworkMode": self.network_name,
+                "Binds": [
+                    "satellite-models-cache:/app/models",
+                ],
             },
         }
 

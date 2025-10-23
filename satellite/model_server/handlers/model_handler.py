@@ -1,3 +1,4 @@
+import hashlib
 import json
 import logging
 import os
@@ -10,7 +11,6 @@ from urllib.parse import urlparse
 
 from conda_manager import ModelCondaManager
 from fnnx.envs.conda import CondaLikeEnvManager, install_micromamba
-from fnnx.handlers._common import unpack_model
 from pydantic import BaseModel, Field, create_model
 from utils.logging import log_success
 
@@ -22,72 +22,84 @@ logger = logging.getLogger(__name__)
 class ModelHandler:
     def __init__(self, url: str | None = None) -> None:
         self._model_url = os.getenv("MODEL_ARTIFACT_URL") if url is None else url
+        self._models_cache_dir = self._get_model_cache_dir()
         self._file_handler = FileHandler()
-        self._cached_models = {}  # url -> local_path mapping
         self._request_model_schema = None
-        self.model_envs = None
+        self._model_envs = None
         self.conda_worker = None
 
         try:
-            self.model_path = self._get_model_path()
-            self.extracted_path = self._unpacked_model_path()
-            self._remove_model_archive()
-            self.model_envs = self._create_model_env()
+            self.extracted_path = self._get_or_extract_model(self._model_url)
+            self._model_envs = self._create_model_env()
 
-            if self.model_envs:
-                model_data = {
-                    "manifest": self._get_manifest(),
-                    "dtypes_schemas": self._load_dtypes_schemas(),
-                    "request_schema": self._get_request_model(),
-                    "model_path": self.extracted_path,
-                }
-
+            if self._model_envs:
                 self.conda_worker = ModelCondaManager(
                     self._get_env_name(),
-                    self.model_envs["manager"],
+                    self._model_envs["manager"],
                     self.extracted_path,
-                    model_data,
+                    self._get_model_data_for_worker(),
                 )
                 self.conda_worker.start()
         except Exception as error:
             logger.error(
                 f"Model handler initialization failed: {error}\nTraceback: {traceback.format_exc()}"
             )
-            self._file_handler.remove_file(self.model_path)
-            self.model_path = None
+            raise
 
-    def _download_model(self, url: str) -> str:
+    @log_success("Model data for worker generated successfully.")
+    def _get_model_data_for_worker(self) -> dict[str, Any]:
+        return {
+            "manifest": self._get_manifest(),
+            "dtypes_schemas": self._load_dtypes_schemas(),
+            "request_schema": self._get_request_model(),
+            "model_path": self.extracted_path,
+        }
+
+    @staticmethod
+    def _get_model_cache_dir() -> Path:
+        models_cache_dir = Path("/app/models")
+        models_cache_dir.mkdir(parents=True, exist_ok=True)
+        return models_cache_dir
+
+    @staticmethod
+    def _generate_model_id(url: str) -> str:
         parsed_url = urlparse(url)
-        filename = Path(parsed_url.path).name or "model.dfs"
+        url_path = parsed_url.path.split("?")[0]  # Remove query params
+        return hashlib.md5(url_path.encode()).hexdigest()
 
-        temp_dir = tempfile.mkdtemp(prefix="dfs_model_")
-        local_path = Path(temp_dir) / filename
-
-        return self._file_handler.download_file(url, str(local_path))
-
-    def _get_model_path(self) -> str:
-        if not self._model_url:
-            raise ValueError("Model URL is empty!")
-
-        if not self._model_url.startswith(("http://", "https://")):
-            if not Path(self._model_url).exists():
-                raise FileNotFoundError(f"Local model file does not exist: {self._model_url}")
-            return self._model_url
-
-        if self._model_url in self._cached_models:
-            cached_path = self._cached_models[self._model_url]
-            if Path(cached_path).exists():
-                return cached_path
-
-        local_path = self._download_model(self._model_url)
-
-        self._cached_models[self._model_url] = local_path
-
-        return local_path
+    @log_success("Model downloaded successfully.")
+    def _download_model(self, url: str) -> Path:
+        temp_dir = tempfile.mkdtemp(prefix="dfs_model_download_")
+        parsed_url = urlparse(url)
+        filename = Path(parsed_url.path).name.split("?")[0] or "model.dfs"
+        model_archive_path = Path(temp_dir) / filename
+        self._file_handler.download_file(url, model_archive_path)
+        return model_archive_path
 
     @log_success("Model archive removed successfully.")
-    def _remove_model_archive(self) -> None:
-        self._file_handler.remove_file(self.model_path)
+    def _clean_model_archive(self, file_path: Path) -> None:
+        self._file_handler.remove_file(file_path)
+
+    @log_success("Model unpacked successfully.")
+    def _unpack_model_archive(self, model_archive_path: Path, extraction_dir: Path) -> str:
+        return self._file_handler.unpack_tar_archive(model_archive_path, extraction_dir)
+
+    @log_success("Unpacked Model path extracted successfully.")
+    def _get_or_extract_model(self, url: str) -> str:
+        model_id = self._generate_model_id(url)
+        extraction_dir = self._models_cache_dir / model_id
+
+        if self._file_handler.dir_exist(extraction_dir):
+            logger.info(f"Using cached model {model_id} from {extraction_dir}")
+            return str(extraction_dir)
+
+        logger.info("Model not in cache, downloading...")
+        model_archive_path = self._download_model(url)
+
+        extracted_path = self._unpack_model_archive(model_archive_path, extraction_dir)
+        self._clean_model_archive(model_archive_path)
+
+        return extracted_path
 
     @staticmethod
     def _get_base_type(dtype_inner: str) -> type:
@@ -157,13 +169,6 @@ class ModelHandler:
             fields[name] = (str | None, Field(default=f"<<<{name}>>>", description=desc))
         return create_model("DynamicAttributesModel", **fields)
 
-    @log_success("Model unpacked successfully.")
-    def _unpacked_model_path(self) -> str:
-        if self.model_path is None:
-            raise ValueError("Model not available - failed to download")
-        extracted_path, *_ = unpack_model(self.model_path)
-        return extracted_path
-
     @log_success("Model manifest.json loaded successfully.")
     def _get_manifest(self) -> dict[str, Any]:
         manifest_path = Path(self.extracted_path) / "manifest.json"
@@ -205,10 +210,12 @@ class ModelHandler:
         return self._request_model_schema.model_json_schema()
 
     def _get_env_name(self) -> str:
-        if self.model_envs["path"]:
-            return self.model_envs["path"].split("/")[-1]
+        if not self._model_envs:
+            raise ValueError("Model environment not initialized")
+        if self._model_envs.get("path"):
+            return self._model_envs["path"].split("/")[-1]
         else:
-            return self.model_envs["name"]
+            return self._model_envs["name"]
 
     @staticmethod
     def _get_default_env_spec() -> dict[str, Any]:

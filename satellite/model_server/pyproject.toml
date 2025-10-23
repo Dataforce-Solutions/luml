@@ -26,7 +26,6 @@ select = [
 ignore = [
     "ANN002", # *args
     "ANN003", # **kwargs
-    "ANN101", # missing type annotation for self
 ]
 
 [tool.ruff.format]
@@ -37,5 +36,5 @@ line-ending = "auto"
 [tool.ruff.lint.isort]
 combine-as-imports = true
 force-wrap-aliases = true
-known-first-party = ["agent"]
+known-first-party = ["model_server"]
 split-on-trailing-comma = true

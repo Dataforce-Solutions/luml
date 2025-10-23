@@ -1,4 +1,6 @@
 import os
+import tarfile
+from pathlib import Path
 
 import httpx
 
@@ -20,7 +22,16 @@ class FileHandler:
             return 268435456  # 256mb
         return 268435456  # 256mb
 
-    def download_file(self, url: str, file_path: str) -> str:
+    @staticmethod
+    def _to_path(file_path: Path | str) -> Path:
+        return Path(file_path) if isinstance(file_path, str) else file_path
+
+    @staticmethod
+    def _to_path_str(file_path: Path | str) -> str:
+        return str(file_path)
+
+    def download_file(self, url: str, file_path: str | Path) -> str:
+        file_path = self._to_path_str(file_path)
         try:
             timeout = httpx.Timeout(connect=30.0, read=300.0, write=60.0, pool=30.0)
 
@@ -61,7 +72,20 @@ class FileHandler:
         except Exception as error:
             raise ValueError(f"Download failed: {str(error)}") from error
 
-    @staticmethod
-    def remove_file(file_path: str) -> None:
+    def remove_file(self, file_path: str | Path) -> None:
+        file_path = self._to_path_str(file_path)
         if os.path.exists(file_path):
             os.remove(file_path)
+
+    def unpack_tar_archive(self, tar_path: Path | str, extraction_dir: Path | str) -> str:
+        extraction_dir = self._to_path(extraction_dir)
+        extraction_dir.mkdir(parents=True, exist_ok=True)
+
+        with tarfile.open(self._to_path(tar_path), "r") as tar:
+            tar.extractall(extraction_dir, filter="data")
+
+        return str(extraction_dir)
+
+    def dir_exist(self, directory: Path | str) -> bool:
+        directory = self._to_path(directory)
+        return directory.exists() and any(directory.iterdir())

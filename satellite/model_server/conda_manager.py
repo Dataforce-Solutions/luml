@@ -20,14 +20,14 @@ class ModelCondaManager:
         env_name: str,
         env_manager: Any,  # noqa: ANN401
         extracted_path: str,
-        model_data: dict = None,
+        model_data: dict | None = None,
     ) -> None:
         self.env_name = env_name
         self.env_manager = env_manager
         self.extracted_path = extracted_path
         self.model_data = model_data or {}
-        self.process = None
-        self.port = 8080
+        self.process: subprocess.Popen | None = None
+        self.port: int | None = 8080
         self.worker_script = Path(__file__).parent / "conda_worker.py"
 
     @property

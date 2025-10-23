@@ -55,7 +55,10 @@ class DeployTask(Task):
     ) -> dict[str, str]:
         secrets_env = await self._get_secrets_env(deployment.env_variables_secrets)
 
-        env: dict[str, str] = {"MODEL_ARTIFACT_URL": str(presigned_url)}
+        env: dict[str, str] = {
+            "MODEL_ARTIFACT_URL": str(presigned_url),
+            "DEPLOYMENT_ID": str(deployment.id),
+        }
         for key, value in secrets_env.items():
             env[key] = value
 
@@ -63,6 +66,15 @@ class DeployTask(Task):
             env[key] = value
 
         return env
+
+    @staticmethod
+    def _get_model_id_from_url(url: str) -> str:
+        """Generate model_id from URL for cache directory naming and cleanup tracking"""
+        import hashlib
+        from urllib.parse import urlparse
+        parsed_url = urlparse(url)
+        url_path = parsed_url.path.split("?")[0]
+        return hashlib.md5(url_path.encode()).hexdigest()
 
     async def run(self, task: SatelliteQueueTask) -> None:
         await self.platform.update_task_status(task.id, SatelliteTaskStatus.RUNNING)
@@ -79,11 +91,15 @@ class DeployTask(Task):
             return
 
         env = await self._get_container_env(presigned_url, dep)
+        model_id = self._get_model_id_from_url(presigned_url)
         container = await self.docker.run_model_container(
             image=config.MODEL_IMAGE,
             name=f"sat-{dep_id}",
             container_port=int(config.CONTAINER_PORT),
-            labels={"df.deployment_id": dep_id},
+            labels={
+                "df.deployment_id": dep_id,
+                "df.model_id": model_id,  # For cleanup: track which deployments use which models
+            },
             env=env,
         )
 
