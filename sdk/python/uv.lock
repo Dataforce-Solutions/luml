@@ -115,7 +115,6 @@ dependencies = [
     { name = "httpx" },
     { name = "pydantic" },
     { name = "pyfnx-utils" },
-    { name = "shortuuid" },
     { name = "uuid6" },
 ]
 
@@ -140,7 +139,6 @@ requires-dist = [
     { name = "httpx", specifier = ">=0.28.1,<1.0.0" },
     { name = "pydantic", specifier = ">=2.11.7,<3.0.0" },
     { name = "pyfnx-utils", specifier = ">=0.0.1,<1.0.0" },
-    { name = "shortuuid", specifier = ">=1.0.13" },
     { name = "uuid6", specifier = ">=2025.0.1" },
 ]
 
@@ -499,15 +497,6 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/fc/52/047f35d3b20fd1ae9ccfe28791ef0f3ca0ef0b3e6c1a58badd97d450131b/ruff-0.11.5-py3-none-win32.whl", hash = "sha256:e268da7b40f56e3eca571508a7e567e794f9bfcc0f412c4b607931d3af9c4afe", size = 10320697 },
     { url = "https://files.pythonhosted.org/packages/b9/fe/00c78010e3332a6e92762424cf4c1919065707e962232797d0b57fd8267e/ruff-0.11.5-py3-none-win_amd64.whl", hash = "sha256:6c6dc38af3cfe2863213ea25b6dc616d679205732dc0fb673356c2d69608f800", size = 11378665 },
     { url = "https://files.pythonhosted.org/packages/43/7c/c83fe5cbb70ff017612ff36654edfebec4b1ef79b558b8e5fd933bab836b/ruff-0.11.5-py3-none-win_arm64.whl", hash = "sha256:67e241b4314f4eacf14a601d586026a962f4002a475aa702c69980a38087aa4e", size = 10460287 },
-]
-
-[[package]]
-name = "shortuuid"
-version = "1.0.13"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/8c/e2/bcf761f3bff95856203f9559baf3741c416071dd200c0fc19fad7f078f86/shortuuid-1.0.13.tar.gz", hash = "sha256:3bb9cf07f606260584b1df46399c0b87dd84773e7b25912b7e391e30797c5e72", size = 9662 }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/c0/44/21d6bf170bf40b41396480d8d49ad640bca3f2b02139cd52aa1e272830a5/shortuuid-1.0.13-py3-none-any.whl", hash = "sha256:a482a497300b49b4953e15108a7913244e1bb0d41f9d332f5e9925dba33a3c5a", size = 10529 },
 ]
 
 [[package]]
