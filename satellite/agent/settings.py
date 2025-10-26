@@ -10,8 +10,6 @@ class Settings(BaseSettings):
     BASE_URL: str = "http://localhost"
     MODEL_IMAGE: str = "df-random-svc:latest"
     POLL_INTERVAL_SEC: float = 2.0
-    CONTAINER_PORT: int = 8080
-    AUTH_PORT: int = 7000
 
     model_config = SettingsConfigDict(
         env_file=".env",

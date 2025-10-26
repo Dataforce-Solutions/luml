@@ -6,7 +6,7 @@ import aiodocker
 from aiodocker.containers import DockerContainer
 from aiodocker.exceptions import DockerError
 
-from agent.settings import config as sat_config
+from agent.constants import MODEL_SERVER_PORT
 
 
 class DockerService:
@@ -25,13 +25,13 @@ class DockerService:
         *,
         image: str,
         name: str,
-        container_port: int,
+        container_port: int = MODEL_SERVER_PORT,
         labels: dict[str, str] | None = None,
         env: dict[str, str] | None = None,
         restart: str = "unless-stopped",
     ) -> DockerContainer:
         base_env = {
-            "SATELLITE_AGENT_URL": f"http://satellite-agent:{int(sat_config.AUTH_PORT)}",
+            "SATELLITE_AGENT_URL": f"http://satellite-agent:{container_port}",
         }
         if env:
             base_env.update(env)

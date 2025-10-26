@@ -5,6 +5,7 @@ from uuid import UUID
 from aiodocker.containers import DockerContainer
 
 from agent.clients import ModelServerClient
+from agent.constants import MODEL_SERVER_PORT
 from agent.handlers.handler_instances import ms_handler
 from agent.schemas import SatelliteQueueTask, SatelliteTaskStatus
 from agent.schemas.deployments import Deployment
@@ -98,7 +99,7 @@ class DeployTask(Task):
         container = await self.docker.run_model_container(
             image=config.MODEL_IMAGE,
             name=f"sat-{dep_id}",
-            container_port=int(config.CONTAINER_PORT),
+            container_port=MODEL_SERVER_PORT,
             labels={
                 "df.deployment_id": dep_id,
                 "df.model_id": model_id,
@@ -106,7 +107,7 @@ class DeployTask(Task):
             env=env,
         )
 
-        inference_url = f"{config.BASE_URL}:{int(config.AUTH_PORT)}/deployments/{dep_id}/compute"
+        inference_url = f"{config.BASE_URL.rstrip('/')}/deployments/{dep_id}/compute"
         async with ModelServerClient() as client:
             health_ok = await client.is_healthy(dep_id)
 

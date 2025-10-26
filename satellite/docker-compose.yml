@@ -25,14 +25,13 @@ services:
       BASE_URL: ${BASE_URL:-http://localhost}
       MODEL_IMAGE: ${MODEL_IMAGE:-df-random-svc:latest}
       POLL_INTERVAL_SEC: ${POLL_INTERVAL_SEC:-2}
-      AUTH_PORT: ${AUTH_PORT:-7000}
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     user: "0:0"
     extra_hosts:
       - "host.docker.internal:host-gateway"
     ports:
-      - "${AUTH_PORT:-7000}:${AUTH_PORT:-7000}"
+      - "80:8000"
     depends_on:
       - model-image
     restart: unless-stopped

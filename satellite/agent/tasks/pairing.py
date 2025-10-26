@@ -11,6 +11,7 @@ class PairingTask(Task):
         capabilities: dict[str, Any] = {
             "deploy": {"max_concurrency": 2, "labels": ["docker", "demo"]}
         }
-        result = {"capabilities": capabilities, "base_url": config.BASE_URL}
-        await self.platform.pair_satellite(config.BASE_URL, capabilities)
+        base_url = config.BASE_URL.rstrip("/")
+        result = {"capabilities": capabilities, "base_url": base_url}
+        await self.platform.pair_satellite(base_url, capabilities)
         await self.platform.update_task_status(task.id, SatelliteTaskStatus.DONE, result)

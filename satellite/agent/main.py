@@ -18,7 +18,6 @@ async def run_async() -> None:
         uv_config = uvicorn.Config(
             agent_app,
             host="0.0.0.0",
-            port=int(config.AUTH_PORT),
             log_level="warning",
         )
         uv_server = uvicorn.Server(uv_config)

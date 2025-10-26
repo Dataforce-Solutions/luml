@@ -5,7 +5,7 @@ from typing import Self
 
 import httpx
 
-from agent.settings import config
+from agent.constants import MODEL_SERVER_PORT
 
 logger = logging.getLogger(__name__)
 
@@ -29,7 +29,7 @@ class ModelServerClient:
 
     @staticmethod
     def _url(deployment_id: str) -> str:
-        return f"http://sat-{deployment_id}:{config.CONTAINER_PORT}"
+        return f"http://sat-{deployment_id}:{MODEL_SERVER_PORT}"
 
     async def compute(
         self,
