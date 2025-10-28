@@ -21,18 +21,20 @@ class PeriodicController:
 
     async def tick(self) -> None:
         tasks = await self.handler.platform.list_tasks(SatelliteTaskStatus.PENDING)
-        logger.info(
-            f"[tasks] Found {len(tasks)} pending tasks: {[t.get('id', 'unknown') for t in tasks]}"
-        )
-        for t in tasks:
+        if len(tasks) > 0:
+            logger.info(
+                f"[tasks] Found {len(tasks)} pending tasks: "
+                f"{[t.get('id', 'unknown') for t in tasks]}"
+            )
+        for task in tasks:
             try:
-                await self.handler.dispatch(t)
-            except Exception as e:
+                await self.handler.dispatch(task)
+            except Exception as error:
                 with suppress(Exception):
                     await self.handler.platform.update_task_status(
-                        t["id"],
+                        task["id"],
                         SatelliteTaskStatus.FAILED,
-                        {"reason": f"handler error: {e}"},
+                        {"reason": f"handler error: {error}"},
                     )
 
     async def run_forever(self) -> None:

@@ -1,4 +1,5 @@
 import contextlib
+import logging
 from typing import Self
 from uuid import UUID
 
@@ -7,6 +8,8 @@ from aiodocker.containers import DockerContainer
 from aiodocker.exceptions import DockerError
 
 from agent.constants import MODEL_SERVER_PORT
+
+logger = logging.getLogger(__name__)
 
 
 class DockerService:
@@ -44,10 +47,9 @@ class DockerService:
             "HostConfig": {
                 "RestartPolicy": {"Name": restart},
                 "NetworkMode": self.network_name,
-                # TODO: enable
-                # "Binds": [
-                #     "satellite-models-cache:/app/models",
-                # ],
+                "Binds": [
+                    "satellite-models-cache:/app/models",
+                ],
             },
         }
 
@@ -56,12 +58,16 @@ class DockerService:
 
         return container
 
-    async def remove_model_container(self, *, deployment_id: UUID) -> bool:
+    async def remove_model_container(self, *, deployment_id: UUID) -> tuple[bool, str | None]:
         container_name = f"sat-{deployment_id}"
         try:
             container = await self.client.containers.get(container_name)
         except DockerError:
-            return False
+            return False, None
+
+        info = await container.show()
+        labels = info.get("Config", {}).get("Labels", {})
+        model_id = labels.get("df.model_id")
 
         with contextlib.suppress(DockerError):
             await container.stop()
@@ -69,4 +75,52 @@ class DockerService:
         with contextlib.suppress(DockerError):
             await container.delete(force=True)
 
-        return True
+        return True, model_id
+
+    async def is_model_in_use(self, model_id: str) -> bool:
+        containers = await self.client.containers.list(all=True)
+        for container in containers:
+            info = await container.show()
+            labels = info.get("Config", {}).get("Labels", {})
+            if labels.get("df.model_id") == model_id:
+                return True
+        return False
+
+    async def _container_for_model_cache_clean_up(self, model_id: str) -> DockerContainer:
+        image_name = "alpine:latest"
+
+        try:
+            await self.client.images.get(image_name)
+        except DockerError:
+            logger.info("[DockerService] Pulling alpine:latest image...")
+            await self.client.images.pull(image_name)
+
+        config = {
+            "Image": image_name,
+            "Cmd": ["rm", "-rf", f"/app/models/{model_id}"],
+            "HostConfig": {
+                "Binds": ["satellite-models-cache:/app/models"],
+            },
+        }
+        container = await self.client.containers.create(config=config)
+        await container.start()
+        await container.wait()
+
+        return container
+
+    async def cleanup_model_cache(self, model_id: str) -> None:
+        if await self.is_model_in_use(model_id):
+            logger.info(
+                f'[DockerService] Model "{model_id}" is still in use, skipping cache cleanup.'
+            )
+            return
+
+        try:
+            container = await self._container_for_model_cache_clean_up(model_id)
+
+            with contextlib.suppress(DockerError):
+                await container.delete(force=True)
+
+            logger.info(f'[DockerService] Successfully cleaned cache for model "{model_id}".')
+        except DockerError as error:
+            logger.error(f"[DockerService] Error cleaning model cache.\n{str(error)}")

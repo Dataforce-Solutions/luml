@@ -1,6 +1,10 @@
+import logging
+
 from agent.handlers.handler_instances import ms_handler
 from agent.schemas import SatelliteQueueTask, SatelliteTaskStatus
 from agent.tasks.base import Task
+
+logger = logging.getLogger(__name__)
 
 
 class UndeployTask(Task):
@@ -11,10 +15,10 @@ class UndeployTask(Task):
         deployment_id = payload.get("deployment_id")
 
         try:
-            container_removed = await self.docker.remove_model_container(
+            container_removed, model_id = await self.docker.remove_model_container(
                 deployment_id=deployment_id
             )
-        except Exception as error:  # pragma: no cover - defensive
+        except Exception as error:
             await self.platform.update_task_status(
                 task.id,
                 SatelliteTaskStatus.FAILED,
@@ -39,6 +43,14 @@ class UndeployTask(Task):
             return
 
         await ms_handler.remove_deployment(deployment_id)
+
+        if model_id:
+            try:
+                await self.docker.cleanup_model_cache(model_id)
+            except Exception as error:
+                logger.error(
+                    f"[UndeployTask] Failed to clean model '{model_id}' cache.\n{str(error)}"
+                )
 
         await self.platform.update_task_status(
             task.id,
