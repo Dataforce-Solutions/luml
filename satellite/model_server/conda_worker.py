@@ -67,6 +67,7 @@ try:
             manifest=model_data.get("manifest"),
             dtypes_schemas=model_data.get("dtypes_schemas"),
             request_schema=model_data.get("request_schema"),
+            response_schema=model_data.get("response_schema"),
         )
 
     app = UvicornService(
@@ -104,6 +105,18 @@ try:
             return result
         except Exception as error:
             raise HTTPException(status_code=500, detail=str(error)) from error
+
+    @app.get("/schemas")
+    async def schemas() -> dict[str, Any]:
+        return {
+            "endpoints": [
+                {
+                    "route": "/compute",
+                    "request": model_data.get("request_schema"),
+                    "response": model_data.get("response_schema"),
+                }
+            ]
+        }
 
     if __name__ == "__main__":
         logger.info("[UVICORN] Starting server...")

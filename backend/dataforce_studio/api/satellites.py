@@ -132,6 +132,7 @@ async def update_deployment(
         request.user.id,
         deployment_id,
         data.inference_url,
+        data.schemas,
     )
 
 

@@ -10,6 +10,7 @@ class OpenAPIGenerator:
         manifest: dict | None = None,
         dtypes_schemas: dict | None = None,
         request_schema: dict | None = None,
+        response_schema: dict | None = None,
     ) -> None:
         self.title = title
         self.version = version
@@ -17,6 +18,7 @@ class OpenAPIGenerator:
         self.manifest = manifest
         self.dtypes_schemas = dtypes_schemas
         self.request_schema = request_schema
+        self.response_schema = response_schema
 
     @staticmethod
     def _inject_dtype_schemas(openapi_schema: dict, dtypes_schemas: dict) -> None:
@@ -36,16 +38,24 @@ class OpenAPIGenerator:
                     inputs_schema["properties"][name] = {"$ref": f"#/components/schemas/{dtype}"}
 
     @staticmethod
-    def _build_response_properties(manifest: dict, dtypes_schemas: dict) -> dict:
-        resp_properties = {}
-        for out_spec in manifest.get("outputs", []):
-            oname = out_spec["name"]
-            odtype = out_spec.get("dtype")
-            if out_spec.get("content_type") == "JSON" and odtype in dtypes_schemas:
-                resp_properties[oname] = {"$ref": f"#/components/schemas/{odtype}"}
-            else:
-                resp_properties[oname] = {"type": "object"}
-        return resp_properties
+    def _update_output_references(
+        openapi_schema: dict, manifest: dict, dtypes_schemas: dict
+    ) -> None:
+        compute_response = openapi_schema["components"]["schemas"].get("ComputeResponse")
+        if compute_response and "properties" in compute_response:
+            for output_spec in manifest.get("outputs", []):
+                name = output_spec["name"]
+                dtype = output_spec.get("dtype")
+                if output_spec.get("content_type") == "JSON" and dtype in dtypes_schemas:
+                    compute_response["properties"][name] = {"$ref": f"#/components/schemas/{dtype}"}
+
+        outputs_schema = openapi_schema["components"]["schemas"].get("OutputsModel")
+        if outputs_schema and "properties" in outputs_schema:
+            for output_spec in manifest.get("outputs", []):
+                name = output_spec["name"]
+                dtype = output_spec.get("dtype")
+                if output_spec.get("content_type") == "JSON" and dtype in dtypes_schemas:
+                    outputs_schema["properties"][name] = {"$ref": f"#/components/schemas/{dtype}"}
 
     @staticmethod
     def _add_security_schemes(openapi_schema: dict) -> None:
@@ -54,7 +64,7 @@ class OpenAPIGenerator:
         }
         openapi_schema["security"] = [{"BearerAuth": []}]
 
-    def _inject_pydantic_schemas(self, openapi_schema: dict, request_schema: Any) -> None:  # noqa: ANN401
+    def _inject_compute_request_schema(self, openapi_schema: dict, request_schema: Any) -> None:  # noqa: ANN401
         if "components" not in openapi_schema:
             openapi_schema["components"] = {}
         if "schemas" not in openapi_schema["components"]:
@@ -74,6 +84,26 @@ class OpenAPIGenerator:
         transformed_main = self._transform_refs(main_schema)
         openapi_schema["components"]["schemas"]["ComputeRequest"] = transformed_main
 
+    def _inject_compute_response_schema(self, openapi_schema: dict, response_schema: Any) -> None:  # noqa: ANN401
+        if "components" not in openapi_schema:
+            openapi_schema["components"] = {}
+        if "schemas" not in openapi_schema["components"]:
+            openapi_schema["components"]["schemas"] = {}
+
+        if "$defs" in response_schema:
+            for def_name, def_schema in response_schema["$defs"].items():
+                transformed_def = self._transform_refs(def_schema.copy())
+                openapi_schema["components"]["schemas"][def_name] = transformed_def
+
+        main_schema = {
+            "type": "object",
+            "properties": response_schema["properties"].copy(),
+            "required": response_schema.get("required", []),
+            "title": "ComputeResponse",
+        }
+        transformed_main = self._transform_refs(main_schema)
+        openapi_schema["components"]["schemas"]["ComputeResponse"] = transformed_main
+
     def _transform_refs(self, obj: Any) -> Any:  # noqa: ANN401
         if isinstance(obj, dict):
             if "$ref" in obj and obj["$ref"].startswith("#/$defs/"):
@@ -87,9 +117,8 @@ class OpenAPIGenerator:
                 obj[i] = self._transform_refs(item)
         return obj
 
-    def _add_compute_endpoint(
-        self, openapi_schema: dict, manifest: dict, dtypes_schemas: dict
-    ) -> None:
+    @staticmethod
+    def _add_compute_endpoint(openapi_schema: dict) -> None:
         openapi_schema.setdefault("paths", {})
         if "/compute" not in openapi_schema["paths"]:
             openapi_schema["paths"]["/compute"] = {}
@@ -103,17 +132,11 @@ class OpenAPIGenerator:
             "required": True,
         }
 
-        resp_properties = self._build_response_properties(manifest, dtypes_schemas)
         openapi_schema["paths"]["/compute"]["post"]["responses"] = {
             "200": {
                 "description": "Successful response",
                 "content": {
-                    "application/json": {
-                        "schema": {
-                            "type": "object",
-                            "properties": resp_properties or {"result": {"type": "object"}},
-                        }
-                    }
+                    "application/json": {"schema": {"$ref": "#/components/schemas/ComputeResponse"}}
                 },
             }
         }
@@ -161,10 +184,13 @@ class OpenAPIGenerator:
                 },
             }
 
-            self._inject_pydantic_schemas(openapi_schema, self.request_schema)
+            self._inject_compute_request_schema(openapi_schema, self.request_schema)
+            if self.response_schema:
+                self._inject_compute_response_schema(openapi_schema, self.response_schema)
             self._inject_dtype_schemas(openapi_schema, self.dtypes_schemas)
             self._update_input_references(openapi_schema, self.manifest, self.dtypes_schemas)
-            self._add_compute_endpoint(openapi_schema, self.manifest, self.dtypes_schemas)
+            self._update_output_references(openapi_schema, self.manifest, self.dtypes_schemas)
+            self._add_compute_endpoint(openapi_schema)
 
             return openapi_schema
         except Exception:

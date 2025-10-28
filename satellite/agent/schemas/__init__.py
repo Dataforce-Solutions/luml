@@ -1,7 +1,6 @@
 from agent.schemas.deployments import (
     Deployment,
     DeploymentInfo,
-    DocsUrl,
     Healthz,
     InferenceAccessIn,
     InferenceAccessOut,
@@ -19,5 +18,4 @@ __all__ = [
     "InferenceAccessIn",
     "InferenceAccessOut",
     "Healthz",
-    "DocsUrl",
 ]

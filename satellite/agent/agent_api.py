@@ -98,8 +98,8 @@ def create_agent_app(authorize_access: Callable[[str], Awaitable[bool]]) -> Fast
     ) -> dict:
         try:
             return await ms_handler.model_compute(deployment_id, body)
-        except Exception as e:
-            raise HTTPException(status_code=500, detail=f"Compute failed: {str(e)}") from e
+        except Exception as error:
+            raise HTTPException(status_code=500, detail=f"Compute failed: {str(error)}") from error
 
     def custom_openapi() -> dict[str, Any]:
         if app.openapi_schema:

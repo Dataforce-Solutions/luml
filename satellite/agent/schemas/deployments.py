@@ -1,4 +1,6 @@
-from pydantic import BaseModel, HttpUrl
+from typing import Any
+
+from pydantic import BaseModel
 
 
 class Deployment(BaseModel):
@@ -17,6 +19,7 @@ class Deployment(BaseModel):
     dynamic_attributes_secrets: dict[str, str] | None = {}
     env_variables_secrets: dict[str, str] | None = {}
     env_variables: dict[str, str] | None = {}
+    schemas: dict[str, str] | None = {}
     created_by_user: str | None = None
     tags: list[str] | None = None
     created_at: str
@@ -51,5 +54,11 @@ class Healthz(BaseModel):
     status: str = "healthy"
 
 
-class DocsUrl(BaseModel):
-    url: HttpUrl
+class EndpointSchema(BaseModel):
+    route: str
+    request: dict[str, Any]
+    response: dict[str, Any]
+
+
+class Schemas(BaseModel):
+    endpoints: list[EndpointSchema]

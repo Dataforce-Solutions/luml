@@ -1,6 +1,7 @@
 import logging
 from collections.abc import Callable
 from contextlib import suppress
+from typing import Any
 from uuid import UUID
 
 from agent.clients import ModelServerClient, PlatformClient
@@ -58,7 +59,7 @@ class ModelServerHandler:
         return list(active_deployments.values())
 
     async def sync_deployments(self) -> None:
-        logger.info("[ModelServerHandler] sync_deployments")
+        logger.info("[ModelServerHandler] sync_deployments...")
         async with PlatformClient(
             str(config.PLATFORM_URL), config.SATELLITE_TOKEN
         ) as platform_client:
@@ -132,6 +133,35 @@ class ModelServerHandler:
                 return await client.compute(deployment_id, body)
         except Exception as e:
             raise RuntimeError(f"Model server request failed: {str(e)}") from e
+
+    async def get_deployment_schemas(self, deployment_id) -> dict[str, Any] | None:  # noqa ANN101
+        logger.info(f"[get_deployment_schemas] Starting for deployment_id='{deployment_id}'...")
+
+        async with ModelServerClient() as client:
+            schemas = await client.get_schemas(deployment_id)
+
+        if not schemas:
+            return None
+
+        local_dep = await self.get_deployment(deployment_id)
+        if not local_dep or not local_dep.dynamic_attributes_secrets:
+            return schemas.model_dump(mode="json")
+
+        local_dep_da = local_dep.dynamic_attributes_secrets.keys()
+
+        for endpoint in schemas.endpoints:
+            if endpoint.route == "/compute":
+                dyna_props = (
+                    endpoint.request.get("$defs", {})
+                    .get("DynamicAttributesModel", {})
+                    .get("properties", {})
+                )
+                props_to_remove = [prop for prop in dyna_props if prop in local_dep_da]
+
+                for prop in props_to_remove:
+                    dyna_props.pop(prop)
+
+        return schemas.model_dump(mode="json")
 
     def register_openapi_cache_invalidation_callback(self, callback: Callable) -> None:
         self._openapi_cache_invalidation_callbacks.append(callback)

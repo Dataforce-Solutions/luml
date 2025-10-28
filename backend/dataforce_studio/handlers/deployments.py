@@ -177,7 +177,7 @@ class DeploymentHandler:
         return deployment
 
     async def update_worker_deployment(
-        self, satellite_id: UUID, deployment_id: UUID, inference_url: str
+        self, satellite_id: UUID, deployment_id: UUID, inference_url: str, schemas: dict | None = None
     ) -> Deployment:
         deployment = await self.__repo.update_deployment(
             deployment_id,
@@ -186,6 +186,7 @@ class DeploymentHandler:
                 id=deployment_id,
                 inference_url=inference_url,
                 status=DeploymentStatus.ACTIVE,
+                schemas=schemas,
             ),
         )
         if not deployment:

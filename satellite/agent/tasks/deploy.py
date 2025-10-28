@@ -1,16 +1,18 @@
 import hashlib
+import logging
 from urllib.parse import urlparse
 from uuid import UUID
 
 from aiodocker.containers import DockerContainer
 
 from agent.clients import ModelServerClient
-from agent.constants import MODEL_SERVER_PORT
 from agent.handlers.handler_instances import ms_handler
 from agent.schemas import SatelliteQueueTask, SatelliteTaskStatus
 from agent.schemas.deployments import Deployment
 from agent.settings import config
 from agent.tasks.base import Task
+
+logger = logging.getLogger(__name__)
 
 
 class DeployTask(Task):
@@ -99,7 +101,7 @@ class DeployTask(Task):
         container = await self.docker.run_model_container(
             image=config.MODEL_IMAGE,
             name=f"sat-{dep_id}",
-            container_port=MODEL_SERVER_PORT,
+            container_port=config.MODEL_SERVER_PORT,
             labels={
                 "df.deployment_id": dep_id,
                 "df.model_id": model_id,
@@ -110,15 +112,16 @@ class DeployTask(Task):
         inference_url = f"{config.BASE_URL.rstrip('/')}/deployments/{dep_id}/compute"
         async with ModelServerClient() as client:
             health_ok = await client.is_healthy(dep_id)
+            await ms_handler.add_deployment(dep)
+            schemas = await ms_handler.get_deployment_schemas(dep_id)
 
         if not health_ok:
             await self._handle_healthcheck_timeout(container, task.id)
             return
-        await self.platform.update_deployment_inference_url(dep_id, inference_url)
+
+        await self.platform.update_deployment(dep_id, inference_url, schemas)
         await self.platform.update_task_status(
             task.id,
             SatelliteTaskStatus.DONE,
             {"inference_url": inference_url},
         )
-
-        await ms_handler.add_deployment(dep)

@@ -25,6 +25,7 @@ class ModelHandler:
         self._models_cache_dir = self._get_model_cache_dir()
         self._file_handler = FileHandler()
         self._request_model_schema = None
+        self._response_model_schema = None
         self._model_envs = None
         self.conda_worker = None
 
@@ -52,6 +53,7 @@ class ModelHandler:
             "manifest": self._get_manifest(),
             "dtypes_schemas": self._load_dtypes_schemas(),
             "request_schema": self._get_request_model(),
+            "response_schema": self._get_response_model(),
             "model_path": self.extracted_path,
         }
 
@@ -89,11 +91,11 @@ class ModelHandler:
         model_id = self._generate_model_id(url)
         extraction_dir = self._models_cache_dir / model_id
 
-        if self._file_handler.dir_exist(extraction_dir):
-            logger.info(f"Using cached model {model_id} from {extraction_dir}")
-            return str(extraction_dir)
-
-        logger.info("Model not in cache, downloading...")
+        # if self._file_handler.dir_exist(extraction_dir):
+        #     logger.info(f"Using cached model {model_id} from {extraction_dir}")
+        #     return str(extraction_dir)
+        #
+        # logger.info("Model not in cache, downloading...")
         model_archive_path = self._download_model(url)
 
         extracted_path = self._unpack_model_archive(model_archive_path, extraction_dir)
@@ -208,6 +210,29 @@ class ModelHandler:
                 ),
             )
         return self._request_model_schema.model_json_schema()
+
+    def _create_output_model(self, manifest: dict) -> type[BaseModel]:
+        fields = {}
+
+        for output_spec in manifest.get("outputs", []):
+            name = output_spec["name"]
+            dtype = output_spec["dtype"]
+            content_type = output_spec["content_type"]
+            field_type = self._get_field_type(
+                content_type, dtype, shape=output_spec.get("shape", None)
+            )
+
+            description = output_spec.get("description", f"Output field of type {dtype}")
+
+            fields[name] = (field_type, Field(..., description=description))
+        return create_model("OutputsModel", **fields)
+
+    @log_success("Response Model generated successfully.")
+    def _get_response_model(self) -> dict[str, Any]:
+        if self._response_model_schema is None:
+            manifest = self._get_manifest()
+            self._response_model_schema = self._create_output_model(manifest)
+        return self._response_model_schema.model_json_schema()
 
     def _get_env_name(self) -> str:
         if not self._model_envs:

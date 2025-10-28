@@ -63,19 +63,6 @@ class PlatformClient:
         r.raise_for_status()
         return r.json()
 
-    async def update_deployment_inference_url(
-        self,
-        deployment_id: str,
-        inference_url: str,
-    ) -> dict[str, Any]:
-        assert self._session is not None
-        r = await self._session.patch(
-            self._url(f"/satellites/deployments/{deployment_id}"),
-            json={"inference_url": inference_url},
-        )
-        r.raise_for_status()
-        return r.json()
-
     async def update_deployment_status(
         self,
         deployment_id: str,
@@ -154,5 +141,15 @@ class PlatformClient:
     async def get_deployment(self, deployment_id: UUID) -> Deployment:
         assert self._session is not None
         r = await self._session.get(self._url(f"/satellites/deployments/{deployment_id}"))
+        r.raise_for_status()
+        return Deployment.model_validate(r.json())
+
+    async def update_deployment(
+        self, deployment_id: str, inference_url: str, schemas: dict[str, Any] | None
+    ) -> Deployment:
+        r = await self._session.patch(
+            self._url(f"/satellites/deployments/{deployment_id}"),
+            json={"inference_url": inference_url, "schemas": schemas},
+        )
         r.raise_for_status()
         return Deployment.model_validate(r.json())

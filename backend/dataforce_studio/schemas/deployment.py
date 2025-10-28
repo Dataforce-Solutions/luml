@@ -1,5 +1,6 @@
 from datetime import datetime
 from enum import StrEnum
+from typing import Any
 from uuid import UUID
 
 from pydantic import BaseModel, Field
@@ -32,6 +33,7 @@ class Deployment(BaseModel, BaseOrmConfig):
     dynamic_attributes_secrets: dict[str, str] = Field(default_factory=dict)
     env_variables_secrets: dict[str, str] = Field(default_factory=dict)
     env_variables: dict[str, str] = Field(default_factory=dict)
+    schemas: dict[str, Any] = Field(default_factory=dict)
     created_by_user: str | None = None
     tags: list[str] | None = None
     created_at: datetime
@@ -70,11 +72,13 @@ class DeploymentUpdate(BaseModel, BaseOrmConfig):
     inference_url: str | None = None
     status: DeploymentStatus | None = None
     tags: list[str] | None = None
+    schemas: dict[str, Any] | None = None
 
 
 class DeploymentUpdateIn(BaseModel):
     inference_url: str
     tags: list[str] | None = None
+    schemas: dict[str, Any] | None = None
 
 
 class InferenceAccessIn(BaseModel):
@@ -89,6 +93,7 @@ class DeploymentDetailsUpdateIn(BaseModel):
     name: str | None = None
     description: str | None = None
     dynamic_attributes_secrets: dict[str, UUID] | None = None
+    schemas: dict[str, Any] | None = None
     tags: list[str] | None = None
 
 
@@ -96,6 +101,7 @@ class DeploymentDetailsUpdate(BaseModel):
     name: str | None = None
     description: str | None = None
     dynamic_attributes_secrets: dict[str, str] | None = None
+    schemas: dict[str, Any] | None = None
     tags: list[str] | None = None
 
 
