@@ -634,7 +634,7 @@ async def test_request_delete_url(
 
     assert url == "url"
     mock_check_orbit_action_access.assert_awaited_once_with(
-        organization_id, orbit_id, user_id, Resource.MODEL, Action.UPDATE
+        organization_id, orbit_id, user_id, Resource.MODEL, Action.DELETE
     )
     mock_update_status.assert_awaited_once_with(
         model_artifact_id, ModelArtifactStatus.PENDING_DELETION
@@ -754,7 +754,7 @@ async def test_request_delete_url_with_deployments(
 
     assert error.value.status_code == 409
     mock_check_orbit_action_access.assert_awaited_once_with(
-        organization_id, orbit_id, user_id, Resource.MODEL, Action.UPDATE
+        organization_id, orbit_id, user_id, Resource.MODEL, Action.DELETE
     )
     mock_get_model_artifact.assert_awaited_once_with(model_artifact_id)
 
@@ -772,7 +772,7 @@ async def test_request_delete_url_with_deployments(
     new_callable=AsyncMock,
 )
 @patch(
-    "dataforce_studio.handlers.model_artifacts.ModelArtifactRepository.get_model_artifact",
+    "dataforce_studio.handlers.model_artifacts.ModelArtifactRepository.get_model_artifact_details",
     new_callable=AsyncMock,
 )
 @patch(
@@ -841,7 +841,7 @@ async def test_confirm_deletion_pending(
     new_callable=AsyncMock,
 )
 @patch(
-    "dataforce_studio.handlers.model_artifacts.ModelArtifactRepository.get_model_artifact",
+    "dataforce_studio.handlers.model_artifacts.ModelArtifactRepository.get_model_artifact_details",
     new_callable=AsyncMock,
 )
 @patch(
@@ -1298,7 +1298,7 @@ async def test_request_delete_url_model_artifact_not_found(
         )
 
     mock_check_permission.assert_awaited_once_with(
-        organization_id, orbit_id, user_id, Resource.MODEL, Action.UPDATE
+        organization_id, orbit_id, user_id, Resource.MODEL, Action.DELETE
     )
 
 
@@ -1377,5 +1377,5 @@ async def test_request_delete_url_orbit_not_found(
         )
 
     mock_check_permission.assert_awaited_once_with(
-        organization_id, orbit_id, user_id, Resource.MODEL, Action.UPDATE
+        organization_id, orbit_id, user_id, Resource.MODEL, Action.DELETE
     )
