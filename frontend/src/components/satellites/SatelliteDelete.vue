@@ -3,14 +3,14 @@
     v-model:visible="visible"
     modal
     :draggable="false"
-    header="Delete this satellite?"
+    header="Unpair this satellite?"
     :style="{ width: '350px' }"
   >
     <div>
-      <p class="text">This action will unpair the satellite {{ name }} from the platform.</p>
+      <p class="text">This action will unpair the satellite {{ name }} from your orbit.</p>
       <div class="checkbox-wrapper">
         <Checkbox v-model="accept" inputId="deleteAccept" binary />
-        <label for="deleteAccept">Yes, delete this satellite</label>
+        <label for="deleteAccept">Yes, unpair this satellite</label>
       </div>
     </div>
     <template #footer>
@@ -22,7 +22,7 @@
         :loading="loading"
         @click="deleteSatellite"
       >
-        delete
+        unpair
       </Button>
     </template>
   </Dialog>
