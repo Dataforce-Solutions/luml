@@ -6,7 +6,6 @@ import pytest
 from dataforce_studio.handlers.permissions import PermissionsHandler
 from dataforce_studio.infra.exceptions import (
     InsufficientPermissionsError,
-    NotFoundError,
 )
 from dataforce_studio.schemas.orbit import OrbitRole
 from dataforce_studio.schemas.organization import OrgRole
@@ -26,16 +25,14 @@ async def test_check_permission_user_not_org_member(
     user_id = UUID("0199c337-09f1-7d8f-b0c4-b68349bbe24b")
     organization_id = UUID("0199c337-09f2-7af1-af5e-83fd7a5b51a0")
 
-    mock_get_organization_member_role.return_value = None
+    mock_get_organization_member_role.side_effect = InsufficientPermissionsError
 
-    with pytest.raises(
-        NotFoundError, match="User is not member of the organization"
-    ) as error:
+    with pytest.raises(InsufficientPermissionsError) as error:
         await handler.check_permissions(
             organization_id, user_id, Resource.ORGANIZATION, Action.DELETE
         )
 
-    assert error.value.status_code == 404
+    assert error.value.status_code == 403
     mock_get_organization_member_role.assert_awaited_once_with(organization_id, user_id)
 
 
@@ -98,14 +95,14 @@ async def test_check_orbit_permission_user_not_member(
     organization_id = UUID("0199c337-09f3-753e-9def-b27745e69b76")
 
     mock_get_organization_member_role.return_value = OrgRole.MEMBER.value
-    mock_get_orbit_member_role.return_value = None
+    mock_get_orbit_member_role.side_effect = InsufficientPermissionsError
 
-    with pytest.raises(NotFoundError, match="User is not member of the orbit") as error:
+    with pytest.raises(InsufficientPermissionsError) as error:
         await handler.check_permissions(
             organization_id, user_id, Resource.SATELLITE, Action.LIST, orbit_id
         )
 
-    assert error.value.status_code == 404
+    assert error.value.status_code == 403
     mock_get_orbit_member_role.assert_awaited_once_with(orbit_id, user_id)
 
 
