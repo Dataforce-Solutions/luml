@@ -55,7 +55,16 @@
           <div class="cell">
             <Tag v-if="data.status === DeploymentStatusEnum.active" severity="success">Active</Tag>
             <Tag v-if="data.status === DeploymentStatusEnum.pending" severity="warn"> Pending </Tag>
-            <Tag v-if="data.status === DeploymentStatusEnum.failed" severity="danger">Failed</Tag>
+            <div v-if="data.status === DeploymentStatusEnum.failed" class="tag-with-icon">
+              <Tag severity="danger">Failed</Tag>
+              <TriangleAlert
+                v-if="data.error_message"
+                v-tooltip.top="'Show error'"
+                :size="14"
+                color="var(--p-tag-danger-color)"
+                @click="error = data.error_message"
+              />
+            </div>
             <Tag v-if="data.status === DeploymentStatusEnum.deletion_pending" severity="warn">
               Shutting down
             </Tag>
@@ -107,16 +116,27 @@
       @update:visible="editableDeployment = null"
     ></DeploymentsEditor>
   </div>
+  <DeploymentErrorModal
+    :error="error?.error || ''"
+    :reason="error?.reason || ''"
+    :visible="!!error"
+    @update:visible="error = null"
+  ></DeploymentErrorModal>
 </template>
 
 <script setup lang="ts">
 import { DataTable, Column, IconField, InputIcon, InputText, Tag, Button } from 'primevue'
 import { FilterMatchMode } from '@primevue/core/api'
 import { ref } from 'vue'
-import { Search, Bolt } from 'lucide-vue-next'
-import { DeploymentStatusEnum, type Deployment } from '@/lib/api/deployments/interfaces'
+import { Search, Bolt, TriangleAlert } from 'lucide-vue-next'
+import {
+  DeploymentStatusEnum,
+  type Deployment,
+  type DeploymentErrorMessage,
+} from '@/lib/api/deployments/interfaces'
 import DeploymentsEditor from '../edit/DeploymentsEditor.vue'
 import UiId from '@/components/ui/UiId.vue'
+import DeploymentErrorModal from '../error/DeploymentErrorModal.vue'
 
 type Props = {
   data: Deployment[]
@@ -126,6 +146,7 @@ defineProps<Props>()
 
 const filters = ref()
 const editableDeployment = ref<Deployment | null>(null)
+const error = ref<DeploymentErrorMessage | null>(null)
 
 const initFilters = () => {
   filters.value = {
@@ -210,5 +231,11 @@ initFilters()
 
 .id-text {
   color: var(--p-text-muted-color);
+}
+
+.tag-with-icon {
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 </style>

@@ -36,6 +36,7 @@ export interface Deployment {
   collection_id: string
   dynamic_attributes_secrets: Record<string, string>
   model_artifact_name: string
+  error_message: DeploymentErrorMessage | null
 }
 
 export interface UpdateDeploymentPayload {
@@ -43,4 +44,9 @@ export interface UpdateDeploymentPayload {
   description: string
   tags: string[]
   dynamic_attributes_secrets: Record<string, string>
+}
+
+export interface DeploymentErrorMessage {
+  error: string
+  reason: string
 }
