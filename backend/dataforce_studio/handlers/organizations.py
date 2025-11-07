@@ -100,10 +100,7 @@ class OrganizationHandler:
         organization: OrganizationUpdate,
     ) -> OrganizationDetails:
         await self.__permissions_handler.check_permissions(
-            organization_id,
-            user_id,
-            Resource.ORGANIZATION,
-            Action.UPDATE,
+            organization_id, user_id, Resource.ORGANIZATION, Action.UPDATE
         )
 
         if not await self.__user_repository.update_organization(
@@ -122,10 +119,7 @@ class OrganizationHandler:
 
     async def delete_organization(self, user_id: UUID, organization_id: UUID) -> None:
         await self.__permissions_handler.check_permissions(
-            organization_id,
-            user_id,
-            Resource.ORGANIZATION,
-            Action.DELETE,
+            organization_id, user_id, Resource.ORGANIZATION, Action.DELETE
         )
         organization = await self.__user_repository.get_organization_details(
             organization_id
@@ -145,10 +139,7 @@ class OrganizationHandler:
         self, user_id: UUID, organization_id: UUID
     ) -> None:
         await self.__permissions_handler.check_permissions(
-            organization_id,
-            user_id,
-            Resource.ORGANIZATION,
-            Action.LEAVE,
+            organization_id, user_id, Resource.ORGANIZATION, Action.LEAVE
         )
 
         return await self.__user_repository.delete_organization_member_by_user_id(
@@ -297,10 +288,7 @@ class OrganizationHandler:
         self, user_id: UUID, organization_id: UUID
     ) -> list[OrganizationMember]:
         await self.__permissions_handler.check_permissions(
-            organization_id,
-            user_id,
-            Resource.ORGANIZATION_USER,
-            Action.LIST,
+            organization_id, user_id, Resource.ORGANIZATION_USER, Action.LIST
         )
 
         return await self.__user_repository.get_organization_members(organization_id)
