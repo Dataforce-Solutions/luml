@@ -116,6 +116,10 @@ async def test_delete_organization_member_by_id(
 
 
 @patch(
+    "dataforce_studio.handlers.organizations.UserRepository.get_organization_member_role",
+    new_callable=AsyncMock,
+)
+@patch(
     "dataforce_studio.handlers.permissions.PermissionsHandler.check_permissions",
     new_callable=AsyncMock,
 )
@@ -132,6 +136,7 @@ async def test_add_organization_member(
     mock_create_organization_member: AsyncMock,
     mock_get_organization_details: AsyncMock,
     mock_check_permissions: AsyncMock,
+    mock_get_organization_member_role: AsyncMock,
     member_data: OrganizationMember,
 ) -> None:
     user_id = member_data.user.id
@@ -146,6 +151,7 @@ async def test_add_organization_member(
 
     mock_create_organization_member.return_value = member_data
     mock_get_organization_details.return_value = Mock(members_limit=50, total_members=0)
+    mock_get_organization_member_role.return_value = OrgRole.OWNER
 
     actual = await handler.add_organization_member(
         user_id, member_create.organization_id, member_create
