@@ -676,7 +676,7 @@ async def test_request_delete_url_with_deployments(
     mock_get_model_artifact: AsyncMock,
     mock_get_orbit_simple: AsyncMock,
     mock_get_collection: AsyncMock,
-    mock_check_orbit_action_access: AsyncMock,
+    mock_check_permissions: AsyncMock,
     test_bucket: BucketSecret,
     manifest_example: Manifest,
 ) -> None:
@@ -753,14 +753,18 @@ async def test_request_delete_url_with_deployments(
         )
 
     assert error.value.status_code == 409
-    mock_check_orbit_action_access.assert_awaited_once_with(
-        organization_id, orbit_id, user_id, Resource.MODEL, Action.DELETE
+    mock_check_permissions.assert_awaited_once_with(
+        organization_id,
+        user_id,
+        Resource.MODEL,
+        Action.DELETE,
+        orbit_id,
     )
     mock_get_model_artifact.assert_awaited_once_with(model_artifact_id)
 
 
 @patch(
-    "dataforce_studio.handlers.model_artifacts.PermissionsHandler.check_orbit_action_access",
+    "dataforce_studio.handlers.model_artifacts.PermissionsHandler.check_permissions",
     new_callable=AsyncMock,
 )
 @patch(

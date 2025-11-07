@@ -543,12 +543,12 @@ async def test_get_deployment(
     new_callable=AsyncMock,
 )
 @patch(
-    "dataforce_studio.handlers.deployments.PermissionsHandler.check_orbit_action_access",
+    "dataforce_studio.handlers.deployments.PermissionsHandler.check_permissions",
     new_callable=AsyncMock,
 )
 @pytest.mark.asyncio
 async def test_delete_deployment(
-    mock_check_orbit_action_access: AsyncMock,
+    mock_check_permissions: AsyncMock,
     mock_request_deletion: AsyncMock,
 ) -> None:
     user_id = UUID("0199c337-09f1-7d8f-b0c4-b68349bbe24b")
@@ -597,8 +597,12 @@ async def test_delete_deployment(
     )
 
     assert result == task
-    mock_check_orbit_action_access.assert_awaited_once_with(
-        organization_id, orbit_id, user_id, Resource.DEPLOYMENT, Action.DELETE
+    mock_check_permissions.assert_awaited_once_with(
+        organization_id,
+        user_id,
+        Resource.DEPLOYMENT,
+        Action.DELETE,
+        orbit_id,
     )
     mock_request_deletion.assert_awaited_once_with(orbit_id, deployment_id)
 
@@ -608,12 +612,12 @@ async def test_delete_deployment(
     new_callable=AsyncMock,
 )
 @patch(
-    "dataforce_studio.handlers.deployments.PermissionsHandler.check_orbit_action_access",
+    "dataforce_studio.handlers.deployments.PermissionsHandler.check_permissions",
     new_callable=AsyncMock,
 )
 @pytest.mark.asyncio
 async def test_delete_deployment_not_found(
-    mock_check_orbit_action_access: AsyncMock,
+    mock_check_permissions: AsyncMock,
     mock_request_deletion: AsyncMock,
 ) -> None:
     user_id = UUID("0199c337-09f1-7d8f-b0c4-b68349bbe24b")
@@ -628,8 +632,12 @@ async def test_delete_deployment_not_found(
             user_id, organization_id, orbit_id, deployment_id
         )
 
-    mock_check_orbit_action_access.assert_awaited_once_with(
-        organization_id, orbit_id, user_id, Resource.DEPLOYMENT, Action.DELETE
+    mock_check_permissions.assert_awaited_once_with(
+        organization_id,
+        user_id,
+        Resource.DEPLOYMENT,
+        Action.DELETE,
+        orbit_id,
     )
     mock_request_deletion.assert_awaited_once_with(orbit_id, deployment_id)
 
@@ -639,12 +647,12 @@ async def test_delete_deployment_not_found(
     new_callable=AsyncMock,
 )
 @patch(
-    "dataforce_studio.handlers.deployments.PermissionsHandler.check_orbit_action_access",
+    "dataforce_studio.handlers.deployments.PermissionsHandler.check_permissions",
     new_callable=AsyncMock,
 )
 @pytest.mark.asyncio
 async def test_delete_deployment_already_pending(
-    mock_check_orbit_action_access: AsyncMock,
+    mock_check_permissions: AsyncMock,
     mock_request_deletion: AsyncMock,
 ) -> None:
     now = datetime.datetime.now()
@@ -679,8 +687,8 @@ async def test_delete_deployment_already_pending(
         )
 
     assert exc.value.status_code == status.HTTP_409_CONFLICT
-    mock_check_orbit_action_access.assert_awaited_once_with(
-        organization_id, orbit_id, user_id, Resource.DEPLOYMENT, Action.DELETE
+    mock_check_permissions.assert_awaited_once_with(
+        organization_id, user_id, Resource.DEPLOYMENT, Action.DELETE, orbit_id
     )
     mock_request_deletion.assert_awaited_once_with(orbit_id, deployment_id)
 
