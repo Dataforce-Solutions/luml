@@ -85,7 +85,7 @@ async function setHtmlData(model: MlModel) {
     fileString = fileString.replace(
       /<head>/i,
       `<head>
-        <meta charset="UTF-8">`
+        <meta charset="UTF-8">`,
     )
   }
   const blob = new Blob([fileString], { type: 'text/html' })
