@@ -20,6 +20,7 @@
       scrollHeight="400px"
       :virtualScrollerOptions="{ itemSize: 45.5 }"
       class="evals-table"
+      :tableStyle="visibleColumns.length < 7 ? 'table-layout: fixed;' : ''"
     >
       <ColumnGroup type="header">
         <Row>
@@ -83,7 +84,12 @@
             >
               {{ slotProps.data[column] }}
             </button>
-            <div v-else v-tooltip.top="`${slotProps.data[column]}`" class="cell">
+            <div
+              v-else
+              v-tooltip.top="`${slotProps.data[column]}`"
+              class="cell"
+              :style="visibleColumns.length < 7 ? '' : 'width: 88px;'"
+            >
               {{ slotProps.data[column] }}
             </div>
           </template>
@@ -220,7 +226,6 @@ function exportTable() {
 
 <style scoped>
 .cell {
-  width: 88px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;

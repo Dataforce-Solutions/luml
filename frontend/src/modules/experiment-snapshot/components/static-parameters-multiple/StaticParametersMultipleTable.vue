@@ -1,8 +1,14 @@
 <template>
-  <DataTable :value="data" size="small" scrollable scrollHeight="180px">
+  <DataTable
+    :value="data"
+    size="small"
+    scrollable
+    scrollHeight="180px"
+    :tableStyle="columns.length < 4 ? 'table-layout: fixed;' : ''"
+  >
     <Column v-for="column in columns" :field="column" :header="column" :pt="{ bodyCell: 'cell' }">
       <template #body="slotProps">
-        <div class="cell-content">
+        <div class="cell-content" :style="columns.length < 4 ? '' : 'width: 180px;'">
           <span v-tooltip.top="getParameterText(slotProps.data[column])">
             {{ getParameterText(slotProps.data[column]) }}
           </span>
@@ -43,7 +49,6 @@ const getParameterText = computed(() => (parameter: any) => {
 }
 
 .cell-content {
-  width: 180px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
