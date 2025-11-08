@@ -24,6 +24,18 @@ export const editorDialogPt: DialogPassThroughOptions = {
   },
 }
 
+export const deploymentErrorDialogPt: DialogPassThroughOptions = {
+  root: {
+    style: 'max-width: calc(100% - 32px); padding: 13px 6px 6px; min-width: 320px;',
+  },
+  header: {
+    style: 'padding: 16px 20px; text-transform: uppercase; font-size: 16px; font-weight: 500;',
+  },
+  footer: {
+    style: 'justify-content: flex-start;',
+  },
+}
+
 export const getInitialFormData = (collectionId?: string, modelId?: string) => {
   return {
     name: '',
