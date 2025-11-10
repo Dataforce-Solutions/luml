@@ -77,8 +77,17 @@ async function setHtmlData(model: MlModel) {
     true,
   )
   const zip = await JSZip.loadAsync(arrayBuffer)
-  const fileString = await zip.file(Object.keys(zip.files)[0])?.async('string')
-  if (!fileString) throw new Error('File not found')
+  const rawFile = await zip.file(Object.keys(zip.files)[0])?.async('arraybuffer')
+  if (!rawFile) throw new Error('File not found')
+  const decoder = new TextDecoder('utf-8')
+  let fileString = decoder.decode(rawFile)
+  if (!fileString.includes('<meta charset=')) {
+    fileString = fileString.replace(
+      /<head>/i,
+      `<head>
+        <meta charset="UTF-8">`,
+    )
+  }
   const blob = new Blob([fileString], { type: 'text/html' })
   const blobUrl = URL.createObjectURL(blob)
   modelsStore.setCurrentModelHtmlBlobUrl(blobUrl)
