@@ -1,8 +1,17 @@
 <template>
-  <DataTable :value="data" size="small" scrollable scrollHeight="180px">
+  <DataTable
+    :value="data"
+    size="small"
+    scrollable
+    scrollHeight="180px"
+    :tableStyle="columns.length < MIN_COLUMNS_FOR_FIXED_LAYOUT ? 'table-layout: fixed;' : ''"
+  >
     <Column v-for="column in columns" :field="column" :header="column" :pt="{ bodyCell: 'cell' }">
       <template #body="slotProps">
-        <div class="cell-content">
+        <div
+          class="cell-content"
+          :style="columns.length < MIN_COLUMNS_FOR_FIXED_LAYOUT ? '' : 'width: 180px;'"
+        >
           <span v-tooltip.top="getParameterText(slotProps.data[column])">
             {{ getParameterText(slotProps.data[column]) }}
           </span>
@@ -15,6 +24,8 @@
 <script setup lang="ts">
 import { DataTable, Column } from 'primevue'
 import { computed } from 'vue'
+
+const MIN_COLUMNS_FOR_FIXED_LAYOUT = 4
 
 type Props = {
   data: Record<string, any>[]
@@ -43,7 +54,6 @@ const getParameterText = computed(() => (parameter: any) => {
 }
 
 .cell-content {
-  width: 180px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
