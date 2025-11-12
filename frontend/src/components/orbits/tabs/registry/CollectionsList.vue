@@ -67,6 +67,10 @@ const filteredCollections = computed(() => {
   inset-inline-end: 21px;
 }
 
+:deep(.p-iconfield .p-inputtext) {
+  width: 100%;
+}
+
 .list {
   display: flex;
   flex-direction: column;
