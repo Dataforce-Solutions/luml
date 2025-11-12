@@ -7,6 +7,7 @@
           v-if="orbitsStore.getCurrentOrbitPermissions?.model.includes(PermissionEnum.delete)"
           variant="text"
           severity="secondary"
+          v-tooltip="'Delete'"
           :disabled="!selectedModels.length"
           @click="onDeleteClick"
         >
@@ -18,6 +19,7 @@
           v-if="orbitsStore.getCurrentOrbitPermissions?.model.includes(PermissionEnum.update)"
           variant="text"
           severity="secondary"
+          v-tooltip="'Settings'"
           :disabled="selectedModels.length !== 1"
           @click="openModelEditor"
         >
@@ -28,6 +30,7 @@
         <Button
           variant="text"
           severity="secondary"
+          v-tooltip="'Download'"
           :disabled="downloadButtonDisabled"
           @click="downloadClick"
         >
