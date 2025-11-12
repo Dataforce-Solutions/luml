@@ -60,11 +60,11 @@ const filteredCollections = computed(() => {
 }
 
 :deep(.p-iconfield) {
-  max-width: 250px;
+  max-width: 237px;
 }
 
 :deep(.p-iconfield .p-inputicon:last-child) {
-  inset-inline-end: 21px;
+  inset-inline-end: 9px;
 }
 
 :deep(.p-iconfield .p-inputtext) {
