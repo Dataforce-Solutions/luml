@@ -12,6 +12,7 @@ from dataforce_studio.infra.exceptions import (
     ApplicationError,
     NotFoundError,
     OrganizationLimitReachedError,
+    DatabaseConstraintError,
 )
 from dataforce_studio.repositories.orbits import OrbitRepository
 from dataforce_studio.repositories.satellites import SatelliteRepository
@@ -268,5 +269,7 @@ class SatelliteHandler:
 
         if not satellite:
             raise NotFoundError("Satellite not found")
-
-        return await self.__sat_repo.delete_satellite(satellite_id)
+        try:
+            return await self.__sat_repo.delete_satellite(satellite_id)
+        except DatabaseConstraintError as e:
+            raise ApplicationError(e.message, 409) from e
