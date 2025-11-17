@@ -84,15 +84,15 @@ class BucketSecretHandler:
         secret.id = secret_id
         try:
             db_secret = await self.__secret_repository.update_bucket_secret(secret)
-
-            if not db_secret:
-                raise NotFoundError("Secret not found")
-
         except DatabaseConstraintError as error:
             raise ApplicationError(
                 "Bucket secret with the given bucket name and endpoint already exists.",
                 409,
             ) from error
+
+        if not db_secret:
+            raise NotFoundError("Secret not found")
+
         return BucketSecretOut.model_validate(db_secret)
 
     async def delete_bucket_secret(

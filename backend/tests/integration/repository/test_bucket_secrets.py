@@ -120,7 +120,7 @@ async def test_get_organization_bucket_secrets(
 
     assert secrets
     assert isinstance(secrets, list)
-    assert len(secrets) == 6
+    assert len(secrets) == 6  # The fixture creates one bucket-secret
     assert all(isinstance(s, BucketSecret) for s in secrets)
     assert all(s.organization_id == data.organization.id for s in secrets)
 
@@ -189,8 +189,6 @@ async def test_update_bucket_secret_strips_http_protocol(
 async def test_update_bucket_secret_not_found(
     create_organization_with_user: OrganizationFixtureData,
 ) -> None:
-    from uuid import uuid4
-
     data = create_organization_with_user
     repo = BucketSecretRepository(data.engine)
 
