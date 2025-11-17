@@ -17,24 +17,22 @@ class SatelliteManager:
             "deploy": {
                 "version": 1,
                 "supported_variants": ["pyfunc", "pipeline"],
-                "supported_tags_combinations": [
-                    [
-                        "falcon.beastbyte.ai::tabular_classification_metrics:v1",
-                        "falcon.beastbyte.ai::tabular_regression_metrics:v1",
-                    ],
-                    [
-                        "dataforce.studio::tabular_classification:v1",
-                        "dataforce.studio::tabular_regression:v1",
-                    ],
-                    ["dataforce.studio::prompt_optimization:v1"],
-                ],
-                "extra_fields_form_spec": SatelliteManager._generate_form_spec(),
+                "supported_tags_combinations": None,
+                "extra_fields_form_spec": None,
             }
         }
 
     @staticmethod
     def _generate_form_spec() -> list[dict[str, Any]]:
         return [
+            {
+                "name": "use_gpu",
+                "type": "boolean",
+                "values": None,
+                "required": False,
+                "validators": [],
+                "conditions": [],
+            },
             {
                 "name": "memory_limit",
                 "type": "dropdown",
@@ -59,7 +57,36 @@ class SatelliteManager:
                     {"type": "min", "value": 0.1},
                     {"type": "max", "value": 16},
                 ],
-                "conditions": [],
+                "conditions": [
+                    {
+                        "type": "field",
+                        "body": {
+                            "field": "use_gpu",
+                            "operator": "equal",
+                            "value": False,
+                        },
+                    }
+                ],
+            },
+            {
+                "name": "gpu_count",
+                "type": "number",
+                "values": None,
+                "required": False,
+                "validators": [
+                    {"type": "min", "value": 1},
+                    {"type": "max", "value": 8},
+                ],
+                "conditions": [
+                    {
+                        "type": "field",
+                        "body": {
+                            "field": "use_gpu",
+                            "operator": "equal",
+                            "value": True,
+                        },
+                    }
+                ],
             },
             {
                 "name": "restart_policy",
