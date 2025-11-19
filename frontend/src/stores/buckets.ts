@@ -75,7 +75,7 @@ export const useBucketsStore = defineStore('buckets', () => {
       try {
         rangeResponse = await fetch(downloadUrl, {
           method: 'GET',
-          headers: { Range: 'bytes=0-10,20-30' },
+          headers: { Range: 'bytes=0-10' },
           mode: 'cors',
         })
       } catch (fetchErr) {
