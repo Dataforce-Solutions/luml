@@ -12,7 +12,7 @@ from dataforce_studio.infra.db import engine
 from dataforce_studio.infra.exceptions import AuthError, EmailDeliveryError
 from dataforce_studio.repositories.token_blacklist import TokenBlackListRepository
 from dataforce_studio.repositories.users import UserRepository
-from dataforce_studio.schemas.auth import Token
+from dataforce_studio.schemas.auth import Token, UserInfo
 from dataforce_studio.schemas.user import (
     AuthProvider,
     CreateUser,
@@ -23,6 +23,10 @@ from dataforce_studio.schemas.user import (
     UpdateUserIn,
     User,
     UserOut,
+)
+from dataforce_studio.services.oauth_providers import (
+    OAuthGoogleProvider,
+    OAuthMicrosoftProvider,
 )
 from dataforce_studio.settings import config
 
@@ -54,19 +58,25 @@ class AuthHandler:
     def _get_password_hash(password: str) -> str:
         return bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
 
-    async def _authenticate_user(self, email: EmailStr, password: str) -> User:
-        user = await self.__user_repository.get_user(email)
-        if user is None:
-            raise AuthError("Invalid email or password", 400)
-        if user.auth_method != AuthProvider.EMAIL:
-            raise AuthError("Invalid auth method", 400)
-        if user.hashed_password is None:
-            raise AuthError("Password is invalid", 400)
-        if not self._verify_password(password, user.hashed_password):
-            raise AuthError("Invalid email or password", 400)
-        if not user.email_verified:
-            raise AuthError("Email not verified", 400)
-        return user
+    @staticmethod
+    def _get_email_confirmation_link(token: str) -> str:
+        return config.CONFIRM_EMAIL_URL + token
+
+    @staticmethod
+    def _get_password_reset_link(token: str) -> str:
+        return config.CHANGE_PASSWORD_URL + token
+
+    def _generate_email_confirmation_token(self, email: EmailStr) -> str:
+        return self._create_token(
+            data={"sub": email, "type": "email_confirmation"},
+            expires_delta=86400,  # 24 hours
+        )
+
+    def _generate_password_reset_token(self, email: EmailStr) -> str:
+        return self._create_token(
+            data={"sub": email, "type": "password_reset"},
+            expires_delta=3600,  # 1 hour
+        )
 
     def _create_token(self, data: dict[str, Any], expires_delta: int) -> str:
         to_encode = data.copy()
@@ -99,6 +109,20 @@ class AuthHandler:
         except InvalidTokenError as err:
             raise AuthError("Invalid token", 401) from err
 
+    async def _authenticate_user(self, email: EmailStr, password: str) -> User:
+        user = await self.__user_repository.get_user(email)
+        if user is None:
+            raise AuthError("Invalid email or password", 400)
+        if user.auth_method != AuthProvider.EMAIL:
+            raise AuthError("Invalid auth method", 400)
+        if user.hashed_password is None:
+            raise AuthError("Password is invalid", 400)
+        if not self._verify_password(password, user.hashed_password):
+            raise AuthError("Invalid email or password", 400)
+        if not user.email_verified:
+            raise AuthError("Email not verified", 400)
+        return user
+
     async def handle_signup(self, create_user_in: CreateUserIn) -> dict[str, str]:
         if await self.__user_repository.get_user(create_user_in.email):
             raise AuthError("Email already registered", 400)
@@ -127,9 +151,6 @@ class AuthHandler:
                 "Error sending confirmation email. User is not created."
             ) from error
         return {"detail": "Please confirm your email address"}
-
-    def _get_email_confirmation_link(self, token: str) -> str:
-        return config.CONFIRM_EMAIL_URL + token
 
     async def handle_signin(self, user: SignInUser) -> SignInResponse:
         db_user = await self._authenticate_user(user.email, user.password)
@@ -223,79 +244,72 @@ class AuthHandler:
         except InvalidTokenError as err:
             raise AuthError("Invalid refresh token", 400) from err
 
-    async def handle_google_auth(self, code: str | None) -> dict[str, Any]:
-        if not code:
-            raise AuthError("Google callback code is missing")
-        data = {
-            "code": code,
-            "client_id": config.GOOGLE_CLIENT_ID,
-            "client_secret": config.GOOGLE_CLIENT_SECRET,
-            "redirect_uri": config.GOOGLE_REDIRECT_URI,
-            "grant_type": "authorization_code",
-        }
+    async def _update_or_create_oauth_user(
+        self, userinfo: UserInfo, provider: AuthProvider
+    ) -> User:
+        user = await self.__user_repository.get_user(userinfo.email)
 
-        async with httpx.AsyncClient() as client:
-            token_response = await client.post(
-                "https://oauth2.googleapis.com/token", data=data
-            )
-            if token_response.status_code != 200:
-                raise AuthError("Failed to retrieve token from Google", 400)
-
-            token_data = token_response.json()
-            access_token = token_data.get("access_token")
-            if not access_token:
-                raise AuthError("Failed to retrieve access token", 400)
-
-            userinfo_response = await client.get(
-                "https://www.googleapis.com/oauth2/v2/userinfo",
-                headers={"Authorization": f"Bearer {access_token}"},
-            )
-            if userinfo_response.status_code != 200:
-                raise AuthError("Failed to retrieve user info from Google", 400)
-
-        userinfo = userinfo_response.json()
-        email = userinfo.get("email")
-        full_name = userinfo.get("name")
-        photo_url = userinfo.get("picture")
-
-        if not email:
-            raise AuthError("Failed to retrieve user email", 400)
-
-        user = await self.__user_repository.get_user(email)
-        if user and user.auth_method != AuthProvider.GOOGLE:
+        if user and user.auth_method != provider:
             await self.__user_repository.update_user(
-                UpdateUser(email=email, auth_method=AuthProvider.GOOGLE)
+                UpdateUser(email=userinfo.email, auth_method=AuthProvider.GOOGLE)
             )
+
         if not user:
             user = await self.__user_repository.create_user(
                 CreateUser(
-                    email=email,
-                    full_name=full_name,
-                    photo=photo_url,
+                    email=userinfo.email,
+                    full_name=userinfo.full_name,
+                    photo=userinfo.photo_url,
                     email_verified=True,
-                    auth_method=AuthProvider.GOOGLE,
+                    auth_method=provider,
                     hashed_password=None,
                 )
             )
 
-        if user and photo_url != user.photo:
+        if (
+            provider == AuthProvider.GOOGLE
+            and user
+            and userinfo.photo_url != user.photo
+        ):
             await self.__user_repository.update_user(
-                UpdateUser(email=email, photo=photo_url)
+                UpdateUser(email=userinfo.email, photo=userinfo.photo_url)
             )
+
+        return user
+
+    async def handle_google_auth(self, code: str | None) -> dict[str, Any]:
+        if not code:
+            raise AuthError("Google callback code is missing")
+
+        async with httpx.AsyncClient() as client:
+            access_token = await OAuthGoogleProvider.exchange_code_for_token(
+                client, code
+            )
+            userinfo = await OAuthGoogleProvider.get_user_info(client, access_token)
+
+        if not userinfo.email:
+            raise AuthError("Failed to retrieve user email", 400)
+
+        user = await self._update_or_create_oauth_user(userinfo, AuthProvider.GOOGLE)
 
         return {"token": self._create_tokens(user.email), "user_id": user.id}
 
-    def _generate_email_confirmation_token(self, email: EmailStr) -> str:
-        return self._create_token(
-            data={"sub": email, "type": "email_confirmation"},
-            expires_delta=86400,  # 24 hours
-        )
+    async def handle_microsoft_auth(self, code: str | None) -> dict[str, Any]:
+        if not code:
+            raise AuthError("Microsoft callback code is missing")
 
-    def _generate_password_reset_token(self, email: EmailStr) -> str:
-        return self._create_token(
-            data={"sub": email, "type": "password_reset"},
-            expires_delta=3600,  # 1 hour
-        )
+        async with httpx.AsyncClient() as client:
+            access_token = await OAuthMicrosoftProvider.exchange_code_for_token(
+                client, code
+            )
+            userinfo = await OAuthMicrosoftProvider.get_user_info(client, access_token)
+
+        if not userinfo.email:
+            raise AuthError("Failed to retrieve user email", 400)
+
+        user = await self._update_or_create_oauth_user(userinfo, AuthProvider.MICROSOFT)
+
+        return {"token": self._create_tokens(user.email), "user_id": user.id}
 
     async def send_password_reset_email(self, email: EmailStr) -> None:
         if not (service_user := await self.__user_repository.get_user(email)):
@@ -308,9 +322,6 @@ class AuthHandler:
             )
         except Exception as error:
             raise EmailDeliveryError() from error
-
-    def _get_password_reset_link(self, token: str) -> str:
-        return config.CHANGE_PASSWORD_URL + token
 
     async def handle_email_confirmation(self, token: str) -> None:
         try:

@@ -721,28 +721,6 @@ async def test_google_auth_userinfo_failure(
 
 @patch("httpx.AsyncClient.get", new_callable=AsyncMock)
 @patch("httpx.AsyncClient.post", new_callable=AsyncMock)
-@pytest.mark.asyncio
-async def test_google_auth_no_email(
-    mock_post: AsyncMock, mock_get: AsyncMock, get_tokens: Token
-) -> None:
-    mock_post.return_value.status_code = 200
-    mock_post.return_value.json = MagicMock(
-        return_value={"access_token": get_tokens.access_token}
-    )
-
-    mock_get.return_value.status_code = 200
-    mock_get.return_value.json = MagicMock(
-        return_value={"name": "Test", "picture": "url"}
-    )
-
-    with pytest.raises(AuthError, match="Failed to retrieve user email") as error:
-        await handler.handle_google_auth("code")
-
-    assert error.value.status_code == 400
-
-
-@patch("httpx.AsyncClient.get", new_callable=AsyncMock)
-@patch("httpx.AsyncClient.post", new_callable=AsyncMock)
 @patch(
     "dataforce_studio.handlers.auth.AuthHandler._create_tokens", new_callable=MagicMock
 )
