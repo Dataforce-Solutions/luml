@@ -39,8 +39,44 @@
             :name="`satelliteFields.${index}.value`"
             class="field"
           >
-            <label class="label">{{ field.label }}</label>
-            <InputText v-model="field.value" placeholder="Enter value" size="small"></InputText>
+            <label class="label" :class="{ required: field.required }">{{ field.label }}</label>
+            <template v-if="field.type === SatelliteFieldTypeEnum.boolean">
+              <ToggleButton
+                v-model="field.value"
+                size="small"
+                @change="updateFields"
+              ></ToggleButton>
+            </template>
+            <template v-else-if="field.type === SatelliteFieldTypeEnum.dropdown">
+              <Select
+                v-model="field.value"
+                :options="field.values"
+                :required="field.required"
+                size="small"
+                option-label="label"
+                option-value="value"
+                placeholder="Select value"
+                @change="updateFields"
+              ></Select>
+            </template>
+            <template v-else-if="field.type === SatelliteFieldTypeEnum.number">
+              <InputNumber
+                v-model="field.value"
+                placeholder="Enter value"
+                size="small"
+                :required="field.required"
+                @change="updateFields"
+              ></InputNumber>
+            </template>
+            <template v-else>
+              <InputText
+                v-model="field.value"
+                placeholder="Enter value"
+                size="small"
+                :required="field.required"
+                @change="updateFields"
+              ></InputText>
+            </template>
           </FormField>
         </div>
       </div>
@@ -50,16 +86,18 @@
 
 <script setup lang="ts">
 import type { FieldInfo } from '../deployments.interfaces'
-import type { Satellite } from '@/lib/api/satellites/interfaces'
 import type { MlModel } from '@/lib/api/orbit-ml-models/interfaces'
+import { SatelliteFieldTypeEnum, type SatelliteField } from '@/lib/api/satellites/interfaces'
 import { getErrorMessage } from '@/helpers/helpers'
 import { simpleErrorToast } from '@/lib/primevue/data/toasts'
 import { useSatellitesStore } from '@/stores/satellites'
-import { Select, useToast, InputText } from 'primevue'
-import { computed, onBeforeMount, watch } from 'vue'
+import { Select, useToast, InputText, InputNumber, ToggleButton } from 'primevue'
+import { computed, nextTick, onBeforeMount, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { FormField } from '@primevue/forms'
 import { Rocket } from 'lucide-vue-next'
+import { useSatelliteFields } from '@/hooks/satellites/useSatelliteFields'
+import { watch } from 'vue'
 
 type Props = {
   selectedModel: MlModel | null
@@ -70,17 +108,12 @@ const props = defineProps<Props>()
 const satellitesStore = useSatellitesStore()
 const route = useRoute()
 const toast = useToast()
+const { fields: fieldsForShowing, setFields } = useSatelliteFields()
 
 const satelliteId = defineModel<string | null>('satelliteId')
 const fields = defineModel<FieldInfo[]>('fields')
 
-const currentSatellite = computed(() => {
-  if (!satelliteId.value) return null
-  const satellite = satellitesStore.satellitesList.find(
-    (satellite) => satellite.id === satelliteId.value,
-  )
-  return satellite || null
-})
+const ignoreWatch = ref(false)
 
 const filteredSatellites = computed(() => {
   const model = props.selectedModel
@@ -93,7 +126,7 @@ const filteredSatellites = computed(() => {
     .filter((satellite) => {
       if (!satellite.capabilities.deploy?.supported_tags_combinations) return true
       return !!satellite.capabilities.deploy.supported_tags_combinations.find((combination) => {
-        return combination.every((tag) => model.tags.includes(tag))
+        return combination.every((tag) => model.manifest.producer_tags.includes(tag))
       })
     })
 })
@@ -115,20 +148,69 @@ async function getSatellites() {
   }
 }
 
-function onSatelliteChange(satellite: Satellite | null) {
-  if (satellite) {
-    const inputs = satellite.capabilities.deploy?.inputs
-    fields.value = inputs?.map((input) => getFieldFromInput(input)) || []
-  } else {
-    fields.value = []
+function updateFields() {
+  const satellite =
+    satellitesStore.satellitesList.find((satellite) => satellite.id === satelliteId.value) || null
+  setFields(
+    satellite,
+    props.selectedModel,
+    fields.value?.reduce(
+      (acc, field) => {
+        acc[field.key] = field.value
+        return acc
+      },
+      {} as Record<string, any>,
+    ) || {},
+  )
+}
+
+watch(
+  [() => props.selectedModel, () => satelliteId.value, () => fields.value],
+  (values, prevValues) => {
+    const isModelChanged = values[0] !== prevValues[0]
+    const isSatelliteChanged = values[1] !== prevValues[1]
+    const isFieldsChanged = JSON.stringify(values[2]) !== JSON.stringify(prevValues[2])
+    const someDataChanged = isModelChanged || isSatelliteChanged || isFieldsChanged
+    if (ignoreWatch.value || !someDataChanged) return
+    updateFields()
+  },
+  { deep: true },
+)
+
+function getFieldInfo(data: SatelliteField) {
+  return {
+    key: data.name,
+    value: null,
+    label: data.name,
+    required: data.required,
+    validators: data.validators,
+    values: data.values,
+    type: data.type,
   }
 }
 
-function getFieldFromInput(input: string) {
-  return { key: input, label: input, value: '' }
+function removeOldFields(currentFields: string[]) {
+  const updatedFields = fields.value?.filter((field) => {
+    return currentFields.includes(field.key)
+  })
+  fields.value = updatedFields
 }
 
-watch(currentSatellite, onSatelliteChange)
+function addNewFields(newFields: SatelliteField[]) {
+  const notExistingFields = newFields.filter((field) => {
+    return !fields.value?.some((f) => f.key === field.name)
+  })
+  fields.value = [...(fields.value || []), ...notExistingFields.map(getFieldInfo)]
+}
+
+watch(fieldsForShowing, (newFields) => {
+  ignoreWatch.value = true
+  removeOldFields(newFields.map((field) => field.name))
+  nextTick(() => {
+    addNewFields(newFields)
+    ignoreWatch.value = false
+  })
+})
 
 onBeforeMount(() => {
   getSatellites()
