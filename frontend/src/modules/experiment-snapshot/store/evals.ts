@@ -71,7 +71,7 @@ export const useEvalsStore = defineStore('evals', () => {
       if (maxTime === null) {
         maxTime = span.end_time_unix_nano
       } else {
-        maxTime = Math.max(minTime, span.end_time_unix_nano)
+        maxTime = Math.max(maxTime, span.end_time_unix_nano)
       }
     })
     minSpanTime.value = minTime

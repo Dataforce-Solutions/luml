@@ -12,7 +12,7 @@
         :nesting="0"
         :selected-span-id="selectedSpanId"
         :all-opened="opened"
-        @select="(payload) => $emit('select', payload)"
+        @select="(payload: TraceSpanType) => $emit('select', payload)"
       ></TraceSpan>
     </div>
   </div>
