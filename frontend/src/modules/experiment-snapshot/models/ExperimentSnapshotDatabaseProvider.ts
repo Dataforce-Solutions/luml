@@ -118,7 +118,7 @@ export class ExperimentSnapshotDatabaseProvider implements ExperimentSnapshotPro
     const traceId = this.getTraceId(args)
     if (!traceId) return []
     const result = db.exec(
-      `SELECT trace_id, span_id, parent_span_id, name, kind, start_time_unix_nano, end_time_unix_nano, status_code, status_message, attributes, events, links FROM spans WHERE trace_id = '${traceId}'`,
+      `SELECT trace_id, span_id, parent_span_id, name, kind, start_time_unix_nano, end_time_unix_nano, status_code, status_message, attributes, events, links, dfs_span_type FROM spans WHERE trace_id = '${traceId}'`,
     )
     if (!result[0]) return []
     const list = result[0].values.map((array) =>
@@ -161,6 +161,19 @@ export class ExperimentSnapshotDatabaseProvider implements ExperimentSnapshotPro
         roots.push(span)
       }
     }
-    return roots
+    return this.sortSpans(roots)
+  }
+
+  sortSpans(tree: TraceSpan[]): TraceSpan[] {
+    return tree
+      .sort((a, b) => {
+        return a.start_time_unix_nano - b.start_time_unix_nano
+      })
+      .map((span) => {
+        return {
+          ...span,
+          children: this.sortSpans(span.children),
+        }
+      })
   }
 }

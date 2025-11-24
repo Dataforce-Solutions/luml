@@ -126,6 +126,7 @@ const sortedEvents = computed(() => {
   border-top: none;
   border-right: none;
   background-color: transparent;
+  flex: 0 0 auto;
 }
 .tabs-panels {
   padding: 20px;
