@@ -65,11 +65,7 @@ async function onFormSubmit({ values, valid }: FormSubmitEvent) {
   try {
     loading.value = true
     await organizationStore.createOrganization(payload)
-    toast.add(
-      simpleSuccessToast(
-        'All changes have been saved.',
-      ),
-    )
+    toast.add(simpleSuccessToast('All changes have been saved.'))
     emits('close')
   } catch (e: any) {
     toast.add(simpleErrorToast(e.message || 'Could not create organization'))
