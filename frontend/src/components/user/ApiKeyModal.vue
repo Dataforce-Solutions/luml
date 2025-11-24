@@ -1,7 +1,7 @@
 <template>
   <Dialog v-model:visible="show" header="Api key" modal :draggable="false" :pt="dialogPt">
     <div v-if="userStore.isUserApiKeyExist">
-      <div class="description">You can use API keys with our SDK.</div>
+      <div class="description">Use the API key to access the platform programmatically.</div>
       <div class="form">
         <InputGroup>
           <InputText

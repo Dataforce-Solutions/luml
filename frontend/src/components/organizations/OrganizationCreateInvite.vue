@@ -12,9 +12,7 @@
     :pt="dialogPT"
   >
     <div class="dialog-content">
-      <p class="dialog-text">
-        Organization collaborators have access to all bases within the organization.
-      </p>
+      <p class="dialog-text">Organization collaborators have access to specific orbits.</p>
       <div class="body">
         <h3 class="body-title">Email invite</h3>
         <p class="body-description">

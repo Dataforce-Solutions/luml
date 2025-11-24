@@ -1,13 +1,13 @@
 <template>
   <Dialog
     v-model:visible="visible"
-    header="Create a new satellite"
+    header="Connect a new satellite"
     :pt="dialogPt"
     modal
     :draggable="false"
   >
     <div>
-      <div class="text">Connect your Satellite to the server using this API key.</div>
+      <div class="text">Use the pairing key to connect your Satellite.</div>
       <InputGroup>
         <InputText
           placeholder="Apy key"

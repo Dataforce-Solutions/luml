@@ -63,7 +63,7 @@ async function deleteSatellite() {
     emits('delete')
     visible.value = false
   } catch (e: any) {
-    toast.add(simpleErrorToast(getErrorMessage(e, 'Could not delete satellite')))
+    toast.add(simpleErrorToast(getErrorMessage(e, 'Could not unpair satellite')))
   } finally {
     loading.value = false
   }

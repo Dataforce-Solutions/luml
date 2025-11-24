@@ -11,8 +11,7 @@
     </div>
     <div class="simple-table__rows">
       <div v-if="!secretsStore.secretsList.length" class="simple-table__placeholder">
-        You don’t have any secrets yet. Add one to make them available for tasks or model
-        deployments.
+        You don’t have any secrets yet.
       </div>
       <div v-for="secret in secretsStore.secretsList" :key="secret.id" class="simple-table__row">
         <div class="secret-name">

@@ -18,9 +18,7 @@
           <h3 class="title">invitation center</h3>
         </div>
       </template>
-      <h4 class="sub-title">
-        Organization collaborators have access to all bases within the organization.
-      </h4>
+      <h4 class="sub-title">Organization collaborators have access to specific orbits.</h4>
       <div v-if="invitationsStore.invitations.length" class="table">
         <div class="table-header">
           <div class="table-row">

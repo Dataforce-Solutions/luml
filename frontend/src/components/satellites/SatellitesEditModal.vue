@@ -52,7 +52,7 @@
         :disabled="loading"
         @click="deleteDialogVisible = true"
       >
-        delete satellite
+        unpair satellite
       </Button>
       <Button type="submit" :disabled="loading" form="satellitesEditForm">save changes</Button>
     </template>

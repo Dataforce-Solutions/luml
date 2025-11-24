@@ -93,7 +93,7 @@ const statusData = computed(() => {
     case SatelliteStatusEnum.active:
       return { className: 'status--success', tooltip: 'Active satellite' }
     case SatelliteStatusEnum.error:
-      return { className: 'status--warn', tooltip: 'Error' }
+      return { className: 'status--warn', tooltip: 'The satellite appears to be offline' }
     case SatelliteStatusEnum.inactive:
       return { className: 'status--danger', tooltip: 'Not connected' }
     default:
