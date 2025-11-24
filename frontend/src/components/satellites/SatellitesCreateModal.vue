@@ -1,7 +1,7 @@
 <template>
   <Dialog
     v-model:visible="visible"
-    header="Create a new satellite"
+    header="Connect a new satellite"
     :pt="dialogPt"
     modal
     :draggable="false"

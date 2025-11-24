@@ -67,7 +67,7 @@ async function onFormSubmit({ values, valid }: FormSubmitEvent) {
     await organizationStore.createOrganization(payload)
     toast.add(
       simpleSuccessToast(
-        'Your organization is ready. You can now switch to it from the organization menu.',
+        'All changes have been saved.',
       ),
     )
     emits('close')

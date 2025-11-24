@@ -2,7 +2,7 @@
   <div v-if="!loading" class="list">
     <UiCardAdd
       title="Add new Satellite"
-      text="Keep checkpoints and configs in one place."
+      text="Connect external compute resources as satellites."
       v-if="!satellitesStore.satellitesList.length"
       @add="satellitesStore.showCreator"
     ></UiCardAdd>

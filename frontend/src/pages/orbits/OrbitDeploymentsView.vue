@@ -10,7 +10,7 @@
     <div v-else class="list">
       <UiCardAdd
         title="Add new Deployment"
-        text="Keep versions and configs organized."
+        text="Instantly deploy models in a single click."
         @add="onAddClick"
       ></UiCardAdd>
     </div>
