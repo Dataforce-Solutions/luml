@@ -110,7 +110,7 @@ class DeployTask(Task):
         model_id = self._get_model_id_from_url(presigned_url)
 
         satellite_params = dep.satellite_parameters or {}
-        health_check_timeout = satellite_params.get("health_check_timeout", 120)
+        health_check_timeout = satellite_params.get("health_check_timeout", 1800)
 
         container = await self.docker.run_model_container(
             image=config.MODEL_IMAGE,
