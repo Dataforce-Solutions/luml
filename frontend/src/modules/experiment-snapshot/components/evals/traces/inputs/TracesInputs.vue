@@ -16,7 +16,6 @@
           placeholder="Model name"
           class="select"
         ></Select>
-        <!--<HelpCircle :size="16" color="var(--p-button-text-secondary-color)"></HelpCircle>-->
       </div>
     </header>
     <div class="list">
@@ -31,7 +30,7 @@
 </template>
 
 <script setup lang="ts">
-import { CircleArrowDown, HelpCircle } from 'lucide-vue-next'
+import { CircleArrowDown } from 'lucide-vue-next'
 import { Select } from 'primevue'
 import { computed, ref, watch } from 'vue'
 import UiMultiTypeText from '../../../ui/UiMultiTypeText.vue'
