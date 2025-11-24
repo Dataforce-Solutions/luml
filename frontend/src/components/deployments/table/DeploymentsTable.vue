@@ -40,16 +40,6 @@
           <div class="cell">{{ data.satellite_name }}</div>
         </template>
       </Column>
-      <Column header="Inference URL" field="inference_url">
-        <template #body="{ data }">
-          <div class="cell">
-            <a v-if="data.inference_url" target="_blank" :href="data.inference_url" class="link">
-              {{ data.inference_url }}
-            </a>
-            <span v-else>-</span>
-          </div>
-        </template>
-      </Column>
       <Column header="Status" sortable field="status">
         <template #body="{ data }">
           <div class="cell">

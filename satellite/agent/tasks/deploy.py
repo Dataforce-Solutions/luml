@@ -121,7 +121,7 @@ class DeployTask(Task):
             env=await self._get_container_env(presigned_url, dep),
         )
 
-        inference_url = f"{config.BASE_URL.rstrip('/')}/deployments/{dep_id}"
+        inference_url = f"/deployments/{dep_id}"
         async with ModelServerClient() as client:
             health_ok = await client.is_healthy(dep_id, timeout=int(health_check_timeout))
             await ms_handler.add_deployment(dep)

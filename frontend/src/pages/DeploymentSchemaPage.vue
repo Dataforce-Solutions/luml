@@ -90,7 +90,24 @@ async function getSatellite(deployment: Deployment) {
 
 async function getServerUrl(deployment: Deployment) {
   const satellite = await getSatellite(deployment)
-  return satellite.base_url
+  const inferenceUrl = deployment.inference_url
+
+  if (!inferenceUrl) {
+    return null
+  }
+
+  if (
+    inferenceUrl.startsWith('http://') ||
+    inferenceUrl.startsWith('https://') ||
+    !satellite?.base_url
+  ) {
+    return inferenceUrl
+  }
+
+  const baseUrl = satellite.base_url.replace(/\/$/, '')
+  const normalizedPath = inferenceUrl.replace(/^(\.\/|\/)+/, '')
+
+  return `${baseUrl}/${normalizedPath}`
 }
 </script>
 
