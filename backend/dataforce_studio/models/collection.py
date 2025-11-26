@@ -16,7 +16,10 @@ class CollectionOrm(TimestampMixin, Base):
         UUID(as_uuid=True), primary_key=True, default=uuid.uuid7
     )
     orbit_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("orbits.id", ondelete="CASCADE"), nullable=False
+        UUID(as_uuid=True),
+        ForeignKey("orbits.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
     )
     description: Mapped[str] = mapped_column(String, nullable=False)
     name: Mapped[str] = mapped_column(String, nullable=False)

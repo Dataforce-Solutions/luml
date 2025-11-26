@@ -214,6 +214,10 @@ async def test_get_collection_model_artifact(
 
 
 @patch(
+    "dataforce_studio.handlers.model_artifacts.ModelArtifactHandler._check_organization_models_limit",
+    new_callable=AsyncMock,
+)
+@patch(
     "dataforce_studio.handlers.model_artifacts.PermissionsHandler.check_permissions",
     new_callable=AsyncMock,
 )
@@ -235,6 +239,7 @@ async def test_create_model_artifact(
     mock_create_model_artifact: AsyncMock,
     mock_check_orbit_and_collection_access: AsyncMock,
     mock_check_permissions: AsyncMock,
+    mock_check_organization_models_limit: AsyncMock,
     test_bucket: BucketSecret,
     manifest_example: Manifest,
 ) -> None:
@@ -309,6 +314,7 @@ async def test_create_model_artifact(
     mock_create_model_artifact.assert_awaited_once()
     mock_get_s3_service.assert_awaited_once()
     mock_s3_service.create_upload.assert_awaited_once()
+    mock_check_organization_models_limit.assert_awaited_once_with(organization_id)
 
 
 @patch(
