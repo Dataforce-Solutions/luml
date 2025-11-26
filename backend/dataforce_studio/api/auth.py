@@ -40,7 +40,7 @@ def set_auth_cookies(response: Response, data: Token) -> None:
         key="access_token",
         value=data.access_token,
         httponly=True,
-        secure=False,
+        secure=True,
         samesite="lax",
         max_age=auth_handler.access_token_expire,
     )
@@ -50,7 +50,7 @@ def set_auth_cookies(response: Response, data: Token) -> None:
             key="refresh_token",
             value=data.refresh_token,
             httponly=True,
-            secure=False,
+            secure=True,
             samesite="lax",
             max_age=auth_handler.refresh_token_expire,
         )
