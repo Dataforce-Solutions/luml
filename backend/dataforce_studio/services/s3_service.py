@@ -1,29 +1,30 @@
-import math
 from datetime import timedelta
 from uuid import UUID
 
 from minio import Minio
 
-from dataforce_studio.constants import MAX_FILE_SIZE_BYTES, USE_MULTIPART_BYTES
 from dataforce_studio.infra.exceptions import BucketConnectionError
-from dataforce_studio.schemas.bucket_secrets import BucketSecret, BucketSecretCreateIn
+from dataforce_studio.schemas.bucket_secrets import (
+    S3BucketSecret,
+    S3BucketSecretCreateIn,
+)
 from dataforce_studio.schemas.storage import (
-    MultiPartUploadDetails,
     MultipartUploadInfo,
     PartDetails,
-    UploadDetails,
+    S3MultiPartUploadDetails,
+    S3UploadDetails,
 )
+from dataforce_studio.services.base_storage_service import BaseStorageService
 
 
-class S3Service:
-    def __init__(self, secret: BucketSecret | BucketSecretCreateIn) -> None:
+class S3Service(BaseStorageService):
+    def __init__(self, secret: S3BucketSecret | S3BucketSecretCreateIn) -> None:
         self._bucket_id: UUID | None = getattr(secret, "id", None)
         self._bucket_name = secret.bucket_name
-        self._client = self._create_minio_client(secret)
-        self._url_expire = 12  # hours
+        self._client = self._create_client(secret)
 
     @staticmethod
-    def _create_minio_client(secret: BucketSecret | BucketSecretCreateIn) -> Minio:
+    def _create_client(secret: S3BucketSecret | S3BucketSecretCreateIn) -> Minio:  # type: ignore[override]
         return Minio(
             secret.endpoint,
             access_key=secret.access_key,
@@ -33,28 +34,6 @@ class S3Service:
             region=secret.region,
             cert_check=secret.cert_check if secret.cert_check is not None else True,
         )
-
-    @staticmethod
-    def _calculate_optimal_chunk_size(file_size: int) -> int:
-        if file_size <= 1073741824:  # 1gb
-            return 33554432  # 32 mb
-        if file_size <= 5368709120:  # 5gb
-            return 67108864  # 64 mb
-        if file_size <= 10737418240:  # 10gb
-            return 134217728  # 128 mb
-        if file_size <= 107374182400:  # 100gb
-            return 536870912  # 512 mb
-        return 1073741824  # 1gb
-
-    @staticmethod
-    def _should_use_multipart(file_size: int) -> bool:
-        return file_size > USE_MULTIPART_BYTES  # 500 mb
-
-    def _calculate_multipart_params(self, file_size: int) -> tuple[int, int]:
-        part_size = self._calculate_optimal_chunk_size(file_size)
-        parts_count = math.ceil(file_size / part_size)
-
-        return parts_count, part_size
 
     async def get_initiate_multipart_url(self, object_name: str) -> str:
         try:
@@ -179,36 +158,36 @@ class S3Service:
             raise BucketConnectionError("Failed to generate delete URL.") from error
 
     async def create_multipart_upload(
-        self, bucket_location: str, size: int, upload_id: str
-    ) -> MultiPartUploadDetails:
+        self, bucket_location: str, size: int, upload_id: str | None = None
+    ) -> S3MultiPartUploadDetails:
+        if upload_id is None:
+            raise ValueError("upload_id is required for S3 multipart uploads")
+
         parts_count, part_size = self._calculate_multipart_params(size)
 
         urls = await self._get_multipart_upload_urls(
             bucket_location, upload_id, parts_count
         )
-        return MultiPartUploadDetails(
+        return S3MultiPartUploadDetails(
             upload_id=upload_id,
             parts=self._parts_upload_details(urls, size, part_size),
             complete_url=await self.get_complete_url(bucket_location, upload_id),
         )
 
-    async def create_upload(self, bucket_location: str, size: int) -> UploadDetails:
+    async def create_upload(self, bucket_location: str, size: int) -> S3UploadDetails:
         if self._bucket_id is None:
             raise ValueError("Bucket secret ID is required for creating upload URLs")
 
-        if size > MAX_FILE_SIZE_BYTES:
-            raise ValueError(
-                f"Model cant be bigger than 5TB - {MAX_FILE_SIZE_BYTES} bytes"
-            )
+        self.validate_size(size)
 
         if self._should_use_multipart(size):
-            return UploadDetails(
+            return S3UploadDetails(
                 url=await self.get_initiate_multipart_url(bucket_location),
                 multipart=True,
                 bucket_location=bucket_location,
                 bucket_secret_id=self._bucket_id,
             )
-        return UploadDetails(
+        return S3UploadDetails(
             url=await self.get_upload_url(bucket_location),
             bucket_location=bucket_location,
             bucket_secret_id=self._bucket_id,

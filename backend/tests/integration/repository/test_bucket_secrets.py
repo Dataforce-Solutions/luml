@@ -6,9 +6,9 @@ from dataforce_studio.infra.exceptions import DatabaseConstraintError
 from dataforce_studio.repositories.bucket_secrets import BucketSecretRepository
 from dataforce_studio.repositories.orbits import OrbitRepository
 from dataforce_studio.schemas.bucket_secrets import (
-    BucketSecret,
-    BucketSecretCreate,
-    BucketSecretUpdate,
+    S3BucketSecret,
+    S3BucketSecretCreate,
+    S3BucketSecretUpdate,
 )
 from dataforce_studio.schemas.orbit import OrbitCreateIn
 from tests.conftest import OrganizationFixtureData
@@ -23,7 +23,7 @@ async def test_create_bucket_secret(
 
     endpoint = "s3.amazonaws.com"
 
-    secret_data = BucketSecretCreate(
+    secret_data = S3BucketSecretCreate(
         organization_id=data.organization.id,
         endpoint=f"https://{endpoint}",
         bucket_name="test-bucket-create",
@@ -55,7 +55,7 @@ async def test_create_duplicate_bucket_secret_raises_error(
     data = create_organization_with_user
     repo = BucketSecretRepository(data.engine)
 
-    secret_data = BucketSecretCreate(
+    secret_data = S3BucketSecretCreate(
         organization_id=data.organization.id,
         endpoint="s3.duplicate.com",
         bucket_name="duplicate-bucket",
@@ -74,7 +74,7 @@ async def test_get_bucket_secret(
     data = create_organization_with_user
     repo = BucketSecretRepository(data.engine)
 
-    secret_data = BucketSecretCreate(
+    secret_data = S3BucketSecretCreate(
         organization_id=data.organization.id,
         endpoint="s3.get.com",
         bucket_name="test-bucket-get",
@@ -84,7 +84,7 @@ async def test_get_bucket_secret(
     fetched_secret = await repo.get_bucket_secret(created_secret.id)
 
     assert fetched_secret
-    assert isinstance(fetched_secret, BucketSecret)
+    assert isinstance(fetched_secret, S3BucketSecret)
     assert fetched_secret.id == created_secret.id
     assert fetched_secret.endpoint == created_secret.endpoint
     assert fetched_secret.bucket_name == created_secret.bucket_name
@@ -109,7 +109,7 @@ async def test_get_organization_bucket_secrets(
     repo = BucketSecretRepository(data.engine)
 
     for i in range(5):
-        secret_data = BucketSecretCreate(
+        secret_data = S3BucketSecretCreate(
             organization_id=data.organization.id,
             endpoint=f"s3.test{i}.com",
             bucket_name=f"test-bucket-{i}",
@@ -121,7 +121,7 @@ async def test_get_organization_bucket_secrets(
     assert secrets
     assert isinstance(secrets, list)
     assert len(secrets) == 6  # The fixture creates one bucket-secret
-    assert all(isinstance(s, BucketSecret) for s in secrets)
+    assert all(isinstance(s, S3BucketSecret) for s in secrets)
     assert all(s.organization_id == data.organization.id for s in secrets)
 
 
@@ -133,7 +133,7 @@ async def test_update_bucket_secret(
     repo = BucketSecretRepository(data.engine)
     endpoint = "s3.update.com"
 
-    secret_data = BucketSecretCreate(
+    secret_data = S3BucketSecretCreate(
         organization_id=data.organization.id,
         endpoint=endpoint,
         bucket_name="test-bucket-update",
@@ -143,7 +143,7 @@ async def test_update_bucket_secret(
 
     new_bucket_name = "updated-bucket-name"
     new_region = "eu-west-1"
-    update_data = BucketSecretUpdate(
+    update_data = S3BucketSecretUpdate(
         id=created_secret.id,
         bucket_name=new_bucket_name,
         region=new_region,
@@ -166,7 +166,7 @@ async def test_update_bucket_secret_strips_http_protocol(
     data = create_organization_with_user
     repo = BucketSecretRepository(data.engine)
 
-    secret_data = BucketSecretCreate(
+    secret_data = S3BucketSecretCreate(
         organization_id=data.organization.id,
         endpoint="s3.update-strip.com",
         bucket_name="test-bucket-update-strip",
@@ -174,7 +174,7 @@ async def test_update_bucket_secret_strips_http_protocol(
 
     created_secret = await repo.create_bucket_secret(secret_data)
 
-    update_data = BucketSecretUpdate(
+    update_data = S3BucketSecretUpdate(
         id=created_secret.id,
         endpoint="https://s3.new-endpoint.com",
     )
@@ -193,7 +193,7 @@ async def test_update_bucket_secret_not_found(
     repo = BucketSecretRepository(data.engine)
 
     non_existent_id = uuid4()
-    update_data = BucketSecretUpdate(
+    update_data = S3BucketSecretUpdate(
         id=non_existent_id,
         bucket_name="new-name",
     )
@@ -212,14 +212,14 @@ async def test_update_bucket_secret_duplicate_raises_error(
 
     secret1 = data.bucket_secret
 
-    secret2_data = BucketSecretCreate(
+    secret2_data = S3BucketSecretCreate(
         organization_id=data.organization.id,
         endpoint="s3.second.com",
         bucket_name="second-bucket",
     )
     secret2 = await repo.create_bucket_secret(secret2_data)
 
-    update_data = BucketSecretUpdate(
+    update_data = S3BucketSecretUpdate(
         id=secret2.id,
         endpoint=secret1.endpoint,
         bucket_name=secret1.bucket_name,
@@ -236,7 +236,7 @@ async def test_delete_bucket_secret(
     data = create_organization_with_user
     repo = BucketSecretRepository(data.engine)
 
-    secret_data = BucketSecretCreate(
+    secret_data = S3BucketSecretCreate(
         organization_id=data.organization.id,
         endpoint="s3.delete.com",
         bucket_name="test-bucket-delete",
@@ -258,7 +258,7 @@ async def test_delete_bucket_secret_in_use_raises_error(
     secret_repo = BucketSecretRepository(data.engine)
     orbit_repo = OrbitRepository(data.engine)
 
-    secret_data = BucketSecretCreate(
+    secret_data = S3BucketSecretCreate(
         organization_id=data.organization.id,
         endpoint="s3.in-use.com",
         bucket_name="in-use-bucket",

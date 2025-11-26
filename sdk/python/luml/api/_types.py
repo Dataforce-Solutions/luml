@@ -1,4 +1,5 @@
 from enum import StrEnum
+from typing import Literal
 from uuid import UUID
 
 from pydantic import BaseModel
@@ -22,16 +23,41 @@ class Organization(BaseModel):
     updated_at: str | None = None
 
 
-class BucketSecret(BaseModel):
+class BucketType(StrEnum):
+    S3 = "s3"
+    AZURE = "azure"
+
+
+class S3BucketSecret(BaseModel):
     id: str
+    type: Literal[BucketType.S3] = BucketType.S3
     endpoint: str
     bucket_name: str
     secure: bool | None = None
-    region: str | None = None
+    region: str
     cert_check: bool | None = None
     organization_id: str
     created_at: str
     updated_at: str | None = None
+
+
+class AzureBucketSecret(BaseModel):
+    id: str
+    type: Literal[BucketType.AZURE] = BucketType.AZURE
+    endpoint: str
+    bucket_name: str
+    organization_id: str
+    created_at: str
+    updated_at: str | None = None
+
+
+BucketSecret = S3BucketSecret | AzureBucketSecret
+
+
+def model_validate_bucket_secret(bucket: dict) -> S3BucketSecret | AzureBucketSecret:
+    if bucket.get("type") == BucketType.S3:
+        return S3BucketSecret.model_validate(bucket)
+    return AzureBucketSecret.model_validate(bucket)
 
 
 class Orbit(BaseModel):
@@ -112,14 +138,16 @@ class PartDetails(BaseModel):
 
 
 class UploadDetails(BaseModel):
-    url: str
+    type: BucketType
+    url: str | None = None
     multipart: bool = False
     bucket_location: str
     bucket_secret_id: str
 
 
 class MultiPartUploadDetails(BaseModel):
-    upload_id: str
+    type: BucketType
+    upload_id: str | None = None
     parts: list[PartDetails]
     complete_url: str
 

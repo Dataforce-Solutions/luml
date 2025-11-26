@@ -11,11 +11,11 @@ from dataforce_studio.infra.exceptions import (
     NotFoundError,
 )
 from dataforce_studio.schemas.bucket_secrets import (
-    BucketSecret,
-    BucketSecretCreateIn,
-    BucketSecretOut,
-    BucketSecretUpdate,
     BucketSecretUrls,
+    S3BucketSecret,
+    S3BucketSecretCreateIn,
+    S3BucketSecretOut,
+    S3BucketSecretUpdate,
 )
 from dataforce_studio.schemas.permissions import Action, Resource
 
@@ -39,14 +39,14 @@ async def test_create_bucket_secret(
     organization_id = UUID("0199c337-09f2-7af1-af5e-83fd7a5b51a0")
     secret_id = UUID("0199c337-09f3-753e-9def-b27745e69be6")
 
-    secret_create_in = BucketSecretCreateIn(
+    secret_create_in = S3BucketSecretCreateIn(
         endpoint="s3.amazonaws.com",
         bucket_name="test-bucket",
         access_key="access_key",
         secret_key="secret_key",
         region="us-east-1",
     )
-    expected = BucketSecretOut(
+    expected = S3BucketSecretOut(
         id=secret_id,
         organization_id=organization_id,
         endpoint=secret_create_in.endpoint,
@@ -87,7 +87,7 @@ async def test_get_organization_bucket_secrets(
     secret_id = UUID("0199c337-09f3-753e-9def-b27745e69be6")
 
     expected = [
-        BucketSecretOut(
+        S3BucketSecretOut(
             id=secret_id,
             organization_id=organization_id,
             endpoint="s3.amazonaws.com",
@@ -126,7 +126,7 @@ async def test_get_bucket_secret(
     organization_id = UUID("0199c337-09f2-7af1-af5e-83fd7a5b51a0")
     secret_id = UUID("0199c337-09f3-753e-9def-b27745e69be6")
 
-    expected = BucketSecretOut(
+    expected = S3BucketSecretOut(
         id=secret_id,
         organization_id=organization_id,
         endpoint="s3.amazonaws.com",
@@ -193,12 +193,12 @@ async def test_update_bucket_secret(
     organization_id = UUID("0199c337-09f2-7af1-af5e-83fd7a5b51a0")
     secret_id = UUID("0199c337-09f3-753e-9def-b27745e69be6")
 
-    secret_update = BucketSecretUpdate(
+    secret_update = S3BucketSecretUpdate(
         id=secret_id,
         endpoint="s3.amazonaws.com",
         bucket_name="updated-bucket",
     )
-    expected = BucketSecretOut(
+    expected = S3BucketSecretOut(
         id=secret_id,
         organization_id=organization_id,
         endpoint=secret_update.endpoint or "default-endpoint",
@@ -238,7 +238,7 @@ async def test_update_bucket_secret_not_found(
     organization_id = UUID("0199c337-09f2-7af1-af5e-83fd7a5b51a0")
     secret_id = UUID("0199c337-09f3-753e-9def-b27745e69be6")
 
-    secret_update = BucketSecretUpdate(
+    secret_update = S3BucketSecretUpdate(
         id=secret_id,
         endpoint="s3.amazonaws.com",
         bucket_name="updated-bucket",
@@ -318,7 +318,7 @@ async def test_delete_bucket_secret_in_use(
 async def test_generate_bucket_urls(
     mock_s3_service: Mock,
 ) -> None:
-    secret = BucketSecretCreateIn(
+    secret = S3BucketSecretCreateIn(
         endpoint="s3.amazonaws.com",
         bucket_name="test-bucket",
         access_key="access_key",
@@ -365,7 +365,7 @@ async def test_get_existing_bucket_urls(
     organization_id = UUID("0199c337-09f2-7af1-af5e-83fd7a5b51a0")
     secret_id = UUID("0199c337-09f3-753e-9def-b27745e69be6")
 
-    original_secret = BucketSecret(
+    original_secret = S3BucketSecret(
         id=secret_id,
         organization_id=organization_id,
         created_at=datetime.datetime.now(),
@@ -379,7 +379,7 @@ async def test_get_existing_bucket_urls(
         region="us-east-1",
         cert_check=None,
     )
-    secret = BucketSecretUpdate(
+    secret = S3BucketSecretUpdate(
         id=secret_id,
         bucket_name="new-bucket-name",
         access_key="new-access_key",
@@ -424,7 +424,7 @@ async def test_get_existing_bucket_urls_secret_not_found(
 ) -> None:
     secret_id = UUID("0199c337-09f3-753e-9def-b27745e69be6")
 
-    secret = BucketSecretUpdate(
+    secret = S3BucketSecretUpdate(
         id=secret_id,
         bucket_name="new-bucket-name",
         access_key="new-access_key",
@@ -443,7 +443,7 @@ async def test_get_existing_bucket_urls_secret_not_found(
 async def test_get_bucket_urls(
     mock_s3_service: Mock,
 ) -> None:
-    secret = BucketSecretCreateIn(
+    secret = S3BucketSecretCreateIn(
         endpoint="s3.amazonaws.com",
         bucket_name="test-bucket",
         access_key="access_key",

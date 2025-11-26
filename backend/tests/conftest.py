@@ -18,7 +18,7 @@ from dataforce_studio.repositories.model_artifacts import ModelArtifactRepositor
 from dataforce_studio.repositories.orbits import OrbitRepository
 from dataforce_studio.repositories.satellites import SatelliteRepository
 from dataforce_studio.repositories.users import UserRepository
-from dataforce_studio.schemas.bucket_secrets import BucketSecret, BucketSecretCreate
+from dataforce_studio.schemas.bucket_secrets import S3BucketSecret, S3BucketSecretCreate
 from dataforce_studio.schemas.model_artifacts import (
     NDJSON,
     Collection,
@@ -98,7 +98,7 @@ class BaseFixtureData:
 @dataclass
 class OrganizationFixtureData(BaseFixtureData):
     user: User
-    bucket_secret: BucketSecret
+    bucket_secret: S3BucketSecret
     member: OrganizationMember
 
 
@@ -111,7 +111,7 @@ class OrganizationWithMembersFixtureData(OrganizationFixtureData):
 @dataclass
 class OrbitFixtureData(BaseFixtureData):
     orbit: OrbitDetails
-    bucket_secret: BucketSecret
+    bucket_secret: S3BucketSecret
     user: User
 
 
@@ -354,8 +354,8 @@ async def manifest_example() -> AsyncGenerator[Manifest]:
 
 
 @pytest_asyncio.fixture
-async def test_bucket() -> AsyncGenerator[BucketSecret]:
-    yield BucketSecret(
+async def test_bucket() -> AsyncGenerator[S3BucketSecret]:
+    yield S3BucketSecret(
         id=uuid7(),
         organization_id=uuid7(),
         endpoint="url",
@@ -422,7 +422,7 @@ async def create_organization_with_user(
     )
 
     secret = await secret_repo.create_bucket_secret(
-        BucketSecretCreate(
+        S3BucketSecretCreate(
             organization_id=created_organization.id,
             endpoint="s3",
             bucket_name="test-bucket",
@@ -513,7 +513,7 @@ async def create_orbit(
     )
 
     bucket_secret = await secret_repo.create_bucket_secret(
-        BucketSecretCreate(
+        S3BucketSecretCreate(
             organization_id=organization.id,
             endpoint="s3",
             bucket_name="test-bucket",

@@ -33,7 +33,8 @@ from dataforce_studio.schemas.model_artifacts import (
 )
 from dataforce_studio.schemas.orbit import Orbit
 from dataforce_studio.schemas.permissions import Action, Resource
-from dataforce_studio.services.s3_service import S3Service
+from dataforce_studio.services.base_storage_service import BaseStorageService
+from dataforce_studio.services.storage_factory import create_storage_service
 
 
 class ModelArtifactHandler:
@@ -59,9 +60,9 @@ class ModelArtifactHandler:
             raise BucketSecretNotFoundError()
         return secret
 
-    async def _get_s3_service(self, secret_id: UUID) -> S3Service:
+    async def _get_storage_service(self, secret_id: UUID) -> BaseStorageService:
         secret = await self._get_secret_or_raise(secret_id)
-        return S3Service(secret)
+        return create_storage_service(secret)
 
     async def _check_orbit_and_collection_access(
         self, organization_id: UUID, orbit_id: UUID, collection_id: UUID
@@ -167,9 +168,9 @@ class ModelArtifactHandler:
             )
         )
 
-        s3_service = await self._get_s3_service(orbit.bucket_secret_id)
+        storage_service = await self._get_storage_service(orbit.bucket_secret_id)
 
-        upload_data = await s3_service.create_upload(
+        upload_data = await storage_service.create_upload(
             bucket_location, model_artifact.size
         )
 
@@ -252,8 +253,8 @@ class ModelArtifactHandler:
         if not model_artifact:
             raise ModelArtifactNotFoundError()
 
-        s3_service = await self._get_s3_service(orbit.bucket_secret_id)
-        return await s3_service.get_download_url(model_artifact.bucket_location)
+        storage_service = await self._get_storage_service(orbit.bucket_secret_id)
+        return await storage_service.get_download_url(model_artifact.bucket_location)
 
     async def request_delete_url(
         self,
@@ -290,8 +291,8 @@ class ModelArtifactHandler:
         if not orbit:
             raise OrbitNotFoundError()
 
-        s3_service = await self._get_s3_service(orbit.bucket_secret_id)
-        url = await s3_service.get_delete_url(model_artifact.bucket_location)
+        storage_service = await self._get_storage_service(orbit.bucket_secret_id)
+        url = await storage_service.get_delete_url(model_artifact.bucket_location)
         await self.__repository.update_status(
             model_artifact_id, ModelArtifactStatus.PENDING_DELETION
         )
@@ -316,8 +317,8 @@ class ModelArtifactHandler:
         if not orbit:
             raise OrbitNotFoundError()
 
-        s3_service = await self._get_s3_service(orbit.bucket_secret_id)
-        return await s3_service.get_download_url(model_artifact.bucket_location)
+        storage_service = await self._get_storage_service(orbit.bucket_secret_id)
+        return await storage_service.get_download_url(model_artifact.bucket_location)
 
     async def confirm_deletion(
         self,
@@ -397,8 +398,8 @@ class ModelArtifactHandler:
         if not model_artifact:
             raise ModelArtifactNotFoundError()
 
-        s3_service = await self._get_s3_service(orbit.bucket_secret_id)
-        url = await s3_service.get_download_url(model_artifact.bucket_location)
+        storage_service = await self._get_storage_service(orbit.bucket_secret_id)
+        url = await storage_service.get_download_url(model_artifact.bucket_location)
         return model_artifact, url
 
     async def get_satellite_model_artifact(
@@ -414,6 +415,6 @@ class ModelArtifactHandler:
         if not orbit:
             raise OrbitNotFoundError()
 
-        s3_service = await self._get_s3_service(orbit.bucket_secret_id)
-        url = await s3_service.get_download_url(model_artifact.bucket_location)
+        storage_service = await self._get_storage_service(orbit.bucket_secret_id)
+        url = await storage_service.get_download_url(model_artifact.bucket_location)
         return SatelliteModelArtifactResponse(model=model_artifact, url=url)

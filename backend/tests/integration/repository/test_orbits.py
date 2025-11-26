@@ -2,7 +2,7 @@ import pytest
 
 from dataforce_studio.repositories.bucket_secrets import BucketSecretRepository
 from dataforce_studio.repositories.orbits import OrbitRepository
-from dataforce_studio.schemas.bucket_secrets import BucketSecretCreate
+from dataforce_studio.schemas.bucket_secrets import S3BucketSecretCreate
 from dataforce_studio.schemas.orbit import (
     Orbit,
     OrbitCreateIn,
@@ -86,7 +86,7 @@ async def test_attach_bucket_secret(
     assert orbit
 
     secret = await secret_repo.create_bucket_secret(
-        BucketSecretCreate(
+        S3BucketSecretCreate(
             organization_id=organization.id,
             endpoint="s3",
             bucket_name="test_attach_bucket_secret",

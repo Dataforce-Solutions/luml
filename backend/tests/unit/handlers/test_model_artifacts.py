@@ -13,7 +13,7 @@ from dataforce_studio.infra.exceptions import (
     ModelArtifactNotFoundError,
     OrbitNotFoundError,
 )
-from dataforce_studio.schemas.bucket_secrets import BucketSecret
+from dataforce_studio.schemas.bucket_secrets import S3BucketSecret
 from dataforce_studio.schemas.deployment import Deployment, DeploymentStatus
 from dataforce_studio.schemas.model_artifacts import (
     Collection,
@@ -27,7 +27,7 @@ from dataforce_studio.schemas.model_artifacts import (
     ModelArtifactUpdateIn,
 )
 from dataforce_studio.schemas.permissions import Action, Resource
-from dataforce_studio.schemas.storage import UploadDetails
+from dataforce_studio.schemas.storage import S3UploadDetails
 
 handler = ModelArtifactHandler()
 
@@ -38,7 +38,7 @@ handler = ModelArtifactHandler()
 )
 @pytest.mark.asyncio
 async def test_get_secret_or_raise(
-    mock_get_bucket_secret: AsyncMock, test_bucket: BucketSecret
+    mock_get_bucket_secret: AsyncMock, test_bucket: S3BucketSecret
 ) -> None:
     expected = test_bucket.model_copy()
     mock_get_bucket_secret.return_value = expected
@@ -46,7 +46,7 @@ async def test_get_secret_or_raise(
     secret = await handler._get_secret_or_raise(expected.id)
 
     assert secret == expected
-    assert isinstance(expected, BucketSecret)
+    assert isinstance(expected, S3BucketSecret)
     mock_get_bucket_secret.assert_awaited_once()
 
 
@@ -245,7 +245,7 @@ async def test_create_model_artifact(
     mock_check_permissions: AsyncMock,
     mock_get_public_user_by_id: AsyncMock,
     mock_check_organization_models_limit: AsyncMock,
-    test_bucket: BucketSecret,
+    test_bucket: S3BucketSecret,
     manifest_example: Manifest,
 ) -> None:
     user_id = UUID("0199c337-09f1-7d8f-b0c4-b68349bbe24b")
@@ -281,7 +281,7 @@ async def test_create_model_artifact(
         Mock(orbit_id=orbit_id),
     )
     mock_s3_service = AsyncMock()
-    mock_upload_data = UploadDetails(
+    mock_upload_data = S3UploadDetails(
         url=" https://dfs-models.s3.eu-north-1.amazonaws.com/orbit/collection/my_llm.pyfnx",
         multipart=False,
         bucket_location=bucket_location,
@@ -351,7 +351,7 @@ async def test_get_model_artifact(
     mock_get_collection: AsyncMock,
     mock_get_orbit_simple: AsyncMock,
     mock_check_permissions: AsyncMock,
-    test_bucket: BucketSecret,
+    test_bucket: S3BucketSecret,
     manifest_example: Manifest,
 ) -> None:
     user_id = UUID("0199c337-09f1-7d8f-b0c4-b68349bbe24b")
@@ -493,7 +493,7 @@ async def test_request_download_url(
     mock_get_orbit_simple: AsyncMock,
     mock_get_collection: AsyncMock,
     mock_check_permissions: AsyncMock,
-    test_bucket: BucketSecret,
+    test_bucket: S3BucketSecret,
     manifest_example: Manifest,
 ) -> None:
     user_id = UUID("0199c337-09f1-7d8f-b0c4-b68349bbe24b")
@@ -582,7 +582,7 @@ async def test_request_delete_url(
     mock_get_orbit_simple: AsyncMock,
     mock_get_collection: AsyncMock,
     mock_check_permissions: AsyncMock,
-    test_bucket: BucketSecret,
+    test_bucket: S3BucketSecret,
     manifest_example: Manifest,
 ) -> None:
     user_id = UUID("0199c337-09f1-7d8f-b0c4-b68349bbe24b")
@@ -684,7 +684,7 @@ async def test_request_delete_url_with_deployments(
     mock_get_orbit_simple: AsyncMock,
     mock_get_collection: AsyncMock,
     mock_check_permissions: AsyncMock,
-    test_bucket: BucketSecret,
+    test_bucket: S3BucketSecret,
     manifest_example: Manifest,
 ) -> None:
     user_id = UUID("0199c337-09f1-7d8f-b0c4-b68349bbe24b")
@@ -1076,13 +1076,15 @@ async def test_update_model_artifact_not_found(
 )
 @pytest.mark.asyncio
 async def test_get_s3_service(
-    mock_get_bucket_secret: AsyncMock, mock_s3_service: Mock, test_bucket: BucketSecret
+    mock_get_bucket_secret: AsyncMock,
+    mock_s3_service: Mock,
+    test_bucket: S3BucketSecret,
 ) -> None:
     secret_id = UUID("0199c3f7-f040-7f63-9bef-a1f380ae9eeb")
 
     mock_get_bucket_secret.return_value = test_bucket
 
-    result = await handler._get_s3_service(secret_id)
+    result = await handler._get_storage_service(secret_id)
 
     mock_get_bucket_secret.assert_awaited_once_with(secret_id)
     mock_s3_service.assert_called_once_with(test_bucket)
@@ -1335,7 +1337,7 @@ async def test_request_delete_url_orbit_not_found(
     mock_check_orbit_and_collection_access: AsyncMock,
     mock_get_model_artifact: AsyncMock,
     mock_get_orbit: AsyncMock,
-    test_bucket: BucketSecret,
+    test_bucket: S3BucketSecret,
     manifest_example: Manifest,
 ) -> None:
     user_id = UUID("0199c337-09f1-7d8f-b0c4-b68349bbe24b")
@@ -1465,7 +1467,7 @@ async def test_request_satellite_download_url(
     mock_get_orbit_by_id: AsyncMock,
     mock_get_bucket_secret: AsyncMock,
     mock_s3_service: Mock,
-    test_bucket: BucketSecret,
+    test_bucket: S3BucketSecret,
 ) -> None:
     orbit_id = UUID("0199c337-09f3-753e-9def-b27745e69be6")
     collection_id = UUID("0199c337-09f4-7a01-9f5f-5f68db62cf70")
@@ -1715,7 +1717,7 @@ async def test_get_satellite_model_artifact(
     mock_get_orbit_by_id: AsyncMock,
     mock_get_bucket_secret: AsyncMock,
     mock_s3_service: Mock,
-    test_bucket: BucketSecret,
+    test_bucket: S3BucketSecret,
     manifest_example: Manifest,
 ) -> None:
     orbit_id = UUID("0199c337-09f3-753e-9def-b27745e69be6")
