@@ -150,7 +150,7 @@ class AsyncLumlClient(LumlClientBase, AsyncBaseClient):
 
         Parameters:
             base_url: Base URL of the Luml API.
-                Defaults to production Luml Api URL: https://api.dfs.studio.
+                Defaults to production Luml Api URL: https://api.luml.ai.
                 Can also be set in env with name LUML_BASE_URL
             api_key: Your Luml API key for authentication.
                 Can also be set in env with name LUML_API_KEY
@@ -323,7 +323,7 @@ class LumlClient(LumlClientBase, SyncBaseClient):
 
         Parameters:
             base_url: Base URL of the Luml API.
-                Defaults to production Luml Api URL: https://api.dfs.studio.
+                Defaults to production Luml Api URL: https://api.luml.ai.
                 Can also be set in env with name LUML_BASE_URL
             api_key: Your Luml API key for authentication.
                 Can also be set in env with name LUML_API_KEY

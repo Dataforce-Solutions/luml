@@ -2,7 +2,7 @@
 from luml.api import LumlClient
 from luml.api._types import CollectionType, ModelArtifactStatus
 
-# Will use LUML API Production url "https://api.dfs.studio"
+# Will use LUML API Production url "https://api.luml.ai"
 # And search for LUML_API_KEY in .env
 luml_simple = LumlClient()
 
