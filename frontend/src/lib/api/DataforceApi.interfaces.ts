@@ -143,6 +143,10 @@ export interface OrganizationDetails extends Omit<Organization, 'role'> {
   total_orbits: number
   total_members: number
   members_by_role: Record<OrganizationRoleEnum, number>
+  satellites_limit: number
+  model_artifacts_limit: number
+  total_satellites: number
+  total_model_artifacts: number
 }
 
 export interface Member {

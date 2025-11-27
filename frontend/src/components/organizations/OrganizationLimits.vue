@@ -39,6 +39,39 @@
           <div class="item-label">orbits limit per organization</div>
         </div>
       </div>
+      <div class="item">
+        <UiCircleProgress
+          :progress="
+            ((organizationStore.organizationDetails.total_satellites || 0) /
+              organizationStore.organizationDetails.satellites_limit) *
+            100
+          "
+        />
+        <div class="item-content">
+          <div class="item-values">
+            {{ organizationStore.organizationDetails.total_satellites }}/
+            {{ organizationStore.organizationDetails.satellites_limit }}
+          </div>
+          <div class="item-label">satellites limit per organization</div>
+        </div>
+      </div>
+
+      <div class="item">
+        <UiCircleProgress
+          :progress="
+            ((organizationStore.organizationDetails.total_model_artifacts || 0) /
+              organizationStore.organizationDetails.model_artifacts_limit) *
+            100
+          "
+        />
+        <div class="item-content">
+          <div class="item-values">
+            {{ organizationStore.organizationDetails.total_model_artifacts }}/
+            {{ organizationStore.organizationDetails.model_artifacts_limit }}
+          </div>
+          <div class="item-label">model attachments limit per organization</div>
+        </div>
+      </div>
     </div>
   </div>
 </template>
