@@ -151,29 +151,33 @@ class ModelArtifactResource(ModelArtifactResourceBase):
                 no default collection set.
 
         Example:
-            >>> luml = LumlClient(
-            ...     api_key="luml_your_key",
-            ...     organization="0199c455-21ec-7c74-8efe-41470e29bae5",
-            ...     orbit="0199c455-21ed-7aba-9fe5-5231611220de",
-            ...     collection="0199c455-21ee-74c6-b747-19a82f1a1e75"
-            ... )
-            ... model_by_name = luml.model_artifacts.get("my_model")
-            ... model_by_id = luml.model_artifacts.get(
-            ...     "0199c455-21ee-74c6-b747-19a82f1a1e67"
-            ... )
+        ```python
+        luml = LumlClient(
+            api_key="luml_your_key",
+            organization="0199c455-21ec-7c74-8efe-41470e29bae5",
+            orbit="0199c455-21ed-7aba-9fe5-5231611220de",
+            collection="0199c455-21ee-74c6-b747-19a82f1a1e75"
+        )
+        model_by_name = luml.model_artifacts.get("my_model")
+        model_by_id = luml.model_artifacts.get(
+            "0199c455-21ee-74c6-b747-19a82f1a1e67"
+        )
+        ```
 
         Example response:
-            >>> ModelArtifact(
-            ...     id="0199c455-21ee-74c6-b747-19a82f1a1e67",
-            ...     model_name="my_model",
-            ...     file_name="model.fnnx",
-            ...     description="Trained model",
-            ...     collection_id="0199c455-21ee-74c6-b747-19a82f1a1e75",
-            ...     status=ModelArtifactStatus.UPLOADED,
-            ...     tags=["ml", "production"],
-            ...     created_at='2025-01-15T10:30:00.123456Z',
-            ...     updated_at=None
-            ... )
+        ```python
+        ModelArtifact(
+            id="0199c455-21ee-74c6-b747-19a82f1a1e67",
+            model_name="my_model",
+            file_name="model.fnnx",
+            description="Trained model",
+            collection_id="0199c455-21ee-74c6-b747-19a82f1a1e75",
+            status=ModelArtifactStatus.UPLOADED,
+            tags=["ml", "production"],
+            created_at='2025-01-15T10:30:00.123456Z',
+            updated_at=None
+        )
+        ```
         """
         if is_uuid(model_value):
             return self._get_by_id(collection_id, model_value)
@@ -215,28 +219,32 @@ class ModelArtifactResource(ModelArtifactResourceBase):
                 no default collection set.
 
         Example:
-            >>> luml = LumlClient(
-            ...     api_key="luml_your_key",
-            ...     organization="0199c455-21ec-7c74-8efe-41470e29bae5",
-            ...     orbit="0199c455-21ed-7aba-9fe5-5231611220de",
-            ...     collection="0199c455-21ee-74c6-b747-19a82f1a1e75"
-            ... )
-            >>> models = luml.model_artifacts.list()
+        ```python
+        luml = LumlClient(
+            api_key="luml_your_key",
+            organization="0199c455-21ec-7c74-8efe-41470e29bae5",
+            orbit="0199c455-21ed-7aba-9fe5-5231611220de",
+            collection="0199c455-21ee-74c6-b747-19a82f1a1e75"
+        )
+        models = luml.model_artifacts.list()
+        ```
 
         Example response:
-            >>> [
-            ...     ModelArtifact(
-            ...         id="0199c455-21ee-74c6-b747-19a82f1a1e67",
-            ...         model_name="my_model",
-            ...         file_name="model.fnnx",
-            ...         description="Trained model",
-            ...         collection_id="0199c455-21ee-74c6-b747-19a82f1a1e75",
-            ...         status=ModelArtifactStatus.UPLOADED,
-            ...         tags=["ml", "production"],
-            ...         created_at='2025-01-15T10:30:00.123456Z',
-            ...         updated_at=None
-            ...     )
-            ... ]
+        ```python
+        [
+            ModelArtifact(
+                id="0199c455-21ee-74c6-b747-19a82f1a1e67",
+                model_name="my_model",
+                file_name="model.fnnx",
+                description="Trained model",
+                collection_id="0199c455-21ee-74c6-b747-19a82f1a1e75",
+                status=ModelArtifactStatus.UPLOADED,
+                tags=["ml", "production"],
+                created_at='2025-01-15T10:30:00.123456Z',
+                updated_at=None
+            )
+        ]
+        ```
         """
         response = self._client.get(
             f"/organizations/{self._client.organization}/orbits/{self._client.orbit}/collections/{collection_id}/model_artifacts"
@@ -266,16 +274,18 @@ class ModelArtifactResource(ModelArtifactResourceBase):
             NotFoundError: If model artifact with specified ID doesn't exist.
 
         Example:
-            >>> luml = LumlClient(
-            ...     api_key="luml_your_key",
-            ...     organization="0199c455-21ec-7c74-8efe-41470e29bae5",
-            ...     orbit="0199c455-21ed-7aba-9fe5-5231611220de",
-            ...     collection="0199c455-21ee-74c6-b747-19a82f1a1e75"
-            ... )
-            ... url_info = luml.model_artifacts.download_url(
-            ...     "0199c455-21ee-74c6-b747-19a82f1a1e67"
-            ... )
-            ... download_url = url_info["url"]
+        ```python
+        luml = LumlClient(
+            api_key="luml_your_key",
+            organization="0199c455-21ec-7c74-8efe-41470e29bae5",
+            orbit="0199c455-21ed-7aba-9fe5-5231611220de",
+            collection="0199c455-21ee-74c6-b747-19a82f1a1e75"
+        )
+        url_info = luml.model_artifacts.download_url(
+            "0199c455-21ee-74c6-b747-19a82f1a1e67"
+        )
+        download_url = url_info["url"]
+        ```
         """
         return self._client.get(
             f"/organizations/{self._client.organization}/orbits/{self._client.orbit}/collections/{collection_id}/model_artifacts/{model_id}/download-url"
@@ -302,15 +312,17 @@ class ModelArtifactResource(ModelArtifactResourceBase):
             NotFoundError: If model artifact with specified ID doesn't exist.
 
         Example:
-            >>> luml = LumlClient(
-            ...     api_key="luml_your_key",
-            ...     organization="0199c455-21ec-7c74-8efe-41470e29bae5",
-            ...     orbit="0199c455-21ed-7aba-9fe5-5231611220de",
-            ...     collection="0199c455-21ee-74c6-b747-19a82f1a1e75"
-            ... )
-            ... url_info = luml.model_artifacts.delete_url(
-            ...     "0199c455-21ee-74c6-b747-19a82f1a1e67"
-            ... )
+        ```python
+        luml = LumlClient(
+            api_key="luml_your_key",
+            organization="0199c455-21ec-7c74-8efe-41470e29bae5",
+            orbit="0199c455-21ed-7aba-9fe5-5231611220de",
+            collection="0199c455-21ee-74c6-b747-19a82f1a1e75"
+        )
+        url_info = luml.model_artifacts.delete_url(
+            "0199c455-21ee-74c6-b747-19a82f1a1e67"
+        )
+        ```
         """
         return self._client.get(
             f"/organizations/{self._client.organization}/orbits/{self._client.orbit}/collections/{collection_id}/model_artifacts/{model_id}/delete-url"
@@ -350,50 +362,54 @@ class ModelArtifactResource(ModelArtifactResourceBase):
                 no default collection set.
 
         Example:
-            >>> luml = LumlClient(
-            ...     api_key="luml_your_key",
-            ...     organization="0199c455-21ec-7c74-8efe-41470e29bae5",
-            ...     orbit="0199c455-21ed-7aba-9fe5-5231611220de",
-            ...     collection="0199c455-21ee-74c6-b747-19a82f1a1e75"
-            ... )
-            >>> model = luml.model_artifacts.upload(
-            ...     file_path="/path/to/model.fnnx",
-            ...     model_name="Production Model",
-            ...     description="Trained on latest dataset",
-            ...     tags=["ml", "production"],
-            ...     collection_id="0199c455-21ee-74c6-b747-19a82f1a1e75"
-            ... )
+        ```python
+        luml = LumlClient(
+            api_key="luml_your_key",
+            organization="0199c455-21ec-7c74-8efe-41470e29bae5",
+            orbit="0199c455-21ed-7aba-9fe5-5231611220de",
+            collection="0199c455-21ee-74c6-b747-19a82f1a1e75"
+        )
+        model = luml.model_artifacts.upload(
+            file_path="/path/to/model.fnnx",
+            model_name="Production Model",
+            description="Trained on latest dataset",
+            tags=["ml", "production"],
+            collection_id="0199c455-21ee-74c6-b747-19a82f1a1e75"
+        )
+        ```
 
         Response object:
-            >>> ModelArtifact(
-            ...     id="0199c455-21ee-74c6-b747-19a82f1a1e67",
-            ...     collection_id="0199c455-21ee-74c6-b747-19a82f1a1e75",
-            ...     file_name="output.dfs",
-            ...     model_name="500mb",
-            ...     description=None,
-            ...     metrics={
-            ...         'F1': 0.9598319029897976,
-            ...         'ACC': 0.9600000000000002,
-            ...         'BACC': 0.96,
-            ...         'B_F1': 0.9598319029897976,
-            ...         'SCORE': 0.96
-            ...     },
-            ...     manifest={
-            ...         'variant': 'pipeline',
-            ...         'name': None,
-            ...         'version': None,
-            ...         'description': '',
-            ...         'producer_name': 'falcon.beastbyte.ai',
-            ...         'producer_version': '0.8.0'
-            ...     },
-            ...     file_hash='b128c34757114835c4bf690a87e7cbe',
-            ...     size=524062720,
-            ...     unique_identifier='b31fa3cb54aa453d9ca625aa24617e7a',
-            ...     status=ModelArtifactStatus.UPLOADED,
-            ...     tags=None,
-            ...     created_at='2025-08-25T09:15:15.524206Z',
-            ...     updated_at='2025-08-25T09:16:05.816506Z'
-            ... )
+        ```python
+        ModelArtifact(
+            id="0199c455-21ee-74c6-b747-19a82f1a1e67",
+            collection_id="0199c455-21ee-74c6-b747-19a82f1a1e75",
+            file_name="output.dfs",
+            model_name="500mb",
+            description=None,
+            metrics={
+                'F1': 0.9598319029897976,
+                'ACC': 0.9600000000000002,
+                'BACC': 0.96,
+                'B_F1': 0.9598319029897976,
+                'SCORE': 0.96
+            },
+            manifest={
+                'variant': 'pipeline',
+                'name': None,
+                'version': None,
+                'description': '',
+                'producer_name': 'falcon.beastbyte.ai',
+                'producer_version': '0.8.0'
+            },
+            file_hash='b128c34757114835c4bf690a87e7cbe',
+            size=524062720,
+            unique_identifier='b31fa3cb54aa453d9ca625aa24617e7a',
+            status=ModelArtifactStatus.UPLOADED,
+            tags=None,
+            created_at='2025-08-25T09:15:15.524206Z',
+            updated_at='2025-08-25T09:16:05.816506Z'
+        )
+        ```
         """
         model_details = ModelFileHandler(file_path).model_details()
 
@@ -468,21 +484,23 @@ class ModelArtifactResource(ModelArtifactResourceBase):
                 no default collection set.
 
         Example:
-            >>> luml = LumlClient(
-            ...     api_key="luml_your_key",
-            ...     organization="0199c455-21ec-7c74-8efe-41470e29bae5",
-            ...     orbit="0199c455-21ed-7aba-9fe5-5231611220de",
-            ...     collection="0199c455-21ee-74c6-b747-19a82f1a1e75"
-            ... )
-            >>> # Download with original filename
-            >>> luml.model_artifacts.download("0199c455-21ee-74c6-b747-19a82f1a1e67")
+        ```python
+        luml = LumlClient(
+            api_key="luml_your_key",
+            organization="0199c455-21ec-7c74-8efe-41470e29bae5",
+            orbit="0199c455-21ed-7aba-9fe5-5231611220de",
+            collection="0199c455-21ee-74c6-b747-19a82f1a1e75"
+        )
+        # Download with original filename
+        luml.model_artifacts.download("0199c455-21ee-74c6-b747-19a82f1a1e67")
 
-            >>> # Download to specific path
-            >>> luml.model_artifacts.download(
-            ...     "0199c455-21ee-74c6-b747-19a82f1a1e67",
-            ...     file_path="/local/path/downloaded_model.fnnx",
-            ...     collection_id="0199c455-21ee-74c6-b747-19a82f1a1e75"
-            ... )
+        # Download to specific path
+        luml.model_artifacts.download(
+            "0199c455-21ee-74c6-b747-19a82f1a1e67",
+            file_path="/local/path/downloaded_model.fnnx",
+            collection_id="0199c455-21ee-74c6-b747-19a82f1a1e75"
+        )
+        ```
         """
         if file_path is None:
             model = self._get_by_id(collection_id=collection_id, model_value=model_id)
@@ -540,23 +558,25 @@ class ModelArtifactResource(ModelArtifactResourceBase):
                 no default collection set.
 
         Example:
-            >>> luml = LumlClient(
-            ...     api_key="luml_your_key",
-            ...     organization="0199c455-21ec-7c74-8efe-41470e29bae5",
-            ...     orbit="0199c455-21ed-7aba-9fe5-5231611220de",
-            ...     collection="0199c455-21ee-74c6-b747-19a82f1a1e75"
-            ... )
-            >>> result = luml.model_artifacts.create(
-            ...     file_name="model.fnnx",
-            ...     metrics={"accuracy": 0.95},
-            ...     manifest={"version": "1.0"},
-            ...     file_hash="abc123",
-            ...     file_index={"layer1": (0, 1024)},
-            ...     size=1048576,
-            ...     model_name="Test Model"
-            ... )
-            >>> upload_url = result["url"]
-            >>> model = result["model"]
+        ```python
+        luml = LumlClient(
+            api_key="luml_your_key",
+            organization="0199c455-21ec-7c74-8efe-41470e29bae5",
+            orbit="0199c455-21ed-7aba-9fe5-5231611220de",
+            collection="0199c455-21ee-74c6-b747-19a82f1a1e75"
+        )
+        result = luml.model_artifacts.create(
+            file_name="model.fnnx",
+            metrics={"accuracy": 0.95},
+            manifest={"version": "1.0"},
+            file_hash="abc123",
+            file_index={"layer1": (0, 1024)},
+            size=1048576,
+            model_name="Test Model"
+        )
+        upload_url = result["url"]
+        model = result["model"]
+        ```
         """
         response = self._client.post(
             f"/organizations/{self._client.organization}/orbits/{self._client.orbit}/collections/{collection_id}/model_artifacts",
@@ -614,17 +634,19 @@ class ModelArtifactResource(ModelArtifactResourceBase):
             NotFoundError: If model artifact with specified ID doesn't exist.
 
         Example:
-            >>> luml = LumlClient(
-            ...     api_key="luml_your_key",
-            ...     organization="0199c455-21ec-7c74-8efe-41470e29bae5",
-            ...     orbit="0199c455-21ed-7aba-9fe5-5231611220de",
-            ...     collection="0199c455-21ee-74c6-b747-19a82f1a1e75"
-            ... )
-            >>> model = luml.model_artifacts.update(
-            ...     "0199c455-21ee-74c6-b747-19a82f1a1e67",
-            ...     model_name="Updated Model",
-            ...     status=ModelArtifactStatus.UPLOADED
-            ... )
+        ```python
+        luml = LumlClient(
+            api_key="luml_your_key",
+            organization="0199c455-21ec-7c74-8efe-41470e29bae5",
+            orbit="0199c455-21ed-7aba-9fe5-5231611220de",
+            collection="0199c455-21ee-74c6-b747-19a82f1a1e75"
+        )
+        model = luml.model_artifacts.update(
+            "0199c455-21ee-74c6-b747-19a82f1a1e67",
+            model_name="Updated Model",
+            status=ModelArtifactStatus.UPLOADED
+        )
+        ```
         """
         return self._client.patch(
             f"/organizations/{self._client.organization}/orbits/{self._client.orbit}/collections/{collection_id}/model_artifacts/{model_id}",
@@ -661,13 +683,15 @@ class ModelArtifactResource(ModelArtifactResourceBase):
             NotFoundError: If model artifact with specified ID doesn't exist.
 
         Example:
-            >>> luml = LumlClient(
-            ...     api_key="luml_your_key",
-            ...     organization="0199c455-21ec-7c74-8efe-41470e29bae5",
-            ...     orbit="0199c455-21ed-7aba-9fe5-5231611220de",
-            ...     collection="0199c455-21ee-74c6-b747-19a82f1a1e75"
-            ... )
-            >>> luml.model_artifacts.delete("0199c455-21ee-74c6-b747-19a82f1a1e67")
+        ```python
+        luml = LumlClient(
+            api_key="luml_your_key",
+            organization="0199c455-21ec-7c74-8efe-41470e29bae5",
+            orbit="0199c455-21ed-7aba-9fe5-5231611220de",
+            collection="0199c455-21ee-74c6-b747-19a82f1a1e75"
+        )
+        luml.model_artifacts.delete("0199c455-21ee-74c6-b747-19a82f1a1e67")
+        ```
 
         Warning:
             This operation is irreversible. The model file and all metadata
@@ -713,32 +737,36 @@ class AsyncModelArtifactResource(ModelArtifactResourceBase):
                 no default collection set.
 
         Example:
-            >>> luml = AsyncLumlClient(
-            ...     api_key="luml_your_key",
-            ... )
-            ... luml.setup_config(
-            ...     organization="0199c455-21ec-7c74-8efe-41470e29bae5",
-            ...     orbit="0199c455-21ed-7aba-9fe5-5231611220de",
-            ...     collection="0199c455-21ee-74c6-b747-19a82f1a1e75"
-            ... )
-            >>> async def main():
-            ...     model_by_name = await luml.model_artifacts.get("my_model")
-            ...     model_by_id = await luml.model_artifacts.get(
-            ...         "0199c455-21ee-74c6-b747-19a82f1a1e67"
-            ...     )
+        ```python
+        luml = AsyncLumlClient(
+            api_key="luml_your_key",
+        )
+        luml.setup_config(
+            organization="0199c455-21ec-7c74-8efe-41470e29bae5",
+            orbit="0199c455-21ed-7aba-9fe5-5231611220de",
+            collection="0199c455-21ee-74c6-b747-19a82f1a1e75"
+        )
+        async def main():
+            model_by_name = await luml.model_artifacts.get("my_model")
+            model_by_id = await luml.model_artifacts.get(
+                "0199c455-21ee-74c6-b747-19a82f1a1e67"
+            )
+        ```
 
         Example response:
-            >>> ModelArtifact(
-            ...     id="0199c455-21ee-74c6-b747-19a82f1a1e67",
-            ...     model_name="my_model",
-            ...     file_name="model.fnnx",
-            ...     description="Trained model",
-            ...     collection_id="0199c455-21ee-74c6-b747-19a82f1a1e75",
-            ...     status=ModelArtifactStatus.UPLOADED,
-            ...     tags=["ml", "production"],
-            ...     created_at='2025-01-15T10:30:00.123456Z',
-            ...     updated_at=None
-            ... )
+        ```python
+        ModelArtifact(
+            id="0199c455-21ee-74c6-b747-19a82f1a1e67",
+            model_name="my_model",
+            file_name="model.fnnx",
+            description="Trained model",
+            collection_id="0199c455-21ee-74c6-b747-19a82f1a1e75",
+            status=ModelArtifactStatus.UPLOADED,
+            tags=["ml", "production"],
+            created_at='2025-01-15T10:30:00.123456Z',
+            updated_at=None
+        )
+        ```
         """
         if is_uuid(model_value):
             return await self._get_by_id(collection_id, model_value)
@@ -780,31 +808,35 @@ class AsyncModelArtifactResource(ModelArtifactResourceBase):
                 no default collection set.
 
         Example:
-            >>> luml = AsyncLumlClient(
-            ...     api_key="luml_your_key",
-            ... )
-            ... luml.setup_config(
-            ...     organization="0199c455-21ec-7c74-8efe-41470e29bae5",
-            ...     orbit="0199c455-21ed-7aba-9fe5-5231611220de",
-            ...     collection="0199c455-21ee-74c6-b747-19a82f1a1e75"
-            ... )
-            >>> async def main():
-            ...     models = await luml.model_artifacts.list()
+        ```python
+        luml = AsyncLumlClient(
+            api_key="luml_your_key",
+        )
+        luml.setup_config(
+            organization="0199c455-21ec-7c74-8efe-41470e29bae5",
+            orbit="0199c455-21ed-7aba-9fe5-5231611220de",
+            collection="0199c455-21ee-74c6-b747-19a82f1a1e75"
+        )
+        async def main():
+            models = await luml.model_artifacts.list()
+        ```
 
         Example response:
-            >>> [
-            ...     ModelArtifact(
-            ...         id="0199c455-21ee-74c6-b747-19a82f1a1e67",
-            ...         model_name="my_model",
-            ...         file_name="model.fnnx",
-            ...         description="Trained model",
-            ...         collection_id="0199c455-21ee-74c6-b747-19a82f1a1e75",
-            ...         status=ModelArtifactStatus.UPLOADED,
-            ...         tags=["ml", "production"],
-            ...         created_at='2025-01-15T10:30:00.123456Z',
-            ...         updated_at=None
-            ...     )
-            ... ]
+        ```python
+        [
+            ModelArtifact(
+                id="0199c455-21ee-74c6-b747-19a82f1a1e67",
+                model_name="my_model",
+                file_name="model.fnnx",
+                description="Trained model",
+                collection_id="0199c455-21ee-74c6-b747-19a82f1a1e75",
+                status=ModelArtifactStatus.UPLOADED,
+                tags=["ml", "production"],
+                created_at='2025-01-15T10:30:00.123456Z',
+                updated_at=None
+            )
+        ]
+        ```
         """
         response = await self._client.get(
             f"/organizations/{self._client.organization}/orbits/{self._client.orbit}/collections/{collection_id}/model_artifacts"
@@ -837,18 +869,20 @@ class AsyncModelArtifactResource(ModelArtifactResourceBase):
             NotFoundError: If model artifact with specified ID doesn't exist.
 
         Example:
-            >>> luml = AsyncLumlClient(
-            ...     api_key="luml_your_key",
-            ... )
-            ... luml.setup_config(
-            ...     organization="0199c455-21ec-7c74-8efe-41470e29bae5",
-            ...     orbit="0199c455-21ed-7aba-9fe5-5231611220de",
-            ...     collection="0199c455-21ee-74c6-b747-19a82f1a1e75"
-            ... )
-            >>> async def main():
-            ...     url_info = await luml.model_artifacts.download_url(
-            ...         "0199c455-21ee-74c6-b747-19a82f1a1e67"
-            ...     )
+        ```python
+        luml = AsyncLumlClient(
+            api_key="luml_your_key",
+        )
+        luml.setup_config(
+            organization="0199c455-21ec-7c74-8efe-41470e29bae5",
+            orbit="0199c455-21ed-7aba-9fe5-5231611220de",
+            collection="0199c455-21ee-74c6-b747-19a82f1a1e75"
+        )
+        async def main():
+            url_info = await luml.model_artifacts.download_url(
+                "0199c455-21ee-74c6-b747-19a82f1a1e67"
+            )
+        ```
         """
         return await self._client.get(
             f"/organizations/{self._client.organization}/orbits/{self._client.orbit}/collections/{collection_id}/model_artifacts/{model_id}/download-url"
@@ -878,18 +912,20 @@ class AsyncModelArtifactResource(ModelArtifactResourceBase):
             NotFoundError: If model artifact with specified ID doesn't exist.
 
         Example:
-            >>> luml = AsyncLumlClient(
-            ...     api_key="luml_your_key",
-            ... )
-            ... luml.setup_config(
-            ...     organization="0199c455-21ec-7c74-8efe-41470e29bae5",
-            ...     orbit="0199c455-21ed-7aba-9fe5-5231611220de",
-            ...     collection="0199c455-21ee-74c6-b747-19a82f1a1e75"
-            ... )
-            >>> async def main():
-            ...     url_info = await luml.model_artifacts.delete_url(
-            ...         "0199c455-21ee-74c6-b747-19a82f1a1e67"
-            ...     )
+        ```python
+        luml = AsyncLumlClient(
+            api_key="luml_your_key",
+        )
+        luml.setup_config(
+            organization="0199c455-21ec-7c74-8efe-41470e29bae5",
+            orbit="0199c455-21ed-7aba-9fe5-5231611220de",
+            collection="0199c455-21ee-74c6-b747-19a82f1a1e75"
+        )
+        async def main():
+            url_info = await luml.model_artifacts.delete_url(
+                "0199c455-21ee-74c6-b747-19a82f1a1e67"
+            )
+        ```
         """
         return await self._client.get(
             f"/organizations/{self._client.organization}/orbits/{self._client.orbit}/collections/{collection_id}/model_artifacts/{model_id}/delete-url"
@@ -935,24 +971,26 @@ class AsyncModelArtifactResource(ModelArtifactResourceBase):
                 no default collection set.
 
         Example:
-            >>> luml = AsyncLumlClient(
-            ...     api_key="luml_your_key",
-            ... )
-            ... luml.setup_config(
-            ...     organization="0199c455-21ec-7c74-8efe-41470e29bae5",
-            ...     orbit="0199c455-21ed-7aba-9fe5-5231611220de",
-            ...     collection="0199c455-21ee-74c6-b747-19a82f1a1e75"
-            ... )
-            >>> async def main():
-            ...     result = await luml.model_artifacts.create(
-            ...         file_name="model.fnnx",
-            ...         metrics={"accuracy": 0.95},
-            ...         manifest={"version": "1.0"},
-            ...         file_hash="abc123",
-            ...         file_index={"layer1": (0, 1024)},
-            ...         size=1048576,
-            ...         model_name="Test Model"
-            ...     )
+        ```python
+        luml = AsyncLumlClient(
+            api_key="luml_your_key",
+        )
+        luml.setup_config(
+            organization="0199c455-21ec-7c74-8efe-41470e29bae5",
+            orbit="0199c455-21ed-7aba-9fe5-5231611220de",
+            collection="0199c455-21ee-74c6-b747-19a82f1a1e75"
+        )
+        async def main():
+            result = await luml.model_artifacts.create(
+                file_name="model.fnnx",
+                metrics={"accuracy": 0.95},
+                manifest={"version": "1.0"},
+                file_hash="abc123",
+                file_index={"layer1": (0, 1024)},
+                size=1048576,
+                model_name="Test Model"
+            )
+        ```
         """
         response = await self._client.post(
             f"/organizations/{self._client.organization}/orbits/{self._client.orbit}/collections/{collection_id}/model_artifacts",
@@ -1009,35 +1047,39 @@ class AsyncModelArtifactResource(ModelArtifactResourceBase):
                 no default collection set.
 
         Example:
-            >>> luml = AsyncLumlClient(
-            ...     api_key="luml_your_key",
-            ... )
-            ... luml.setup_config(
-            ...     organization="0199c455-21ec-7c74-8efe-41470e29bae5",
-            ...     orbit="0199c455-21ed-7aba-9fe5-5231611220de",
-            ...     collection="0199c455-21ee-74c6-b747-19a82f1a1e75"
-            ... )
-            >>> async def main():
-            ...     model = await luml.model_artifacts.upload(
-            ...         file_path="/path/to/model.fnnx",
-            ...         model_name="Production Model",
-            ...         description="Trained on latest dataset",
-            ...         tags=["ml", "production"],
-            ...         collection_id="0199c455-21ee-74c6-b747-19a82f1a1e75"
-            ...     )
+        ```python
+        luml = AsyncLumlClient(
+            api_key="luml_your_key",
+        )
+        luml.setup_config(
+            organization="0199c455-21ec-7c74-8efe-41470e29bae5",
+            orbit="0199c455-21ed-7aba-9fe5-5231611220de",
+            collection="0199c455-21ee-74c6-b747-19a82f1a1e75"
+        )
+        async def main():
+            model = await luml.model_artifacts.upload(
+                file_path="/path/to/model.fnnx",
+                model_name="Production Model",
+                description="Trained on latest dataset",
+                tags=["ml", "production"],
+                collection_id="0199c455-21ee-74c6-b747-19a82f1a1e75"
+            )
+        ```
 
         Response object:
-            >>> ModelArtifact(
-            ...     id="0199c455-21ee-74c6-b747-19a82f1a1e67",
-            ...     model_name="Production Model",
-            ...     file_name="model.fnnx",
-            ...     description="Trained on latest dataset",
-            ...     collection_id="0199c455-21ee-74c6-b747-19a82f1a1e75",
-            ...     status=ModelArtifactStatus.UPLOADED,
-            ...     tags=["ml", "production"],
-            ...     created_at='2025-01-15T10:30:00.123456Z',
-            ...     updated_at='2025-01-15T10:35:00.123456Z'
-            ... )
+        ```python
+        ModelArtifact(
+            id="0199c455-21ee-74c6-b747-19a82f1a1e67",
+            model_name="Production Model",
+            file_name="model.fnnx",
+            description="Trained on latest dataset",
+            collection_id="0199c455-21ee-74c6-b747-19a82f1a1e75",
+            status=ModelArtifactStatus.UPLOADED,
+            tags=["ml", "production"],
+            created_at='2025-01-15T10:30:00.123456Z',
+            updated_at='2025-01-15T10:35:00.123456Z'
+        )
+        ```
         """
         model_details = ModelFileHandler(file_path).model_details()
 
@@ -1114,26 +1156,28 @@ class AsyncModelArtifactResource(ModelArtifactResourceBase):
                 no default collection set.
 
         Example:
-            >>> luml = AsyncLumlClient(
-            ...     api_key="luml_your_key",
-            ... )
-            ... luml.setup_config(
-            ...     organization="0199c455-21ec-7c74-8efe-41470e29bae5",
-            ...     orbit="0199c455-21ed-7aba-9fe5-5231611220de",
-            ...     collection="0199c455-21ee-74c6-b747-19a82f1a1e75"
-            ... )
-            >>> async def main():
-            ...     # Download with original filename
-            ...     await luml.model_artifacts.download(
-            ...         "0199c455-21ee-74c6-b747-19a82f1a1e67"
-            ...     )
-            ...
-            ...     # Download to specific path
-            ...     await luml.model_artifacts.download(
-            ...         "0199c455-21ee-74c6-b747-19a82f1a1e67",
-            ...         file_path="/local/path/downloaded_model.fnnx",
-            ...         collection_id="0199c455-21ee-74c6-b747-19a82f1a1e75"
-            ...     )
+        ```python
+        luml = AsyncLumlClient(
+            api_key="luml_your_key",
+        )
+        luml.setup_config(
+            organization="0199c455-21ec-7c74-8efe-41470e29bae5",
+            orbit="0199c455-21ed-7aba-9fe5-5231611220de",
+            collection="0199c455-21ee-74c6-b747-19a82f1a1e75"
+        )
+        async def main():
+            # Download with original filename
+            await luml.model_artifacts.download(
+                "0199c455-21ee-74c6-b747-19a82f1a1e67"
+            )
+
+            # Download to specific path
+            await luml.model_artifacts.download(
+                "0199c455-21ee-74c6-b747-19a82f1a1e67",
+                file_path="/local/path/downloaded_model.fnnx",
+                collection_id="0199c455-21ee-74c6-b747-19a82f1a1e75"
+            )
+        ```
         """
         if file_path is None:
             model = await self._get_by_id(
@@ -1191,20 +1235,22 @@ class AsyncModelArtifactResource(ModelArtifactResourceBase):
             NotFoundError: If model artifact with specified ID doesn't exist.
 
         Example:
-            >>> luml = AsyncLumlClient(
-            ...     api_key="luml_your_key",
-            ... )
-            ... luml.setup_config(
-            ...     organization="0199c455-21ec-7c74-8efe-41470e29bae5",
-            ...     orbit="0199c455-21ed-7aba-9fe5-5231611220de",
-            ...     collection="0199c455-21ee-74c6-b747-19a82f1a1e75"
-            ... )
-            >>> async def main():
-            >>>     model = await luml.model_artifacts.update(
-            ...         "0199c455-21ee-74c6-b747-19a82f1a1e67",
-            ...         model_name="Updated Model",
-            ...         status=ModelArtifactStatus.UPLOADED
-            ...     )
+        ```python
+        luml = AsyncLumlClient(
+            api_key="luml_your_key",
+        )
+        luml.setup_config(
+            organization="0199c455-21ec-7c74-8efe-41470e29bae5",
+            orbit="0199c455-21ed-7aba-9fe5-5231611220de",
+            collection="0199c455-21ee-74c6-b747-19a82f1a1e75"
+        )
+        async def main():
+            model = await luml.model_artifacts.update(
+                "0199c455-21ee-74c6-b747-19a82f1a1e67",
+                model_name="Updated Model",
+                status=ModelArtifactStatus.UPLOADED
+            )
+        ```
         """
         return await self._client.patch(
             f"/organizations/{self._client.organization}/orbits/{self._client.orbit}/collections/{collection_id}/model_artifacts/{model_id}",
@@ -1242,18 +1288,20 @@ class AsyncModelArtifactResource(ModelArtifactResourceBase):
             NotFoundError: If model artifact with specified ID doesn't exist
 
         Example:
-            >>> luml = AsyncLumlClient(
-            ...     api_key="luml_your_key",
-            ... )
-            ... luml.setup_config(
-            ...     organization="0199c455-21ec-7c74-8efe-41470e29bae5",
-            ...     orbit="0199c455-21ed-7aba-9fe5-5231611220de",
-            ...     collection="0199c455-21ee-74c6-b747-19a82f1a1e75"
-            ... )
-            ... async def main():
-            ...     await luml.model_artifacts.delete(
-            ...         "0199c455-21ee-74c6-b747-19a82f1a1e67"
-            ...     )
+        ```python
+        luml = AsyncLumlClient(
+            api_key="luml_your_key",
+        )
+        luml.setup_config(
+            organization="0199c455-21ec-7c74-8efe-41470e29bae5",
+            orbit="0199c455-21ed-7aba-9fe5-5231611220de",
+            collection="0199c455-21ee-74c6-b747-19a82f1a1e75"
+        )
+        async def main():
+            await luml.model_artifacts.delete(
+                "0199c455-21ee-74c6-b747-19a82f1a1e67"
+            )
+        ```
 
         Warning:
             This operation is irreversible. The model file and all metadata

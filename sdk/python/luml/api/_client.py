@@ -173,17 +173,19 @@ class AsyncLumlClient(LumlClientBase, AsyncBaseClient):
                 name passed for client configuration
 
         Example:
-            >>> luml = LumlClient(
-            ...     api_key="luml_your_api_key",
-            ...     organization="0199c455-21ec-7c74-8efe-41470e29bae5",
-            ...     orbit="0199c455-21ed-7aba-9fe5-5231611220de"
-            ... )
+        ```python
+        luml = LumlClient(
+            api_key="luml_your_api_key",
+            organization="0199c455-21ec-7c74-8efe-41470e29bae5",
+            orbit="0199c455-21ed-7aba-9fe5-5231611220de"
+        )
 
-            >>> luml = LumlClient(
-            ...     api_key="luml_your_api_key",
-            ...     organization="My Personal Organization",
-            ...     orbit="Default Orbit"
-            ... )
+        luml = LumlClient(
+            api_key="luml_your_api_key",
+            organization="My Personal Organization",
+            orbit="Default Orbit"
+        )
+        ```
 
         Note:
             Default resource configuration is optional. If no values are provided during
@@ -223,14 +225,15 @@ class AsyncLumlClient(LumlClientBase, AsyncBaseClient):
                 Can be set by organization ID or name.
 
         Example:
-            >>> luml = AsyncLumlClient(api_key="luml_api_key")
-            >>> async def main():
-            ...     await luml.setup_config(
-            ...         "0199c455-21ec-7c74-8efe-41470e29bae5",
-            ...         "0199c455-21ed-7aba-9fe5-5231611220de",
-            ...         "0199c455-21ee-74c6-b747-19a82f1a1e75"
-            ...     )
-
+        ```python
+        luml = AsyncLumlClient(api_key="luml_api_key")
+        async def main():
+            await luml.setup_config(
+                "0199c455-21ec-7c74-8efe-41470e29bae5",
+                "0199c455-21ed-7aba-9fe5-5231611220de",
+                "0199c455-21ee-74c6-b747-19a82f1a1e75"
+            )
+        ```
         """
         self._organization = await self._validate_organization(organization)
         self._orbit = await self._validate_orbit(orbit)
@@ -352,17 +355,19 @@ class LumlClient(LumlClientBase, SyncBaseClient):
                 by ID or name passed for client configuration
 
         Example:
-            >>> luml = LumlClient(
-            ...     api_key="luml_your_api_key",
-            ...     organization="0199c455-21ec-7c74-8efe-41470e29bae5",
-            ...     orbit="0199c455-21ed-7aba-9fe5-5231611220de"
-            ... )
+        ```python
+        luml = LumlClient(
+            api_key="luml_your_api_key",
+            organization="0199c455-21ec-7c74-8efe-41470e29bae5",
+            orbit="0199c455-21ed-7aba-9fe5-5231611220de"
+        )
 
-            >>> luml = LumlClient(
-            ...     api_key="luml_your_api_key",
-            ...     organization="My Personal Organization",
-            ...     orbit="Default Orbit"
-            ... )
+        luml = LumlClient(
+            api_key="luml_your_api_key",
+            organization="My Personal Organization",
+            orbit="Default Orbit"
+        )
+        ```
 
         Note:
             For long-running operations, consider using the async version:

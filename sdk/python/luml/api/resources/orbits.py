@@ -76,26 +76,30 @@ class OrbitResource(OrbitResourceBase):
                 Orbits with that name.
 
         Example:
-            >>> luml = LumlClient(
-            ...     api_key="luml_your_key",
-            ...     organization="0199c455-21ec-7c74-8efe-41470e29bae5",
-            ...     orbit="0199c455-21ed-7aba-9fe5-5231611220de",
-            ...     collection="0199c455-21ee-74c6-b747-19a82f1a1e75"
-            ... )
-            ... orbit_by_name = luml.orbits.get("Default Orbit")
-            ... orbit_by_id = luml.orbits.get("0199c455-21ed-7aba-9fe5-5231611220de")
+        ```python
+        luml = LumlClient(
+            api_key="luml_your_key",
+            organization="0199c455-21ec-7c74-8efe-41470e29bae5",
+            orbit="0199c455-21ed-7aba-9fe5-5231611220de",
+            collection="0199c455-21ee-74c6-b747-19a82f1a1e75"
+        )
+        orbit_by_name = luml.orbits.get("Default Orbit")
+        orbit_by_id = luml.orbits.get("0199c455-21ed-7aba-9fe5-5231611220de")
+        ```
 
         Example response:
-            >>> Orbit(
-            ...    id="0199c455-21ed-7aba-9fe5-5231611220de",
-            ...    name="Default Orbit",
-            ...    organization_id="0199c455-21ec-7c74-8efe-41470e29bae5",
-            ...    bucket_secret_id="0199c455-21ed-7aba-9fe5-5231611220de",
-            ...    total_members=2,
-            ...    total_collections=9,
-            ...    created_at='2025-05-21T19:35:17.340408Z',
-            ...    updated_at='2025-08-13T22:44:58.035731Z'
-            ...)
+        ```python
+        Orbit(
+            id="0199c455-21ed-7aba-9fe5-5231611220de",
+            name="Default Orbit",
+            organization_id="0199c455-21ec-7c74-8efe-41470e29bae5",
+            bucket_secret_id="0199c455-21ed-7aba-9fe5-5231611220de",
+            total_members=2,
+            total_collections=9,
+            created_at='2025-05-21T19:35:17.340408Z',
+            updated_at='2025-08-13T22:44:58.035731Z'
+        )
+        ```
         """
         if orbit_value is None:
             orbit_value = self._client.orbit
@@ -120,27 +124,31 @@ class OrbitResource(OrbitResourceBase):
             List of Orbits objects.
 
         Example:
-            >>> luml = LumlClient(
-            ...     api_key="luml_your_key",
-            ...     organization="0199c455-21ec-7c74-8efe-41470e29bae5",
-            ...     orbit="0199c455-21ed-7aba-9fe5-5231611220de",
-            ...     collection="0199c455-21ee-74c6-b747-19a82f1a1e75"
-            ... )
-            >>> orgs = luml.orbits.list()
+        ```python
+        luml = LumlClient(
+            api_key="luml_your_key",
+            organization="0199c455-21ec-7c74-8efe-41470e29bae5",
+            orbit="0199c455-21ed-7aba-9fe5-5231611220de",
+            collection="0199c455-21ee-74c6-b747-19a82f1a1e75"
+        )
+        orgs = luml.orbits.list()
+        ```
 
         Example response:
-            >>> [
-            ...     Orbit(
-            ...         id="0199c455-21ed-7aba-9fe5-5231611220de",
-            ...         name="Default Orbit",
-            ...         organization_id="0199c455-21ec-7c74-8efe-41470e29bae5",
-            ...         bucket_secret_id="0199c455-21ed-7aba-9fe5-5231611220de",
-            ...         total_members=2,
-            ...         total_collections=9,
-            ...         created_at='2025-05-21T19:35:17.340408Z',
-            ...         updated_at='2025-08-13T22:44:58.035731Z'
-            ...     )
-            ...]
+        ```python
+        [
+            Orbit(
+                id="0199c455-21ed-7aba-9fe5-5231611220de",
+                name="Default Orbit",
+                organization_id="0199c455-21ec-7c74-8efe-41470e29bae5",
+                bucket_secret_id="0199c455-21ed-7aba-9fe5-5231611220de",
+                total_members=2,
+                total_collections=9,
+                created_at='2025-05-21T19:35:17.340408Z',
+                updated_at='2025-08-13T22:44:58.035731Z'
+            )
+        ]
+        ```
         """
         response = self._client.get(
             f"/organizations/{self._client.organization}/orbits"
@@ -161,28 +169,32 @@ class OrbitResource(OrbitResourceBase):
             Orbit: Newly created orbit object with generated ID and timestamps.
 
         Example:
-            >>> luml = LumlClient(
-            ...     api_key="luml_your_key",
-            ...     organization="0199c455-21ec-7c74-8efe-41470e29bae5",
-            ...     orbit="0199c455-21ed-7aba-9fe5-5231611220de",
-            ...     collection="0199c455-21ee-74c6-b747-19a82f1a1e75"
-            ... )
-            >>> orbit = luml.orbits.create(
-            ...     name="ML Models",
-            ...     bucket_secret_id="0199c455-21ed-7aba-9fe5-5231611220de"
-            ... )
+        ```python
+        luml = LumlClient(
+            api_key="luml_your_key",
+            organization="0199c455-21ec-7c74-8efe-41470e29bae5",
+            orbit="0199c455-21ed-7aba-9fe5-5231611220de",
+            collection="0199c455-21ee-74c6-b747-19a82f1a1e75"
+        )
+        orbit = luml.orbits.create(
+            name="ML Models",
+            bucket_secret_id="0199c455-21ed-7aba-9fe5-5231611220de"
+        )
+        ```
 
         Response object:
-            >>> Orbit(
-            ...    id="0199c455-21ed-7aba-9fe5-5231611220de",
-            ...    name="Default Orbit",
-            ...    organization_id="0199c455-21ec-7c74-8efe-41470e29bae5",
-            ...    bucket_secret_id="0199c455-21ed-7aba-9fe5-5231611220de",
-            ...    total_members=2,
-            ...    total_collections=9,
-            ...    created_at='2025-05-21T19:35:17.340408Z',
-            ...    updated_at='2025-08-13T22:44:58.035731Z'
-            ...)
+        ```python
+        Orbit(
+            id="0199c455-21ed-7aba-9fe5-5231611220de",
+            name="Default Orbit",
+            organization_id="0199c455-21ec-7c74-8efe-41470e29bae5",
+            bucket_secret_id="0199c455-21ed-7aba-9fe5-5231611220de",
+            total_members=2,
+            total_collections=9,
+            created_at='2025-05-21T19:35:17.340408Z',
+            updated_at='2025-08-13T22:44:58.035731Z'
+        )
+        ```
         """
         response = self._client.post(
             f"/organizations/{self._client.organization}/orbits",
@@ -209,30 +221,34 @@ class OrbitResource(OrbitResourceBase):
             Orbit: Updated orbit object.
 
         Example:
-            >>> luml = LumlClient(
-            ...     api_key="luml_your_key",
-            ...     organization="0199c455-21ec-7c74-8efe-41470e29bae5",
-            ...     orbit="0199c455-21ed-7aba-9fe5-5231611220de",
-            ...     collection="0199c455-21ee-74c6-b747-19a82f1a1e75"
-            ... )
-            >>> orbit = luml.orbits.update(name="New Orbit Name")
+        ```python
+        luml = LumlClient(
+            api_key="luml_your_key",
+            organization="0199c455-21ec-7c74-8efe-41470e29bae5",
+            orbit="0199c455-21ed-7aba-9fe5-5231611220de",
+            collection="0199c455-21ee-74c6-b747-19a82f1a1e75"
+        )
+        orbit = luml.orbits.update(name="New Orbit Name")
 
-            >>> orbit = luml.orbits.update(
-            ...     name="New Orbit Name",
-            ...     bucket_secret_id="0199c455-21ed-7aba-9fe5-5231611220de"
-            ... )
+        orbit = luml.orbits.update(
+            name="New Orbit Name",
+            bucket_secret_id="0199c455-21ed-7aba-9fe5-5231611220de"
+        )
+        ```
 
-            Response object:
-                >>> Orbit(
-                ...    id="0199c455-21ed-7aba-9fe5-5231611220de",
-                ...    name="Default Orbit",
-                ...    organization_id="0199c455-21ec-7c74-8efe-41470e29bae5",
-                ...    bucket_secret_id="0199c455-21ed-7aba-9fe5-5231611220de",
-                ...    total_members=2,
-                ...    total_collections=9,
-                ...    created_at='2025-05-21T19:35:17.340408Z',
-                ...    updated_at='2025-08-13T22:44:58.035731Z'
-                ...)
+        Response object:
+        ```python
+        Orbit(
+            id="0199c455-21ed-7aba-9fe5-5231611220de",
+            name="Default Orbit",
+            organization_id="0199c455-21ec-7c74-8efe-41470e29bae5",
+            bucket_secret_id="0199c455-21ed-7aba-9fe5-5231611220de",
+            total_members=2,
+            total_collections=9,
+            created_at='2025-05-21T19:35:17.340408Z',
+            updated_at='2025-08-13T22:44:58.035731Z'
+        )
+        ```
 
         Note:
             This method updates the orbit set as default in the client.
@@ -262,13 +278,15 @@ class OrbitResource(OrbitResourceBase):
             LumlAPIError: If try to delete default orbit.
 
         Example:
-            >>> luml = LumlClient(
-            ...     api_key="luml_your_key",
-            ...     organization="0199c455-21ec-7c74-8efe-41470e29bae5",
-            ...     orbit="0199c455-21ed-7aba-9fe5-5231611220de",
-            ...     collection="0199c455-21ee-74c6-b747-19a82f1a1e75"
-            ... )
-            ... luml.orbits.delete("0199c455-21ed-7aba-9fe5-5231611220de")
+        ```python
+        luml = LumlClient(
+            api_key="luml_your_key",
+            organization="0199c455-21ec-7c74-8efe-41470e29bae5",
+            orbit="0199c455-21ed-7aba-9fe5-5231611220de",
+            collection="0199c455-21ee-74c6-b747-19a82f1a1e75"
+        )
+        luml.orbits.delete("0199c455-21ed-7aba-9fe5-5231611220de")
+        ```
 
         Warning:
             This operation is irreversible. All collections, models, and data
@@ -310,31 +328,35 @@ class AsyncOrbitResource(OrbitResourceBase):
                 Orbits with that name.
 
         Example:
-            >>> luml = AsyncLumlClient(
-            ...     api_key="luml_your_key",
-            ... )
-            ... luml.setup_config(
-            ...     organization="0199c455-21ec-7c74-8efe-41470e29bae5",
-            ...     orbit="0199c455-21ed-7aba-9fe5-5231611220de",
-            ...     collection="0199c455-21ee-74c6-b747-19a82f1a1e75"
-            ... )
-            >>> async def main():
-            ...     orbit_by_name = await luml.orbits.get("Default Orbit")
-            ...     orbit_by_id = await luml.orbits.get(
-            ...         "0199c455-21ed-7aba-9fe5-5231611220de"
-            ...     )
+        ```python
+        luml = AsyncLumlClient(
+            api_key="luml_your_key",
+        )
+        luml.setup_config(
+            organization="0199c455-21ec-7c74-8efe-41470e29bae5",
+            orbit="0199c455-21ed-7aba-9fe5-5231611220de",
+            collection="0199c455-21ee-74c6-b747-19a82f1a1e75"
+        )
+        async def main():
+            orbit_by_name = await luml.orbits.get("Default Orbit")
+            orbit_by_id = await luml.orbits.get(
+                "0199c455-21ed-7aba-9fe5-5231611220de"
+            )
+        ```
 
         Example response:
-            >>> Orbit(
-            ...    id="0199c455-21ed-7aba-9fe5-5231611220de",
-            ...    name="Default Orbit",
-            ...    organization_id="0199c455-21ec-7c74-8efe-41470e29bae5",
-            ...    bucket_secret_id="0199c455-21ed-7aba-9fe5-5231611220de",
-            ...    total_members=2,
-            ...    total_collections=9,
-            ...    created_at='2025-05-21T19:35:17.340408Z',
-            ...    updated_at='2025-08-13T22:44:58.035731Z'
-            ...)
+        ```python
+        Orbit(
+            id="0199c455-21ed-7aba-9fe5-5231611220de",
+            name="Default Orbit",
+            organization_id="0199c455-21ec-7c74-8efe-41470e29bae5",
+            bucket_secret_id="0199c455-21ed-7aba-9fe5-5231611220de",
+            total_members=2,
+            total_collections=9,
+            created_at='2025-05-21T19:35:17.340408Z',
+            updated_at='2025-08-13T22:44:58.035731Z'
+        )
+        ```
         """
         if orbit_value is None:
             orbit_value = self._client.orbit
@@ -359,30 +381,34 @@ class AsyncOrbitResource(OrbitResourceBase):
             List of Orbits objects.
 
         Example:
-            >>> luml = AsyncLumlClient(
-            ...     api_key="luml_your_key",
-            ... )
-            ... luml.setup_config(
-            ...     organization="0199c455-21ec-7c74-8efe-41470e29bae5",
-            ...     orbit="0199c455-21ed-7aba-9fe5-5231611220de",
-            ...     collection="0199c455-21ee-74c6-b747-19a82f1a1e75"
-            ... )
-            >>> async def main():
-            ...     orgs = await luml.orbits.list()
+        ```python
+        luml = AsyncLumlClient(
+            api_key="luml_your_key",
+        )
+        luml.setup_config(
+            organization="0199c455-21ec-7c74-8efe-41470e29bae5",
+            orbit="0199c455-21ed-7aba-9fe5-5231611220de",
+            collection="0199c455-21ee-74c6-b747-19a82f1a1e75"
+        )
+        async def main():
+            orgs = await luml.orbits.list()
+        ```
 
         Example response:
-            >>> [
-            ...     Orbit(
-            ...         id="0199c455-21ed-7aba-9fe5-5231611220de",
-            ...         name="Default Orbit",
-            ...         organization_id="0199c455-21ec-7c74-8efe-41470e29bae5",
-            ...         bucket_secret_id="0199c455-21ed-7aba-9fe5-5231611220de",
-            ...         total_members=2,
-            ...         total_collections=9,
-            ...         created_at='2025-05-21T19:35:17.340408Z',
-            ...         updated_at='2025-08-13T22:44:58.035731Z'
-            ...     )
-            ...]
+        ```python
+        [
+            Orbit(
+                id="0199c455-21ed-7aba-9fe5-5231611220de",
+                name="Default Orbit",
+                organization_id="0199c455-21ec-7c74-8efe-41470e29bae5",
+                bucket_secret_id="0199c455-21ed-7aba-9fe5-5231611220de",
+                total_members=2,
+                total_collections=9,
+                created_at='2025-05-21T19:35:17.340408Z',
+                updated_at='2025-08-13T22:44:58.035731Z'
+            )
+        ]
+        ```
         """
         response = await self._client.get(
             f"/organizations/{self._client.organization}/orbits"
@@ -403,31 +429,35 @@ class AsyncOrbitResource(OrbitResourceBase):
             Orbit: Newly created orbit object with generated ID and timestamps.
 
         Example:
-            >>> luml = AsyncLumlClient(
-            ...     api_key="luml_your_key",
-            ... )
-            ... luml.setup_config(
-            ...     organization="0199c455-21ec-7c74-8efe-41470e29bae5",
-            ...     orbit="0199c455-21ed-7aba-9fe5-5231611220de",
-            ...     collection="0199c455-21ee-74c6-b747-19a82f1a1e75"
-            ... )
-            >>> async def main():
-            ...     orbit = await luml.orbits.create(
-            ...         name="ML Models",
-            ...         bucket_secret_id="0199c455-21ed-7aba-9fe5-5231611220de"
-            ...     )
+        ```python
+        luml = AsyncLumlClient(
+            api_key="luml_your_key",
+        )
+        luml.setup_config(
+            organization="0199c455-21ec-7c74-8efe-41470e29bae5",
+            orbit="0199c455-21ed-7aba-9fe5-5231611220de",
+            collection="0199c455-21ee-74c6-b747-19a82f1a1e75"
+        )
+        async def main():
+            orbit = await luml.orbits.create(
+                name="ML Models",
+                bucket_secret_id="0199c455-21ed-7aba-9fe5-5231611220de"
+            )
+        ```
 
         Response object:
-            >>> Orbit(
-            ...    id="0199c455-21ed-7aba-9fe5-5231611220de",
-            ...    name="Default Orbit",
-            ...    organization_id="0199c455-21ec-7c74-8efe-41470e29bae5",
-            ...    bucket_secret_id="0199c455-21ed-7aba-9fe5-5231611220de",
-            ...    total_members=2,
-            ...    total_collections=9,
-            ...    created_at='2025-05-21T19:35:17.340408Z',
-            ...    updated_at='2025-08-13T22:44:58.035731Z'
-            ...)
+        ```python
+        Orbit(
+            id="0199c455-21ed-7aba-9fe5-5231611220de",
+            name="Default Orbit",
+            organization_id="0199c455-21ec-7c74-8efe-41470e29bae5",
+            bucket_secret_id="0199c455-21ed-7aba-9fe5-5231611220de",
+            total_members=2,
+            total_collections=9,
+            created_at='2025-05-21T19:35:17.340408Z',
+            updated_at='2025-08-13T22:44:58.035731Z'
+        )
+        ```
         """
         response = await self._client.post(
             f"/organizations/{self._client.organization}/orbits",
@@ -454,33 +484,37 @@ class AsyncOrbitResource(OrbitResourceBase):
             Orbit: Updated orbit object.
 
         Example:
-            >>> luml = AsyncLumlClient(
-            ...     api_key="luml_your_key",
-            ... )
-            ... luml.setup_config(
-            ...     organization="0199c455-21ec-7c74-8efe-41470e29bae5",
-            ...     orbit="0199c455-21ed-7aba-9fe5-5231611220de",
-            ...     collection="0199c455-21ee-74c6-b747-19a82f1a1e75"
-            ... )
-            >>> async def main():
-            ...     orbit = await luml.orbits.update(name="New Orbit Name")
-            ...
-            ...     orbit = await luml.orbits.update(
-            ...         name="New Orbit Name",
-            ...         bucket_secret_id="0199c455-21ed-7aba-9fe5-5231611220de"
-            ...     )
+        ```python
+        luml = AsyncLumlClient(
+            api_key="luml_your_key",
+        )
+        luml.setup_config(
+            organization="0199c455-21ec-7c74-8efe-41470e29bae5",
+            orbit="0199c455-21ed-7aba-9fe5-5231611220de",
+            collection="0199c455-21ee-74c6-b747-19a82f1a1e75"
+        )
+        async def main():
+            orbit = await luml.orbits.update(name="New Orbit Name")
 
-            Response object:
-                >>> Orbit(
-                ...    id="0199c455-21ed-7aba-9fe5-5231611220de",
-                ...    name="Default Orbit",
-                ...    organization_id="0199c455-21ec-7c74-8efe-41470e29bae5",
-                ...    bucket_secret_id="0199c455-21ed-7aba-9fe5-5231611220de",
-                ...    total_members=2,
-                ...    total_collections=9,
-                ...    created_at='2025-05-21T19:35:17.340408Z',
-                ...    updated_at='2025-08-13T22:44:58.035731Z'
-                ...)
+            orbit = await luml.orbits.update(
+                name="New Orbit Name",
+                bucket_secret_id="0199c455-21ed-7aba-9fe5-5231611220de"
+            )
+        ```
+
+        Response object:
+        ```python
+        Orbit(
+            id="0199c455-21ed-7aba-9fe5-5231611220de",
+            name="Default Orbit",
+            organization_id="0199c455-21ec-7c74-8efe-41470e29bae5",
+            bucket_secret_id="0199c455-21ed-7aba-9fe5-5231611220de",
+            total_members=2,
+            total_collections=9,
+            created_at='2025-05-21T19:35:17.340408Z',
+            updated_at='2025-08-13T22:44:58.035731Z'
+        )
+        ```
 
         Note:
             This method updates the orbit set as default in the client.
@@ -510,16 +544,18 @@ class AsyncOrbitResource(OrbitResourceBase):
             LumlAPIError: If try to delete default orbit.
 
         Example:
-            >>> luml = AsyncLumlClient(
-            ...     api_key="luml_your_key",
-            ... )
-            ... luml.setup_config(
-            ...     organization="0199c455-21ec-7c74-8efe-41470e29bae5",
-            ...     orbit="0199c455-21ed-7aba-9fe5-5231611220de",
-            ...     collection="0199c455-21ee-74c6-b747-19a82f1a1e75"
-            ... )
-            >>> async def main():
-            ...     await luml.orbits.delete("0199c475-8339-70ec-b032-7b3f5d59fdc1")
+        ```python
+        luml = AsyncLumlClient(
+            api_key="luml_your_key",
+        )
+        luml.setup_config(
+            organization="0199c455-21ec-7c74-8efe-41470e29bae5",
+            orbit="0199c455-21ed-7aba-9fe5-5231611220de",
+            collection="0199c455-21ee-74c6-b747-19a82f1a1e75"
+        )
+        async def main():
+            await luml.orbits.delete("0199c475-8339-70ec-b032-7b3f5d59fdc1")
+        ```
 
         Warning:
             This operation is irreversible. All collections, models, and data
