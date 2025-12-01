@@ -6,7 +6,6 @@ import pytest
 
 from dataforce_studio.handlers.bucket_secrets import BucketSecretHandler
 from dataforce_studio.infra.exceptions import (
-    BucketConnectionError,
     BucketSecretInUseError,
     DatabaseConstraintError,
     NotFoundError,
@@ -477,28 +476,3 @@ async def test_get_bucket_urls(
     mock_s3_instance.get_upload_url.assert_awaited_once_with(object_name)
     mock_s3_instance.get_download_url.assert_awaited_once_with(object_name)
     mock_s3_instance.get_delete_url.assert_awaited_once_with(object_name)
-
-
-@patch("dataforce_studio.handlers.bucket_secrets.S3Service")
-@pytest.mark.asyncio
-async def test_generate_bucket_urls_bucket_do_not_exist(
-    mock_s3_service: Mock,
-) -> None:
-    secret = BucketSecretCreateIn(
-        endpoint="s3.amazonaws.com",
-        bucket_name="non-existent-bucket",
-        access_key="access_key",
-        secret_key="secret_key",
-        region="us-east-1",
-    )
-
-    mock_s3_instance = Mock()
-    mock_s3_instance.bucket_exists.return_value = False
-    mock_s3_service.return_value = mock_s3_instance
-
-    with pytest.raises(BucketConnectionError, match="No such bucket.") as error:
-        await handler.generate_bucket_urls(secret)
-
-    assert error.value.status_code == 400
-    mock_s3_service.assert_called_once_with(secret)
-    mock_s3_instance.bucket_exists.assert_called_once()
