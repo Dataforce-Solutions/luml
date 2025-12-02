@@ -1,5 +1,4 @@
-from typing import Annotated, Any
-from urllib.parse import urlencode
+from typing import Annotated
 
 from fastapi import APIRouter, Body, Depends, Request
 from pydantic import EmailStr
@@ -7,13 +6,17 @@ from starlette.responses import RedirectResponse
 
 from dataforce_studio.handlers.auth import AuthHandler
 from dataforce_studio.infra.dependencies import UserAuthentication
-from dataforce_studio.schemas.auth import Token
+from dataforce_studio.schemas.auth import OAuthLogin, Token
 from dataforce_studio.schemas.user import (
     CreateUserIn,
     SignInResponse,
     SignInUser,
     UpdateUserIn,
     UserOut,
+)
+from dataforce_studio.services.oauth_providers import (
+    OAuthGoogleProvider,
+    OAuthMicrosoftProvider,
 )
 from dataforce_studio.settings import config
 
@@ -22,6 +25,12 @@ is_user_authenticated = UserAuthentication(["jwt"])
 auth_router = APIRouter(prefix="/auth", tags=["auth"])
 
 auth_handler = AuthHandler(secret_key=config.AUTH_SECRET_KEY)
+google_auth_handler = AuthHandler(
+    secret_key=config.AUTH_SECRET_KEY, oauth_provider=OAuthGoogleProvider
+)
+microsoft_auth_handler = AuthHandler(
+    secret_key=config.AUTH_SECRET_KEY, oauth_provider=OAuthMicrosoftProvider
+)
 
 
 @auth_router.post("/signup", response_model=dict)
@@ -36,21 +45,12 @@ async def signin(user: SignInUser) -> SignInResponse:
 
 @auth_router.get("/google/login")
 async def google_login() -> RedirectResponse:
-    params = {
-        "client_id": config.GOOGLE_CLIENT_ID,
-        "redirect_uri": config.GOOGLE_REDIRECT_URI,
-        "response_type": "code",
-        "scope": "openid email profile",
-        "access_type": "offline",
-        "prompt": "consent",
-    }
-    url = "https://accounts.google.com/o/oauth2/v2/auth?" + urlencode(params)
-    return RedirectResponse(url)
+    return RedirectResponse(google_auth_handler.get_oauth_login_url())
 
 
 @auth_router.get("/google/callback")
-async def google_callback(code: str | None = None) -> dict[str, Any]:
-    return await auth_handler.handle_google_auth(code)
+async def google_callback(code: str | None = None) -> OAuthLogin:
+    return await google_auth_handler.handle_oauth(code)
 
 
 @auth_router.post("/refresh", response_model=Token)
@@ -119,3 +119,13 @@ async def reset_password(
 ) -> dict[str, str]:
     await auth_handler.handle_reset_password(reset_token, new_password)
     return {"detail": "Password reset successfully"}
+
+
+@auth_router.get("/microsoft/login")
+async def microsoft_login() -> RedirectResponse:
+    return RedirectResponse(microsoft_auth_handler.get_oauth_login_url())
+
+
+@auth_router.get("/microsoft/callback")
+async def microsoft_callback(code: str | None = None) -> OAuthLogin:
+    return await microsoft_auth_handler.handle_oauth(code)

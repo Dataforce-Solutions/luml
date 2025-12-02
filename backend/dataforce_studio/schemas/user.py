@@ -10,6 +10,7 @@ from dataforce_studio.schemas.base import BaseOrmConfig
 class AuthProvider(str, Enum):
     EMAIL = "EMAIL"
     GOOGLE = "GOOGLE"
+    MICROSOFT = "MICROSOFT"
 
 
 class _UserBase(BaseModel):
