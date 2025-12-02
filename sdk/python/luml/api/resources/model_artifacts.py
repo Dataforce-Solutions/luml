@@ -1033,7 +1033,7 @@ class AsyncModelArtifactResource(ModelArtifactResourceBase):
                 model=ModelArtifact(
                      id="0199c455-21ee-74c6-b747-19a82f1a1e67",
                      model_name="Production Model",
-                     file_name="model.fnnx",
+                     file_name="my_llm_attachments.pyfnx",
                      description="Trained on latest dataset",
                      collection_id="0199c455-21ee-74c6-b747-19a82f1a1e75",
                      status=ModelArtifactStatus.UPLOADED,
@@ -1041,9 +1041,9 @@ class AsyncModelArtifactResource(ModelArtifactResourceBase):
                      created_at='2025-01-15T10:30:00.123456Z',
                      updated_at='2025-01-15T10:35:00.123456Z'),
                 upload_details=UploadDetails(
-                    url=" https://luml-models.s3.eu-north-1.amazonaws.com/my_llm_attachaments.pyfnx",
+                    url=" https://luml-models.s3.eu-north-1.amazonaws.com/my_llm_attachments.pyfnx",
                     multipart=False,
-                    bucket_location="my_llm_attachaments.pyfnx",
+                    bucket_location="my_llm_attachments.pyfnx",
                     bucket_secret_id="0199c455-21ee-74c6-b747-19a82f1a1873"))
         ```
         """
@@ -1133,9 +1133,9 @@ class AsyncModelArtifactResource(ModelArtifactResourceBase):
                      created_at='2025-01-15T10:30:00.123456Z',
                      updated_at='2025-01-15T10:35:00.123456Z'),
                 upload_details=UploadDetails(
-                    url=" https://luml-models.s3.eu-north-1.amazonaws.com/my_llm_attachaments.pyfnx",
+                    url=" https://luml-models.s3.eu-north-1.amazonaws.com/my_llm_attachments.pyfnx",
                     multipart=False,
-                    bucket_location="my_llm_attachaments.pyfnx",
+                    bucket_location="my_llm_attachments.pyfnx",
                     bucket_secret_id="0199c455-21ee-74c6-b747-19a82f1a1873"))
         ```
         """
@@ -1277,7 +1277,7 @@ class AsyncModelArtifactResource(ModelArtifactResourceBase):
         file_handler.download_file_with_progress(
             url=download_url,
             file_path=file_path,
-            file_name=f'with model id="{model_id}"',
+            file_name=f'model id="{model_id}"',
         )
 
     @validate_collection

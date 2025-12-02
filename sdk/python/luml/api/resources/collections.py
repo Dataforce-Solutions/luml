@@ -538,7 +538,7 @@ class AsyncCollectionResource(CollectionResourceBase):
         )
 
         async def main():
-            luml.setup_config(
+            await luml.setup_config(
                 organization="0199c455-21ec-7c74-8efe-41470e29bae5",
                 orbit="0199c455-21ed-7aba-9fe5-5231611220de",
             )
@@ -603,11 +603,13 @@ class AsyncCollectionResource(CollectionResourceBase):
         luml = AsyncLumlClient(
             api_key="luml_your_key",
         )
+
         async def main():
-            luml.setup_config(
+            await luml.setup_config(
                 organization="0199c455-21ec-7c74-8efe-41470e29bae5",
                 orbit="0199c455-21ed-7aba-9fe5-5231611220de",
             )
+
             # Delete specific collection by ID
             await luml.collections.delete(
                 "0199c455-21ee-74c6-b747-19a82f1a1e75"
