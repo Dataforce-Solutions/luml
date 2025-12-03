@@ -3,7 +3,6 @@ from collections.abc import AsyncGenerator
 from dataclasses import dataclass
 from time import time
 from unittest.mock import AsyncMock, MagicMock, Mock, patch
-from uuid import uuid7
 
 import jwt
 import pytest
@@ -665,7 +664,6 @@ async def test_handle_oauth_google(
         hashed_password=None,
         disabled=False,
     )
-
 
     expected = OAuthLogin(token=get_tokens, user_id=created_user.id)
 
