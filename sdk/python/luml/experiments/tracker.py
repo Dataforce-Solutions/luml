@@ -188,7 +188,7 @@ class ExperimentTracker:
         if attachments_result is None:
             raise ValueError(f"No attachments found for experiment {exp_id}")
         attachments, index = attachments_result
-        tag = "luml::experiment_snapshot:v1"
+        tag = "dataforce.studio::experiment_snapshot:v1"
         with NamedTemporaryFile(suffix=".zip", delete=False) as temp_zip:
             zip_path = temp_zip.name
 
