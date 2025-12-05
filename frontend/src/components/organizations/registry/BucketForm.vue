@@ -95,7 +95,7 @@
         >
           Region
           <div
-            v-tooltip.left="'If you don’t have a specific region, you may enter just us-west-2'"
+            v-tooltip.left="'If your provider doesn’t require a region, you may enter any value.'"
             :autoHide="false"
           >
             <circle-help :size="15" class="tooltip-icon" />
