@@ -92,8 +92,15 @@
             label: !update,
             'label--medium': update,
           }"
-          >Region</label
         >
+          Region
+          <div
+            v-tooltip.left="'If your provider doesn’t require a region, you may enter any value.'"
+            :autoHide="false"
+          >
+            <circle-help :size="15" class="tooltip-icon" />
+          </div>
+        </label>
         <InputText
           v-model="initialValues.region"
           id="region"
@@ -127,6 +134,7 @@ import { z } from 'zod'
 import { Form, type FormSubmitEvent } from '@primevue/forms'
 import { Button, InputText, ToggleSwitch } from 'primevue'
 import { zodResolver } from '@primevue/forms/resolvers/zod'
+import { CircleHelp } from 'lucide-vue-next'
 
 type Props = {
   initialData?: BucketSecretCreator
@@ -176,7 +184,7 @@ const createBucketResolver = zodResolver(
     access_key: z.string(),
     secret_key: z.string(),
     session_token: z.string(),
-    region: z.string(),
+    region: z.string().min(1),
   }),
 )
 
@@ -251,5 +259,10 @@ function onSubmit({ valid }: FormSubmitEvent) {
 }
 .label--medium {
   font-weight: 500;
+}
+@media (max-width: 768px) {
+  .tooltip-icon {
+    display: none;
+  }
 }
 </style>
