@@ -86,6 +86,7 @@ onBeforeUnmount(() => {
   padding-right: calc(var(--p-scrollbar-width) + 16px);
 }
 .logo {
+  height: 36px;
 }
 .logo-img {
   max-width: 202px;

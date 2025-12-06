@@ -12,7 +12,7 @@ export const useFnnxModel = () => {
   const getModel = computed(() => model.value)
 
   async function createModelFromFile(file: File) {
-    if (!file.name.endsWith('.dfs')) throw new Error('Incorrect file format')
+    if (!file.name.endsWith('.luml')) throw new Error('Incorrect file format')
     buffer.value = await file.arrayBuffer()
     model.value = await Model.fromBuffer(buffer.value)
     currentTag.value = FnnxService.getTypeTag(model.value.getManifest())

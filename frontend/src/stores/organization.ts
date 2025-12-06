@@ -53,9 +53,9 @@ export const useOrganizationStore = defineStore('organization', () => {
 
   async function deleteOrganization(organizationId: string) {
     await dataforceApi.deleteOrganization(organizationId)
-    const organizationInLocalStorage = LocalStorageService.get('dataforce:currentOrganizationId')
+    const organizationInLocalStorage = LocalStorageService.get('currentOrganizationId')
     if (organizationInLocalStorage && organizationInLocalStorage === organizationId) {
-      LocalStorageService.remove('dataforce:currentOrganizationId')
+      LocalStorageService.remove('currentOrganizationId')
     }
     availableOrganizations.value = availableOrganizations.value.filter(
       (organization) => organization.id !== organizationId,
@@ -65,7 +65,7 @@ export const useOrganizationStore = defineStore('organization', () => {
 
   async function setCurrentOrganizationId(id: string) {
     currentOrganizationId.value = id
-    LocalStorageService.set('dataforce:currentOrganizationId', `${id}`)
+    LocalStorageService.set('currentOrganizationId', `${id}`)
   }
 
   async function getOrganizationDetails(id: string) {
@@ -78,7 +78,7 @@ export const useOrganizationStore = defineStore('organization', () => {
   }
 
   async function setInitialOrganization() {
-    const organizationInStorage = LocalStorageService.get('dataforce:currentOrganizationId')
+    const organizationInStorage = LocalStorageService.get('currentOrganizationId')
     const organizationInStorageAvailable =
       organizationInStorage &&
       availableOrganizations.value?.find((org) => org.id === organizationInStorage)

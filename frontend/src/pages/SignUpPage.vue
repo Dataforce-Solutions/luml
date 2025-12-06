@@ -1,5 +1,5 @@
 <template>
-  <authorization-wrapper title="Sign up" sub-title="Welcome to DataForce Studio" :image="MainImage">
+  <authorization-wrapper title="Sign up" sub-title="Welcome to LUML" :image="MainImage">
     <template #form>
       <d-form
         class="form"

@@ -95,7 +95,7 @@ function setDynamicAttributes() {
       return tag ? ProviderDynamicAttributesTagsEnum[tag] : null
     })
     .filter((attribute) => !!attribute)
-  const providerSettings = LocalStorageService.get('dataforce.providersSettings')?.[
+  const providerSettings = LocalStorageService.get('providersSettings')?.[
     providerId.value
   ]
   const entries = dynamicAttributesList.map((attribute) => {

@@ -5,7 +5,7 @@ import { saveAs } from 'file-saver'
 
 const DATABASE_PREFIX = 'jl_'
 const FILES_STORE = 'files'
-const DATAFORCE_FILES_EXTENSIONS = ['.dfs', '.fnnx', '.pyfnx']
+const DATAFORCE_FILES_EXTENSIONS = ['.dfs', '.fnnx', '.pyfnx', '.luml']
 
 class DatabaseServiceClass {
   async getDatabases() {
