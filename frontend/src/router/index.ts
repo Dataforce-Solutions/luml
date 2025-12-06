@@ -160,7 +160,7 @@ const router = createRouter({
             {
               path: 'experiment-snapshot',
               name: 'model-snapshot',
-              component: () => import('../pages/collection/model/SpanshotView.vue'),
+              component: () => import('../pages/collection/model/SnapshotView.vue'),
             },
             {
               path: 'attachments',

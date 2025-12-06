@@ -8,11 +8,13 @@
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, onMounted, ref } from 'vue'
+import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import Plotly from 'plotly.js-dist'
 import { useVariableValue } from '../../../../hooks/useVariableValue'
 import { plotlyBarChartLayout } from '../../../../lib/plotly/layouts'
 import EvalsScoresMultipleItemContent from './EvalsScoresMultipleItemContent.vue'
+import { useThemeStore } from '@/stores/theme'
+import { cutStringOnMiddle } from '@/modules/experiment-snapshot/helpers/helpers'
 
 type Props = {
   data: { modelName: string; color: string; value: number | undefined; scoreName: string }[]
@@ -20,6 +22,7 @@ type Props = {
 
 const props = defineProps<Props>()
 const { getVariablesValues } = useVariableValue()
+const themeStore = useThemeStore()
 
 const chartRef = ref<HTMLDivElement[]>([])
 const chartScaledRef = ref<HTMLDivElement[]>([])
@@ -30,14 +33,22 @@ const plotlyData = computed(() => {
   const color: string[] = []
   props.data.map((item) => {
     if (item.value === undefined) return
-    x.push(item.modelName)
+    x.push(getFormattedName(item.modelName))
     y.push(item.value)
     color.push(item.color)
   })
-  return [{ x, y, type: 'bar', marker: { color: getVariablesValues(color) } }]
+  return [
+    {
+      x,
+      y,
+      type: 'bar',
+      marker: { color: getVariablesValues(color) },
+      hovertemplate: '<b>Model:</b> %{x}<br>' + '<b>Value:</b> %{y}<extra></extra>',
+    },
+  ]
 })
 
-const plotlyLayout = computed(() => {
+function getPlotlyLayout() {
   const [bgColor, textColor, gridColor] = getVariablesValues([
     'var(--p-card-background)',
     'var(--p-text-muted-color)',
@@ -45,19 +56,37 @@ const plotlyLayout = computed(() => {
   ])
 
   return plotlyBarChartLayout({ title: props.data[0].scoreName, bgColor, textColor, gridColor })
-})
+}
 
 function setScaledChart() {
   nextTick(() => {
-    Plotly.newPlot(chartScaledRef.value, plotlyData.value, plotlyLayout.value, {
+    const layout = getPlotlyLayout()
+    Plotly.newPlot(chartScaledRef.value, plotlyData.value, layout, {
       displayModeBar: false,
       responsive: true,
     })
   })
 }
 
+function getFormattedName(name: string | undefined) {
+  if (!name) return ''
+  if (name.length > 24) {
+    return cutStringOnMiddle(name, 24)
+  }
+  return name
+}
+
+watch(
+  () => themeStore.getCurrentTheme,
+  () => {
+    const layout = getPlotlyLayout()
+    Plotly.relayout(chartRef.value, layout)
+  },
+)
+
 onMounted(() => {
-  Plotly.newPlot(chartRef.value, plotlyData.value, plotlyLayout.value, {
+  const layout = getPlotlyLayout()
+  Plotly.newPlot(chartRef.value, plotlyData.value, layout, {
     displayModeBar: false,
     responsive: true,
   })

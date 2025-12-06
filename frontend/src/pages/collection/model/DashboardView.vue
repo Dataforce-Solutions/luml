@@ -1,13 +1,13 @@
 <template>
-  <div v-if="currentModel" class="details">
+  <div v-if="model" class="details">
     <div class="details__part">
       <div class="details__item">
         <div class="details__label">Model ID</div>
-        <div class="details__value">{{ currentModel.id }}</div>
+        <div class="details__value">{{ model.id }}</div>
       </div>
       <div class="details__item">
         <div class="details__label">Model name</div>
-        <div class="details__value">{{ currentModel.model_name }}</div>
+        <div class="details__value">{{ model.model_name }}</div>
       </div>
       <div class="details__item">
         <div class="details__label">Status</div>
@@ -15,7 +15,7 @@
           <Tag
             v-if="statusSeverity"
             :severity="statusSeverity"
-            :value="currentModel.status"
+            :value="model.status"
             class="tag"
           ></Tag>
         </div>
@@ -23,28 +23,23 @@
       <div class="details__item">
         <div class="details__label">Creation time</div>
         <div class="details__value">
-          {{ new Date(currentModel.created_at).toLocaleString() }}
+          {{ new Date(model.created_at).toLocaleString() }}
         </div>
       </div>
       <div class="details__item">
         <div class="details__label">Description</div>
-        <div class="details__value">{{ currentModel.description || '-' }}</div>
+        <div class="details__value">{{ model.description || '-' }}</div>
       </div>
       <div class="details__item">
         <div class="details__label">Tags</div>
         <div class="details__value">
           <div class="details__tags">
-            <Tag
-              v-if="currentModel.tags?.length"
-              v-for="tag in currentModel.tags"
-              :value="tag"
-              class="tag"
-            ></Tag>
+            <Tag v-if="model.tags?.length" v-for="tag in model.tags" :value="tag" class="tag"></Tag>
             <span v-else>-</span>
           </div>
         </div>
       </div>
-      <div v-if="currentModel?.manifest" class="details__item" style="align-items: center">
+      <div v-if="model?.manifest" class="details__item" style="align-items: center">
         <div class="details__label">Manifest</div>
         <div class="details__value">
           <Button variant="text" size="small" severity="secondary" @click="showManifest">
@@ -56,55 +51,52 @@
     <div class="details__part">
       <div class="details__item">
         <div class="details__label">Size</div>
-        <div class="details__value">{{ getSizeText(currentModel.size) }}</div>
+        <div class="details__value">{{ getSizeText(model.size) }}</div>
       </div>
-      <div v-for="metric in Object.entries(currentModel.metrics)" class="details__item">
+      <div v-for="metric in Object.entries(model.metrics)" class="details__item">
         <div class="details__label">{{ metric[0] }}</div>
         <div class="details__value">{{ metric[1] }}</div>
       </div>
     </div>
   </div>
   <ModelManifestModal
-    v-if="currentModel?.manifest"
+    v-if="model?.manifest"
     v-model:visible="manifestVisible"
-    :manifest="currentModel?.manifest"
+    :manifest="model?.manifest"
   ></ModelManifestModal>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { useModelsStore } from '@/stores/models'
-import { useRoute } from 'vue-router'
 import { Tag, Button } from 'primevue'
-import { MlModelStatusEnum } from '@/lib/api/orbit-ml-models/interfaces'
+import { MlModelStatusEnum, type MlModel } from '@/lib/api/orbit-ml-models/interfaces'
 import { getSizeText } from '@/helpers/helpers'
 import { ref } from 'vue'
 import ModelManifestModal from '@/components/model/ModelManifestModal.vue'
 
-const modelsStore = useModelsStore()
-const route = useRoute()
+type Props = {
+  model?: MlModel
+}
+
+const props = defineProps<Props>()
 
 const manifestVisible = ref(false)
 
-const currentModel = computed(() => {
-  if (typeof route.params.modelId !== 'string') return undefined
-  return modelsStore.modelsList.find((model) => model.id === route.params.modelId)
-})
 const statusSeverity = computed(() => {
-  if (!currentModel.value) return null
+  if (!props.model) return null
   else if (
     [MlModelStatusEnum.deletion_failed, MlModelStatusEnum.upload_failed].includes(
-      currentModel.value.status,
+      props.model.status,
     )
   )
     return 'danger'
   else if (
     [MlModelStatusEnum.pending_deletion, MlModelStatusEnum.pending_upload].includes(
-      currentModel.value.status,
+      props.model.status,
     )
   )
     return 'warn'
-  else if (currentModel.value.status === MlModelStatusEnum.uploaded) return 'success'
+  else if (props.model.status === MlModelStatusEnum.uploaded) return 'success'
 })
 
 function showManifest() {
