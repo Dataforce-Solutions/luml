@@ -72,8 +72,6 @@ try:
             description=description,
             manifest=model_data.get("manifest"),
             dtypes_schemas=model_data.get("dtypes_schemas"),
-            request_schema=model_data.get("request_schema"),
-            response_schema=model_data.get("response_schema"),
         )
 
     app = UvicornService(

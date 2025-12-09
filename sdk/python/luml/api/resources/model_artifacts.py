@@ -419,7 +419,7 @@ class ModelArtifactResource(ModelArtifactResourceBase):
         model_details = ModelFileHandler(file_path).model_details()
 
         file_format = model_details.file_name.split(".")[1]
-        if file_format not in ["fnnx", "pyfnx", "dfs"]:
+        if file_format not in ["fnnx", "pyfnx", "dfs", "luml"]:
             raise FileError("File format error")
 
         created_model_data = self.create(
