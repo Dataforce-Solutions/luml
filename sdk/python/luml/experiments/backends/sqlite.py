@@ -651,9 +651,8 @@ class SQLiteBackend(Backend):
         db_path = self._get_experiment_db_path(experiment_id)
         if not db_path.exists():
             raise ValueError(f"Experiment {experiment_id} not found")
-        conn = sqlite3.Connection(db_path, check_same_thread=False)
-        conn.execute("PRAGMA wal_checkpoint(TRUNCATE);")
-        conn.close()
+        with sqlite3.connect(db_path, check_same_thread=False) as conn:
+            conn.execute("PRAGMA wal_checkpoint(TRUNCATE);")
         return DiskArtifact(db_path)
 
     def export_attachments(
