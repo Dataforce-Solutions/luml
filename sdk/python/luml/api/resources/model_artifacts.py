@@ -3,20 +3,20 @@ from abc import ABC, abstractmethod
 from collections.abc import Coroutine
 from typing import TYPE_CHECKING, Any
 
-from .._exceptions import FileError, FileUploadError, LumlAPIError
-from .._types import (
+from luml.api._exceptions import FileError, FileUploadError, LumlAPIError
+from luml.api._types import (
     CreatedModel,
     ModelArtifact,
     ModelArtifactStatus,
     is_uuid,
 )
-from .._utils import find_by_value
-from ..utils.file_handler import FileHandler
-from ..utils.model_artifacts import ModelFileHandler
-from ._validators import validate_collection
+from luml.api._utils import find_by_value
+from luml.api.resources._validators import validate_collection
+from luml.api.utils.file_handler import FileHandler
+from luml.api.utils.model_artifacts import ModelFileHandler
 
 if TYPE_CHECKING:
-    from .._client import AsyncLumlClient, LumlClient
+    from luml.api._client import AsyncLumlClient, LumlClient
 
 file_handler = FileHandler()
 

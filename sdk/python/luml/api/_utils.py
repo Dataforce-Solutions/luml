@@ -1,7 +1,7 @@
 from collections.abc import Callable
 from typing import TypeVar
 
-from ._exceptions import MultipleResourcesFoundError
+from luml.api._exceptions import MultipleResourcesFoundError
 
 T = TypeVar("T")
 

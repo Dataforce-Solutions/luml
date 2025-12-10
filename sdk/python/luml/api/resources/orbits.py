@@ -2,12 +2,12 @@ from abc import ABC, abstractmethod
 from collections.abc import Coroutine
 from typing import TYPE_CHECKING, Any
 
-from .. import LumlAPIError
-from .._types import Orbit, is_uuid
-from .._utils import find_by_value
+from luml.api._exceptions import LumlAPIError
+from luml.api._types import Orbit, is_uuid
+from luml.api._utils import find_by_value
 
 if TYPE_CHECKING:
-    from .._client import AsyncLumlClient, LumlClient
+    from luml.api._client import AsyncLumlClient, LumlClient
 
 
 class OrbitResourceBase(ABC):
