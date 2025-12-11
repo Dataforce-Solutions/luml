@@ -7,6 +7,9 @@
         <PenLine :size="14" />
       </template>
     </Button>
+    <div class="id-row" v-if="organizationStore.currentOrganization?.id">
+      <UiId :id="organizationStore.currentOrganization.id" variant="button"></UiId>
+    </div>
     <Dialog
       v-model:visible="visible"
       position="topright"
@@ -58,6 +61,7 @@ import { useOrganizationStore } from '@/stores/organization'
 import { Avatar, Button, Dialog, useToast, InputText } from 'primevue'
 import ImageInput from '../ui/ImageInput.vue'
 import OrganizationDelete from './OrganizationDelete.vue'
+import UiId from '../ui/UiId.vue'
 import { simpleErrorToast, simpleSuccessToast } from '@/lib/primevue/data/toasts'
 
 const organizationStore = useOrganizationStore()
@@ -145,6 +149,10 @@ onMounted(() => {
   font-weight: 500;
   line-height: 1.25;
 }
+.id-row {
+  margin-left: auto;
+}
+
 .body {
   padding-top: 20px;
   display: flex;
