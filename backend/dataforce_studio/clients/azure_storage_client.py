@@ -164,7 +164,7 @@ class AzureBlobClient(BaseStorageClient):
                     part_size=current_part_size,
                 )
             )
-            start_byte += current_part_size + 1
+            start_byte += current_part_size
 
         return parts
 

@@ -11,6 +11,7 @@ from .base_file_handler import BaseFileHandler
 
 
 class AzureFileHandler(BaseFileHandler):
+    """File handler for Azure Blob Storage."""
     def upload_simple(
         self,
         url: str,

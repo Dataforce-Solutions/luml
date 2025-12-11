@@ -10,7 +10,6 @@ from luml.api._types import (
     ModelArtifactStatus,
     is_uuid,
 )
-
 from luml.api._utils import find_by_value
 from luml.api.services.upload_service import AsyncUploadService, UploadService
 from luml.api.utils.model_artifacts import ModelFileHandler

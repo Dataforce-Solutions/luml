@@ -56,15 +56,15 @@ class BucketSecretOrm(TimestampMixin, Base):
         )
 
     def to_bucket_secret(self) -> BucketSecret:
-        data = validate_bucket_secret(self)
-        if isinstance(data, S3BucketSecret):
-            if data.access_key:
-                data.access_key = decrypt(data.access_key)
-            if data.secret_key:
-                data.secret_key = decrypt(data.secret_key)
-            if data.session_token:
-                data.session_token = decrypt(data.session_token)
-        return data
+        secret = validate_bucket_secret(self)
+        if isinstance(secret, S3BucketSecret):
+            if secret.access_key:
+                secret.access_key = decrypt(secret.access_key)
+            if secret.secret_key:
+                secret.secret_key = decrypt(secret.secret_key)
+            if secret.session_token:
+                secret.session_token = decrypt(secret.session_token)
+        return secret
 
     @classmethod
     def from_bucket_secret(cls, secret: BucketSecretCreate) -> BucketSecretOrm:
