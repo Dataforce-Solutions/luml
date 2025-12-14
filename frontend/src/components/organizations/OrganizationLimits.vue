@@ -52,8 +52,9 @@
         />
         <div class="item-content">
           <div class="item-values">
-            {{ organizationStore.organizationDetails.total_satellites }}/
-            {{ organizationStore.organizationDetails.satellites_limit }}
+            {{ organizationStore.organizationDetails.total_satellites }}/{{
+              organizationStore.organizationDetails.satellites_limit
+            }}
           </div>
           <div class="item-label">satellites limit per organization</div>
         </div>
@@ -70,8 +71,9 @@
         />
         <div class="item-content">
           <div class="item-values">
-            {{ organizationStore.organizationDetails.total_model_artifacts }}/
-            {{ organizationStore.organizationDetails.model_artifacts_limit }}
+            {{ organizationStore.organizationDetails.total_model_artifacts }}/{{
+              organizationStore.organizationDetails.model_artifacts_limit
+            }}
           </div>
           <div class="item-label">model attachments limit per organization</div>
         </div>
