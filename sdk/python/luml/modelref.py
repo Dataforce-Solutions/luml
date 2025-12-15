@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import io
 import json
 import tarfile
@@ -10,6 +12,8 @@ from pathlib import Path
 from typing import Any
 
 from pyfnx_utils.reader import Reader  # type: ignore[import-untyped]
+
+from luml.model_card.builder import ModelCardBuilder
 
 
 class PathSeparators(str, Enum):
@@ -94,7 +98,24 @@ class ModelReference:
                 file_info.size = len(file_content)
                 tar.addfile(file_info, fileobj=io.BytesIO(file_content))
 
-    def add_model_card(self, html_content: str) -> None:
+    def add_model_card(self, html_content: str | ModelCardBuilder) -> None:
+        """
+        Add a model card to the model artifact.
+
+        Args:
+            html_content: Either an HTML string or a ModelCardBuilder instance
+        """
+        # Handle ModelCardBuilder
+        if not isinstance(html_content, str):
+            # Runtime import to avoid circular dependency
+            from luml.model_card.builder import ModelCardBuilder
+
+            if isinstance(html_content, ModelCardBuilder):
+                html_content = html_content.build()
+            else:
+                msg = "html_content must be a string or ModelCardBuilder instance"
+                raise TypeError(msg)
+
         tag = "dataforce.studio::model_card:v1"
 
         zip_buffer = io.BytesIO()
