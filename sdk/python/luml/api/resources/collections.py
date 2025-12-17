@@ -3,12 +3,12 @@ from abc import ABC, abstractmethod
 from collections.abc import Coroutine
 from typing import TYPE_CHECKING, Any
 
-from .._types import Collection, CollectionType, is_uuid
-from .._utils import find_by_value
-from ._validators import validate_collection
+from luml.api._types import Collection, CollectionType, is_uuid
+from luml.api._utils import find_by_value
+from luml.api.resources._validators import validate_collection
 
 if TYPE_CHECKING:
-    from .._client import AsyncLumlClient, LumlClient
+    from luml.api._client import AsyncLumlClient, LumlClient
 
 
 class CollectionResourceBase(ABC):

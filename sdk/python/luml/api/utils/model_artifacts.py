@@ -3,7 +3,7 @@ import json
 import os
 import tarfile
 
-from .._types import ModelDetails
+from luml.api._types import ModelDetails
 
 
 class ModelFileHandler:
@@ -83,7 +83,9 @@ class ModelFileHandler:
 
                 return {k: v for k, v in eval_metrics.items() if k != "N_SAMPLES"}
 
-        custom_metrics = self._get_metadata_by_tag(["dataforce.studio::registry_metrics:v1"])
+        custom_metrics = self._get_metadata_by_tag(
+            ["dataforce.studio::registry_metrics:v1"]
+        )
         if custom_metrics:
             return custom_metrics.get("metrics", {})
 

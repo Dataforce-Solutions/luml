@@ -3,7 +3,7 @@ from collections.abc import Callable
 from functools import wraps
 from typing import Any
 
-from .._exceptions import ConfigurationError
+from luml.api._exceptions import ConfigurationError
 
 
 def validate_collection(func: Callable[..., Any]) -> Callable[..., Any]:

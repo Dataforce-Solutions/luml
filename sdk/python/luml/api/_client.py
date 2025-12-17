@@ -5,15 +5,15 @@ from typing import TYPE_CHECKING
 
 from httpx import URL
 
-from ._base_client import AsyncBaseClient, SyncBaseClient
-from ._exceptions import (
+from luml.api._base_client import AsyncBaseClient, SyncBaseClient
+from luml.api._exceptions import (
     CollectionResourceNotFoundError,
     ConfigurationError,
     LumlAPIError,
     OrbitResourceNotFoundError,
     OrganizationResourceNotFoundError,
 )
-from ._types import is_uuid
+from luml.api._types import is_uuid
 
 if TYPE_CHECKING:
     from .resources.bucket_secrets import (

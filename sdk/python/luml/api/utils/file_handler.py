@@ -5,8 +5,8 @@ from xml.etree import ElementTree as ET
 
 import httpx
 
-from .._exceptions import FileDownloadError, FileUploadError, LumlAPIError
-from .._types import (
+from luml.api._exceptions import FileDownloadError, FileUploadError, LumlAPIError
+from luml.api._types import (
     PartDetails,
 )
 
