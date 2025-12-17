@@ -108,7 +108,6 @@ class ModelReference:
         # Handle ModelCardBuilder
         if not isinstance(html_content, str):
             # Runtime import to avoid circular dependency
-            from luml.model_card.builder import ModelCardBuilder
 
             if isinstance(html_content, ModelCardBuilder):
                 html_content = html_content.build()
