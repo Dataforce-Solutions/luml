@@ -52,6 +52,7 @@ class S3FileHandler(BaseFileHandler):
         upload_id: str | None = None,
     ) -> httpx.Response:
         """Upload a file using S3 multipart upload."""
+
         if upload_id is None:
             raise ValueError("upload_id is required for S3 multipart uploads")
 
@@ -89,6 +90,7 @@ class S3FileHandler(BaseFileHandler):
         update_progress: Callable[[int], None],
     ) -> dict[str, int | str]:
         """Upload a single part of multipart upload."""
+
         part_size = part.end_byte - part.start_byte + 1
 
         with open(file_path, "rb") as f:
@@ -114,6 +116,7 @@ class S3FileHandler(BaseFileHandler):
         self, url: str, parts_complete: list[dict[str, int | str]]
     ) -> httpx.Response:
         """Complete S3 multipart upload."""
+
         parts_complete.sort(key=lambda x: x["part_number"])
         parts_xml = ""
         for part in parts_complete:
@@ -136,9 +139,12 @@ class S3FileHandler(BaseFileHandler):
 
         return result
 
-    @staticmethod
-    def initiate_multipart_upload(initiate_url: str) -> str | None:
-        """Initiate S3 multipart upload and return upload_id."""
+    def initiate_multipart_upload(self, initiate_url: str | None) -> str | None:
+        if not initiate_url:
+            raise LumlAPIError(
+                "Upload URL is required for S3 multipart upload initialization"
+            )
+
         try:
             with httpx.Client(timeout=300) as client:
                 response = client.post(initiate_url)

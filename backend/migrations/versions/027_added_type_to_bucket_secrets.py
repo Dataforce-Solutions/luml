@@ -24,7 +24,7 @@ def upgrade() -> None:
     op.execute("UPDATE bucket_secrets SET type = 's3' WHERE type IS NULL")
     op.alter_column("bucket_secrets", "type", nullable=False)
     op.execute(
-        "UPDATE bucket_secrets SET region = 'eu-north-1' "
+        "UPDATE bucket_secrets SET region = 'PLEASE_ADD_REGION_HERE' "
         "WHERE region IS NULL AND type = 's3'"
     )
     # ### end Alembic commands ###

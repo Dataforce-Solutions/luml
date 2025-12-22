@@ -12,7 +12,6 @@ from dataforce_studio.schemas.bucket_secrets import (
 )
 from dataforce_studio.schemas.storage import (
     MultipartUploadInfo,
-    PartDetails,
     S3MultiPartUploadDetails,
     S3UploadDetails,
 )
@@ -91,29 +90,6 @@ class S3Client(BaseStorageClient):
             return urls
         except Exception as error:
             raise BucketConnectionError("Failed to generate upload URL.") from error
-
-    @staticmethod
-    def _parts_upload_details(
-        urls: list[str], size: int, part_size: int
-    ) -> list[PartDetails]:
-        parts: list[PartDetails] = []
-        start_byte: int = 0
-        for part_number in range(len(urls)):
-            current_part_size: int = min(part_size, size - part_number * part_size)
-            end_byte: int = start_byte + current_part_size
-
-            parts.append(
-                PartDetails(
-                    part_number=part_number + 1,
-                    url=urls[part_number],
-                    start_byte=start_byte,
-                    end_byte=end_byte,
-                    part_size=current_part_size,
-                )
-            )
-            start_byte += current_part_size + 1
-
-        return parts
 
     async def get_upload_url(self, object_name: str) -> str:
         try:

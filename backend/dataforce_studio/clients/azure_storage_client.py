@@ -20,7 +20,6 @@ from dataforce_studio.schemas.bucket_secrets import (
 from dataforce_studio.schemas.storage import (
     AzureMultiPartUploadDetails,
     AzureUploadDetails,
-    PartDetails,
 )
 
 
@@ -70,6 +69,10 @@ class AzureBlobClient(BaseStorageClient):
     ) -> str:
         return self._extract_field_from_connection_string(secret.endpoint, "AccountKey")
 
+    @staticmethod
+    def _get_part_id(part_number: int) -> str:
+        return base64.b64encode(f"block-{part_number:08d}".encode()).decode()
+
     def _generate_sas_url(
         self,
         blob_name: str,
@@ -111,10 +114,6 @@ class AzureBlobClient(BaseStorageClient):
             BlobSasPermissions(delete=True),
         )
 
-    @staticmethod
-    def _get_part_id(part_number: int) -> str:
-        return base64.b64encode(f"block-{part_number:08d}".encode()).decode()
-
     async def get_complete_url(self, object_name: str) -> str:
         url = self._generate_sas_url(
             object_name,
@@ -144,29 +143,6 @@ class AzureBlobClient(BaseStorageClient):
             raise BucketConnectionError(
                 "Failed to generate multipart upload URLs."
             ) from error
-
-    @staticmethod
-    def _parts_upload_details(
-        urls: list[str], size: int, part_size: int
-    ) -> list[PartDetails]:
-        parts: list[PartDetails] = []
-        start_byte: int = 0
-        for part_number in range(len(urls)):
-            current_part_size: int = min(part_size, size - part_number * part_size)
-            end_byte: int = start_byte + current_part_size
-
-            parts.append(
-                PartDetails(
-                    part_number=part_number + 1,
-                    url=urls[part_number],
-                    start_byte=start_byte,
-                    end_byte=end_byte,
-                    part_size=current_part_size,
-                )
-            )
-            start_byte += current_part_size
-
-        return parts
 
     async def create_multipart_upload(
         self, bucket_location: str, size: int, upload_id: str | None = None

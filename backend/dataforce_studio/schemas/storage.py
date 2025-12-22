@@ -43,7 +43,7 @@ class S3MultiPartUploadDetails(BaseModel):
 
 
 class AzureMultiPartUploadDetails(BaseModel):
-    type: BucketType | None = BucketType.AZURE
+    type: BucketType = BucketType.AZURE
     parts: list[PartDetails]
     complete_url: str
 

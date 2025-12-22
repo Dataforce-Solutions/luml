@@ -3,8 +3,8 @@ from collections.abc import Callable, Generator
 
 import httpx
 
-from .._exceptions import FileDownloadError
-from .._types import PartDetails
+from luml.api._exceptions import FileDownloadError
+from luml.api._types import PartDetails
 
 
 class BaseFileHandler(ABC):
@@ -96,6 +96,9 @@ class BaseFileHandler(ABC):
         upload_id: str | None = None,
     ) -> httpx.Response:
         pass
+
+    def initiate_multipart_upload(self, initiate_url: str | None) -> str | None:
+        return None
 
     def download_file_with_progress(
         self, url: str, file_path: str, file_name: str = ""

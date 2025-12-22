@@ -11,10 +11,10 @@ from luml.api._types import (
     is_uuid,
 )
 from luml.api._utils import find_by_value
+from luml.api.resources._validators import validate_collection
 from luml.api.services.upload_service import AsyncUploadService, UploadService
 from luml.api.utils.model_artifacts import ModelFileHandler
 from luml.api.utils.s3_file_handler import S3FileHandler
-from luml.api.resources._validators import validate_collection
 
 if TYPE_CHECKING:
     from luml.api._client import AsyncLumlClient, LumlClient

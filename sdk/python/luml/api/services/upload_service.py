@@ -2,13 +2,12 @@ from typing import TYPE_CHECKING
 
 import httpx
 
-from .._exceptions import LumlAPIError
-from .._types import UploadDetails
-from ..utils.file_handler_factory import create_file_handler
-from ..utils.s3_file_handler import S3FileHandler
+from luml.api._exceptions import LumlAPIError
+from luml.api._types import UploadDetails
+from luml.api.utils.file_handler_factory import create_file_handler
 
 if TYPE_CHECKING:
-    from ..resources.bucket_secrets import (
+    from luml.api.resources.bucket_secrets import (
         AsyncBucketSecretResource,
         BucketSecretResource,
     )
@@ -28,13 +27,7 @@ class UploadService:
         handler = create_file_handler(upload_details.type)
 
         if upload_details.multipart:
-            upload_id = None
-            if isinstance(handler, S3FileHandler):
-                if not upload_details.url:
-                    raise LumlAPIError("Upload URL is required for multipart upload")
-                upload_id = handler.initiate_multipart_upload(upload_details.url)
-                if not upload_id:
-                    raise LumlAPIError("Failed to initiate multipart upload")
+            upload_id = handler.initiate_multipart_upload(upload_details.url)
 
             multipart_urls = self._bucket_secrets.get_multipart_upload_urls(
                 upload_details.bucket_secret_id,
@@ -75,13 +68,7 @@ class AsyncUploadService:
         handler = create_file_handler(upload_details.type)
 
         if upload_details.multipart:
-            upload_id = None
-            if isinstance(handler, S3FileHandler):
-                if not upload_details.url:
-                    raise LumlAPIError("Upload URL is required for multipart upload")
-                upload_id = handler.initiate_multipart_upload(upload_details.url)
-                if not upload_id:
-                    raise LumlAPIError("Failed to initiate multipart upload")
+            upload_id = handler.initiate_multipart_upload(upload_details.url)
 
             multipart_urls = await self._bucket_secrets.get_multipart_upload_urls(
                 upload_details.bucket_secret_id,

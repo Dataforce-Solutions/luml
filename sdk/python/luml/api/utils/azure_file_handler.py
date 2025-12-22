@@ -5,13 +5,14 @@ from threading import Lock
 
 import httpx
 
-from .._exceptions import FileUploadError
-from .._types import PartDetails
-from .base_file_handler import BaseFileHandler
+from luml.api._exceptions import FileUploadError
+from luml.api._types import PartDetails
+from luml.api.utils.base_file_handler import BaseFileHandler
 
 
 class AzureFileHandler(BaseFileHandler):
     """File handler for Azure Blob Storage."""
+
     def upload_simple(
         self,
         url: str,
