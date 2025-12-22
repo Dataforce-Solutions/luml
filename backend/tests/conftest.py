@@ -59,7 +59,7 @@ from luml.settings import config
 from sqlalchemy.ext.asyncio import AsyncConnection, AsyncEngine, create_async_engine
 from utils.db import migrate_db
 
-TEST_DB_NAME = "df_studio_test"
+TEST_DB_NAME = "luml_studio_test"
 TEST_PASSWORD = "test_password"
 
 
