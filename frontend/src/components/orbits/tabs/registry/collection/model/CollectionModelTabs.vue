@@ -19,7 +19,7 @@
 
 <script setup lang="ts">
 import { Tabs, TabList, Tab, type TabPassThroughOptions } from 'primevue'
-import { LayoutDashboard, FolderDot, ScanEye, Folders } from 'lucide-vue-next'
+import { LayoutDashboard, ScanEye, Folders, FileChartLine } from 'lucide-vue-next'
 import { computed } from 'vue'
 
 type Props = {
@@ -45,7 +45,7 @@ const items = computed(() => [
   {
     label: 'Model card',
     routeName: 'model-card',
-    icon: FolderDot,
+    icon: FileChartLine,
     disabled: !props.showModelCard,
   },
   {
