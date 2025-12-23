@@ -15,6 +15,7 @@ from dataforce_studio.api.satellites import satellite_worker_router
 from dataforce_studio.api.user_routes import users_routers
 from dataforce_studio.infra.exceptions import ApplicationError
 from dataforce_studio.infra.security import JWTAuthenticationBackend
+from dataforce_studio.settings import config
 
 
 class AppService(FastAPI):
@@ -32,9 +33,10 @@ class AppService(FastAPI):
         self.include_error_handlers()
         self.custom_openapi()
 
+        allowed_origins = config.CORS_ORIGINS.split(",")
         self.add_middleware(
             CORSMiddleware,
-            allow_origins=["*"],
+            allow_origins=allowed_origins,
             allow_credentials=True,
             allow_methods=["*"],
             allow_headers=["*"],

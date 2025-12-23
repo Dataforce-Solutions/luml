@@ -3,7 +3,6 @@ from collections.abc import AsyncGenerator
 from dataclasses import dataclass
 from time import time
 from unittest.mock import AsyncMock, MagicMock, Mock, patch
-from uuid import uuid7
 
 import jwt
 import pytest
@@ -653,12 +652,12 @@ async def test_handle_oauth_google(
     mock_get_user_info: AsyncMock,
     mock_exchange_code: AsyncMock,
     get_tokens: Token,
-    test_user_create: CreateUser,
+    test_user: User,
 ) -> None:
     created_user = User(
-        id=uuid7(),
-        email=test_user_create.email,
-        full_name=test_user_create.full_name,
+        id=uuid.uuid7(),
+        email=test_user.email,
+        full_name=test_user.full_name,
         email_verified=True,
         auth_method=AuthProvider.GOOGLE,
         photo="http://example.com/photo.jpg",
@@ -670,8 +669,8 @@ async def test_handle_oauth_google(
 
     mock_exchange_code.return_value = "access_token"
     mock_get_user_info.return_value = UserInfo(
-        email=test_user_create.email,
-        full_name=test_user_create.full_name,
+        email=test_user.email,
+        full_name=test_user.full_name,
         photo_url="http://example.com/photo.jpg",
     )
 
@@ -711,6 +710,7 @@ async def test_oauth_updates_auth_method_for_existing_user(
     mock_get_user_info: AsyncMock,
     mock_exchange_code: AsyncMock,
     get_tokens: Token,
+    test_user: User,
 ) -> None:
     email = "test@example.com"
     photo = "http://example.com/photo.jpg"
