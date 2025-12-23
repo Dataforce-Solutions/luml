@@ -9,13 +9,16 @@
 
 <script setup lang="ts">
 import type { ExperimentSnapshotDynamicMetric, ModelInfo } from '../../interfaces/interfaces'
-import { computed, nextTick, onMounted, ref } from 'vue'
+import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import Plotly from 'plotly.js-dist'
 import DynamicMetricsItemContent from './DynamicMetricsItemContent.vue'
 import { useVariableValue } from '../../hooks/useVariableValue'
 import { plotlyLineChartLayout } from '../../lib/plotly/layouts'
+import { cutStringOnMiddle } from '@/modules/experiment-snapshot/helpers/helpers'
+import { useThemeStore } from '@/stores/theme'
 
 const { getVariablesValues } = useVariableValue()
+const themeStore = useThemeStore()
 
 type Props = {
   metricName: string
@@ -25,28 +28,46 @@ type Props = {
 
 const props = defineProps<Props>()
 
-const chartRef = ref<HTMLDivElement[]>([])
-const chartScaledRef = ref<HTMLDivElement[]>([])
+const chartRef = ref<HTMLDivElement | null>(null)
+const chartScaledRef = ref<HTMLDivElement | null>(null)
 
 const plotlyData = computed(() => {
-  return props.data
+  const data: ExperimentSnapshotDynamicMetric[] = JSON.parse(JSON.stringify(props.data))
+  return data
     .filter((item) => item.modelId)
-    .map((data) => {
-      const color = getVariablesValues([props.modelsInfo[data.modelId]?.color])[0]
+    .map((item) => {
+      const color = getVariablesValues([props.modelsInfo[item.modelId]?.color])[0]
+      const modelName = getFormattedName(props.modelsInfo[item.modelId]?.name)
       return {
-        ...data,
+        ...item,
         type: 'scatter',
-        mode: 'lines',
+        mode: item.x.length > 1 ? 'lines' : 'markers',
         name: props.metricName,
-        line: { color: color, width: 3 },
-        hovertemplate:
-          '<b>Value:</b> %{y}<br>' +
-          `<b>Model:</b> ${props.modelsInfo[data.modelId]?.name}<extra></extra>`,
+        line: { color: color, width: 2, shape: 'spline', smoothing: 1.2 },
+        hovertemplate: '<b>Value:</b> %{y}<br>' + `<b>Model:</b> ${modelName}<extra></extra>`,
       }
     })
 })
 
-const plotlyLayout = computed(() => {
+function setScaledChart() {
+  nextTick(() => {
+    const layout = getPlotlyLayout()
+    Plotly.newPlot(chartScaledRef.value, plotlyData.value, layout, {
+      displayModeBar: false,
+      responsive: true,
+    })
+  })
+}
+
+function getFormattedName(name: string | undefined) {
+  if (!name) return ''
+  if (name.length > 24) {
+    return cutStringOnMiddle(name, 24)
+  }
+  return name
+}
+
+function getPlotlyLayout() {
   const [bgColor, borderColor, textColor, gridColor] = getVariablesValues([
     'var(--p-card-background)',
     'var(--p-content-border-color)',
@@ -61,19 +82,19 @@ const plotlyLayout = computed(() => {
     textColor,
     gridColor,
   })
-})
-
-function setScaledChart() {
-  nextTick(() => {
-    Plotly.newPlot(chartScaledRef.value, plotlyData.value, plotlyLayout.value, {
-      displayModeBar: false,
-      responsive: true,
-    })
-  })
 }
 
+watch(
+  () => themeStore.getCurrentTheme,
+  () => {
+    const layout = getPlotlyLayout()
+    Plotly.relayout(chartRef.value, layout)
+  },
+)
+
 onMounted(() => {
-  Plotly.newPlot(chartRef.value, plotlyData.value, plotlyLayout.value, {
+  const layout = getPlotlyLayout()
+  Plotly.newPlot(chartRef.value, plotlyData.value, layout, {
     displayModeBar: false,
     responsive: true,
   })
