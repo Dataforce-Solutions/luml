@@ -447,7 +447,7 @@ class ModelArtifactResource(ModelArtifactResourceBase):
 
             status = (
                 ModelArtifactStatus.UPLOADED
-                if response.status_code == 200
+                if 200 <= response.status_code < 300
                 else ModelArtifactStatus.UPLOAD_FAILED
             )
         except FileUploadError as error:
@@ -1150,7 +1150,7 @@ class AsyncModelArtifactResource(ModelArtifactResourceBase):
 
             status = (
                 ModelArtifactStatus.UPLOADED
-                if response.status_code == 200
+                if 200 <= response.status_code < 300
                 else ModelArtifactStatus.UPLOAD_FAILED
             )
         except FileUploadError as error:
