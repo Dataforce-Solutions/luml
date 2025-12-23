@@ -5,7 +5,13 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from dataforce_studio.infra.encryption import decrypt, encrypt
 from dataforce_studio.models.base import Base, TimestampMixin
-from dataforce_studio.schemas.bucket_secrets import BucketSecret, BucketSecretCreate
+from dataforce_studio.schemas.bucket_secrets import (
+    BucketSecret,
+    BucketSecretCreate,
+    S3BucketSecret,
+    S3BucketSecretCreate,
+    validate_bucket_secret,
+)
 
 
 class BucketSecretOrm(TimestampMixin, Base):
@@ -32,6 +38,7 @@ class BucketSecretOrm(TimestampMixin, Base):
     secure: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
     region: Mapped[str | None] = mapped_column(String, nullable=True)
     cert_check: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
+    type: Mapped[str] = mapped_column(String, nullable=False)
 
     organization: Mapped[OrganizationOrm] = relationship(  # type: ignore[name-defined]  # noqa: F821
         "OrganizationOrm", back_populates="bucket_secrets", lazy="selectin"
@@ -43,25 +50,30 @@ class BucketSecretOrm(TimestampMixin, Base):
     )
 
     def __repr__(self) -> str:
-        return f"BucketSecret(id={self.id!r}, endpoint={self.endpoint!r})"
+        return (
+            f"BucketSecret(id={self.id!r}, type={self.type}, "
+            f"endpoint={self.endpoint!r})"
+        )
 
     def to_bucket_secret(self) -> BucketSecret:
-        data = BucketSecret.model_validate(self)
-        if data.access_key:
-            data.access_key = decrypt(data.access_key)
-        if data.secret_key:
-            data.secret_key = decrypt(data.secret_key)
-        if data.session_token:
-            data.session_token = decrypt(data.session_token)
-        return data
+        secret = validate_bucket_secret(self)
+        if isinstance(secret, S3BucketSecret):
+            if secret.access_key:
+                secret.access_key = decrypt(secret.access_key)
+            if secret.secret_key:
+                secret.secret_key = decrypt(secret.secret_key)
+            if secret.session_token:
+                secret.session_token = decrypt(secret.session_token)
+        return secret
 
     @classmethod
     def from_bucket_secret(cls, secret: BucketSecretCreate) -> BucketSecretOrm:
         data = secret.model_dump()
-        if secret.access_key:
-            data["access_key"] = encrypt(secret.access_key)
-        if secret.secret_key:
-            data["secret_key"] = encrypt(secret.secret_key)
-        if secret.session_token:
-            data["session_token"] = encrypt(secret.session_token)
+        if isinstance(secret, S3BucketSecretCreate):
+            if secret.access_key:
+                data["access_key"] = encrypt(secret.access_key)
+            if secret.secret_key:
+                data["secret_key"] = encrypt(secret.secret_key)
+            if secret.session_token:
+                data["session_token"] = encrypt(secret.session_token)
         return cls(**data)

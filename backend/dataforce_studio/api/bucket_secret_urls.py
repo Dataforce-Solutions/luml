@@ -4,12 +4,13 @@ from dataforce_studio.handlers.bucket_secrets import BucketSecretHandler
 from dataforce_studio.infra.dependencies import UserAuthentication
 from dataforce_studio.infra.endpoint_responses import endpoint_responses
 from dataforce_studio.schemas.bucket_secrets import (
-    BucketSecretCreateIn,
     BucketSecretUrls,
+    S3BucketSecretCreateIn,
 )
 from dataforce_studio.schemas.storage import (
+    AzureMultiPartUploadDetails,
     BucketMultipartUpload,
-    MultiPartUploadDetails,
+    S3MultiPartUploadDetails,
 )
 
 bucket_secret_urls_router = APIRouter(
@@ -25,7 +26,7 @@ bucket_secret_handler = BucketSecretHandler()
     "/urls", responses=endpoint_responses, response_model=BucketSecretUrls
 )
 async def get_bucket_secret_connection_urls(
-    secret: BucketSecretCreateIn,
+    secret: S3BucketSecretCreateIn,
 ) -> BucketSecretUrls:
     return await bucket_secret_handler.generate_bucket_urls(secret)
 
@@ -33,9 +34,9 @@ async def get_bucket_secret_connection_urls(
 @bucket_secret_urls_router.post(
     "/upload/multipart",
     responses=endpoint_responses,
-    response_model=MultiPartUploadDetails,
+    response_model=S3MultiPartUploadDetails | AzureMultiPartUploadDetails,
 )
 async def get_bucket_multipart_urls(
     data: BucketMultipartUpload,
-) -> MultiPartUploadDetails:
+) -> S3MultiPartUploadDetails | AzureMultiPartUploadDetails:
     return await bucket_secret_handler.get_bucket_multipart_urls(data)

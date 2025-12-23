@@ -1,8 +1,8 @@
 __version__ = "0.1.0"
 __title__ = "luml-sdk"
 
-from ._client import AsyncLumlClient, LumlClient
-from ._exceptions import (
+from luml.api._client import AsyncLumlClient, LumlClient
+from luml.api._exceptions import (
     APIError,
     APIResponseValidationError,
     APIStatusError,

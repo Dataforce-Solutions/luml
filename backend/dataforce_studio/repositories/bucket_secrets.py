@@ -11,6 +11,7 @@ from dataforce_studio.schemas.bucket_secrets import (
     BucketSecret,
     BucketSecretCreate,
     BucketSecretUpdate,
+    S3BucketSecretUpdate,
 )
 
 
@@ -53,12 +54,13 @@ class BucketSecretRepository(RepositoryBase, CrudMixin):
             if not db_secret:
                 return None
             update_data = secret.model_dump(exclude_unset=True)
-            if secret.access_key is not None:
-                update_data["access_key"] = encrypt(secret.access_key)
-            if secret.secret_key is not None:
-                update_data["secret_key"] = encrypt(secret.secret_key)
-            if secret.session_token is not None:
-                update_data["session_token"] = encrypt(secret.session_token)
+            if isinstance(secret, S3BucketSecretUpdate):
+                if secret.access_key is not None:
+                    update_data["access_key"] = encrypt(secret.access_key)
+                if secret.secret_key is not None:
+                    update_data["secret_key"] = encrypt(secret.secret_key)
+                if secret.session_token is not None:
+                    update_data["session_token"] = encrypt(secret.session_token)
             for field, value in update_data.items():
                 setattr(db_secret, field, value)
             try:
