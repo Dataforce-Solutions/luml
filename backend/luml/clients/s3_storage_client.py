@@ -11,7 +11,10 @@ from luml.schemas.bucket_secrets import (
     S3BucketSecretCreateIn,
 )
 from luml.schemas.storage import (
-
+    MultipartUploadInfo,
+    S3MultiPartUploadDetails,
+    S3UploadDetails,
+)
 
 
 class S3Client(BaseStorageClient):

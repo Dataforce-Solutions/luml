@@ -3,7 +3,6 @@ from unittest.mock import AsyncMock, Mock, patch
 from uuid import UUID
 
 import pytest
-
 from luml.handlers.bucket_secrets import BucketSecretHandler
 from luml.infra.exceptions import (
     ApplicationError,

@@ -7,7 +7,6 @@ from uuid import uuid7
 
 import asyncpg  # type: ignore[import-untyped]
 import pytest_asyncio
-
 from luml.models import OrganizationOrm
 from luml.repositories.bucket_secrets import BucketSecretRepository
 from luml.repositories.collections import CollectionRepository

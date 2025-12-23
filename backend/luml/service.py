@@ -63,9 +63,9 @@ class AppService(FastAPI):
         if self.openapi_schema:
             return self.openapi_schema
         openapi_schema = get_openapi(
-            title="Dataforce Studio API",
+            title="LUML AI API",
             version="1.0.0",
-            description="API docs for Dataforce Studio",
+            description="API docs for LUML AI",
             routes=self.routes,
         )
         openapi_schema["components"]["securitySchemes"] = {

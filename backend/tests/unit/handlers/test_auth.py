@@ -8,7 +8,6 @@ import jwt
 import pytest
 import pytest_asyncio
 from jwt.exceptions import InvalidTokenError
-
 from luml.clients.oauth_providers import OAuthGoogleProvider
 from luml.handlers.auth import AuthHandler
 from luml.infra.exceptions import AuthError
@@ -24,7 +23,6 @@ from luml.schemas.user import (
     User,
     UserOut,
 )
-from luml.services.oauth_providers import OAuthGoogleProvider
 
 secret_key = "test"
 algorithm = "HS256"
@@ -336,8 +334,11 @@ async def test_handle_signin(
 @patch("luml.handlers.auth.jwt.decode")
 @patch.object(AuthHandler, "_create_tokens", new_callable=MagicMock)
 @patch("luml.handlers.auth.UserRepository.get_user", new_callable=AsyncMock)
-@patch("luml.handlers.auth.TokenBlackListRepository.is_token_blacklisted",new_callable=AsyncMock)
-@patch("luml.handlers.auth.TokenBlackListRepository.add_token",new_callable=AsyncMock)
+@patch(
+    "luml.handlers.auth.TokenBlackListRepository.is_token_blacklisted",
+    new_callable=AsyncMock,
+)
+@patch("luml.handlers.auth.TokenBlackListRepository.add_token", new_callable=AsyncMock)
 @pytest.mark.asyncio
 async def test_handle_refresh_token(
     mock_add_token: AsyncMock,
@@ -415,7 +416,10 @@ async def test_handle_refresh_token_email_is_none(
 
 
 @patch("luml.handlers.auth.jwt.decode")
-@patch("luml.handlers.auth.TokenBlackListRepository.is_token_blacklisted",new_callable=AsyncMock)
+@patch(
+    "luml.handlers.auth.TokenBlackListRepository.is_token_blacklisted",
+    new_callable=AsyncMock,
+)
 @pytest.mark.asyncio
 async def test_handle_refresh_token_has_been_revoked(
     mock_is_token_blacklisted: AsyncMock,
@@ -536,7 +540,7 @@ async def test_handle_get_current_user(
     mock_get_public_user.assert_awaited_once_with(user.email)
 
 
-@patch("luml.handlers.auth.UserRepository.get_public_user",new_callable=AsyncMock)
+@patch("luml.handlers.auth.UserRepository.get_public_user", new_callable=AsyncMock)
 @pytest.mark.asyncio
 async def test_handle_get_current_user_not_found(
     mock_get_public_user: AsyncMock, test_user_out: UserOut

@@ -17,7 +17,7 @@ class EmailHandler:
         message = Mail(
             from_email=self.sender_email,
             to_emails=str(email),
-            subject="Welcome to Dataforce Studio",
+            subject="Welcome to LUML AI",
         )
         message.template_id = config.TEMPLATE_ID_ACTIVATION_EMAIL
         message.dynamic_template_data = {

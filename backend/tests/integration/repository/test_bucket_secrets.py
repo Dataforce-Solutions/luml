@@ -1,7 +1,6 @@
 from uuid import uuid4
 
 import pytest
-
 from luml.infra.exceptions import DatabaseConstraintError
 from luml.repositories.bucket_secrets import BucketSecretRepository
 from luml.repositories.orbits import OrbitRepository
@@ -11,6 +10,7 @@ from luml.schemas.bucket_secrets import (
     S3BucketSecretUpdate,
 )
 from luml.schemas.orbit import OrbitCreateIn
+
 from tests.conftest import OrganizationFixtureData
 
 
