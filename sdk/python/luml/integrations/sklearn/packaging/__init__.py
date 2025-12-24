@@ -1,5 +1,7 @@
 from typing import Any
 
+from luml.utils.time import get_epoch
+
 try:
     from sklearn.base import BaseEstimator  # type: ignore[import-not-found]
 except ImportError:
@@ -17,16 +19,15 @@ except ImportError:
 
 
 import os
-import shutil
 import tempfile
 
 import numpy as np  # type: ignore[import-not-found]
 from pyfnx_utils.builder import PyfuncBuilder  # type: ignore[import-untyped]
 from pyfnx_utils.models.manifest import NDJSON  # type: ignore[import-untyped]
 
+from luml.integrations.sklearn.packaging._template import SKlearnPyFunc
 from luml.modelref import ModelReference
-from luml.packaging.integrations.sklearn.template import SKlearnPyFunc
-from luml.packaging.utils import get_version
+from luml.utils.imports import get_version
 
 
 def _resolve_dtype(dtype: np.dtype) -> str:
@@ -37,14 +38,16 @@ def _resolve_dtype(dtype: np.dtype) -> str:
     return "str"
 
 
-def save(
+def save_sklearn(  # noqa: C901
     estimator: Any,  # noqa: ANN401
     inputs: Any,  # noqa: ANN401
-    path: str = "model.dfs",
-    model_name: str | None = None,
-    model_version: str | None = None,
-    model_description: str | None = None,
+    path: str | None = None,
+    manifest_model_name: str | None = None,
+    manifest_model_version: str | None = None,
+    manifest_model_description: str | None = None,
+    extra_dependencies: list[str] | None = None,
 ) -> ModelReference:
+    path = path or f"model_{get_epoch()}.luml"
     if not cloudpickle:
         raise RuntimeError("cloudpickle is not installed")
     if not BaseEstimator:
@@ -55,9 +58,9 @@ def save(
 
     builder = PyfuncBuilder(
         pyfunc=SKlearnPyFunc,
-        model_name=model_name,
-        model_version=model_version,
-        model_description=model_description,
+        model_name=manifest_model_name,
+        model_version=manifest_model_version,
+        model_description=manifest_model_description,
     )
 
     if pd is not None and isinstance(inputs, pd.DataFrame):
@@ -107,6 +110,9 @@ def save(
     ]
     for dep in dependencies:
         builder.add_runtime_dependency(dep)
+    if extra_dependencies:
+        for dep in extra_dependencies:
+            builder.add_runtime_dependency(dep)
     builder.add_fnnx_runtime_dependency()
 
     with tempfile.NamedTemporaryFile("wb", delete=False) as tmp:
@@ -114,10 +120,7 @@ def save(
         estimator_path = tmp.name
     builder.add_file(estimator_path, "estimator.pkl")
 
-    with tempfile.TemporaryDirectory() as tmpdir:
-        tmp_model_path = os.path.join(tmpdir, "model.pyfnx")
-        builder.save(tmp_model_path)
-        shutil.move(tmp_model_path, path)
+    builder.save(path)
 
     os.remove(estimator_path)
     return ModelReference(path)
