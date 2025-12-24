@@ -24,6 +24,7 @@ import numpy as np  # type: ignore[import-not-found]
 from pyfnx_utils.builder import PyfuncBuilder  # type: ignore[import-untyped]
 from pyfnx_utils.models.manifest import NDJSON  # type: ignore[import-untyped]
 
+from luml.modelref import ModelReference
 from luml.packaging.integrations.sklearn.template import SKlearnPyFunc
 from luml.packaging.utils import get_version
 
@@ -43,7 +44,7 @@ def save(
     model_name: str | None = None,
     model_version: str | None = None,
     model_description: str | None = None,
-) -> None:
+) -> ModelReference:
     if not cloudpickle:
         raise RuntimeError("cloudpickle is not installed")
     if not BaseEstimator:
@@ -62,7 +63,7 @@ def save(
     if pd is not None and isinstance(inputs, pd.DataFrame):
         input_order = list(inputs.columns)
         for col in input_order:
-            dtype = _resolve_dtype(inputs[col].dtype)
+            dtype = _resolve_dtype(inputs[col].dtype)  # type: ignore
             builder.add_input(
                 NDJSON(name=col, dtype=f"Array[{dtype}]", shape=["batch"])
             )
@@ -84,7 +85,7 @@ def save(
             shape = ["batch"] + list(example.shape[1:])
             dtype = _resolve_dtype(example.dtype)
             builder.add_input(
-                NDJSON(name="input", dtype=f"Array[{dtype}]", shape=shape)
+                NDJSON(name="input", dtype=f"Array[{dtype}]", shape=shape)  # type: ignore
             )
             input_order = ["input"]
         x = example
@@ -96,7 +97,7 @@ def save(
     y_shape = ["batch"] + list(y_array.shape[1:])
     y_dtype = _resolve_dtype(y_array.dtype)
 
-    builder.add_output(NDJSON(name="y", dtype=f"Array[{y_dtype}]", shape=y_shape))
+    builder.add_output(NDJSON(name="y", dtype=f"Array[{y_dtype}]", shape=y_shape))  # type: ignore
 
     dependencies = [
         "scikit-learn==" + get_version("sklearn"),
@@ -119,3 +120,4 @@ def save(
         shutil.move(tmp_model_path, path)
 
     os.remove(estimator_path)
+    return ModelReference(path)
