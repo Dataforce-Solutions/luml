@@ -1,5 +1,4 @@
 version = 1
-revision = 1
 requires-python = ">=3.12"
 
 [[package]]
@@ -32,6 +31,15 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/b3/76/52c535bcebe74590f296d6c77c86dabf761c41980e1347a2422e4aa2ae41/certifi-2025.7.14.tar.gz", hash = "sha256:8ea99dbdfaaf2ba2f9bac77b9249ef62ec5218e7c2b2e903378ed5fccf765995", size = 163981 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/4f/52/34c6cf5bb9285074dc3531c437b3919e825d976fde097a7a73f79e726d03/certifi-2025.7.14-py3-none-any.whl", hash = "sha256:6b31f564a415d79ee77df69d757bb49a5bb53bd9f756cbbe24394ffd6fc1f4b2", size = 162722 },
+]
+
+[[package]]
+name = "cloudpickle"
+version = "3.1.2"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/27/fb/576f067976d320f5f0114a8d9fa1215425441bb35627b1993e5afd8111e5/cloudpickle-3.1.2.tar.gz", hash = "sha256:7fda9eb655c9c230dab534f1983763de5835249750e85fbcef43aaa30a9a2414", size = 22330 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/88/39/799be3f2f0f38cc727ee3b4f1445fe6d5e4133064ec2e4115069418a5bb6/cloudpickle-3.1.2-py3-none-any.whl", hash = "sha256:9acb47f6afd73f60dc1df93bb801b472f05ff42fa6c84167d25cb206be1fbf4a", size = 22228 },
 ]
 
 [[package]]
@@ -108,57 +116,6 @@ wheels = [
 ]
 
 [[package]]
-name = "dataforce"
-version = "0.1.0"
-source = { editable = "." }
-dependencies = [
-    { name = "httpx" },
-    { name = "pydantic" },
-    { name = "pyfnx-utils" },
-    { name = "uuid6" },
-]
-
-[package.dev-dependencies]
-dev = [
-    { name = "mypy" },
-    { name = "pytest" },
-    { name = "pytest-asyncio" },
-    { name = "pytest-cov" },
-    { name = "respx" },
-    { name = "ruff" },
-    { name = "types-passlib" },
-]
-tracing = [
-    { name = "opentelemetry-api" },
-    { name = "opentelemetry-instrumentation-openai" },
-    { name = "opentelemetry-sdk" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "httpx", specifier = ">=0.28.1,<1.0.0" },
-    { name = "pydantic", specifier = ">=2.11.7,<3.0.0" },
-    { name = "pyfnx-utils", specifier = ">=0.0.1,<1.0.0" },
-    { name = "uuid6", specifier = ">=2025.0.1" },
-]
-
-[package.metadata.requires-dev]
-dev = [
-    { name = "mypy", specifier = "==1.15.0" },
-    { name = "pytest", specifier = "==8.3.5" },
-    { name = "pytest-asyncio", specifier = "==0.26.0" },
-    { name = "pytest-cov", specifier = "==6.0.0" },
-    { name = "respx", specifier = "==0.22.0" },
-    { name = "ruff", specifier = "==0.11.5" },
-    { name = "types-passlib", specifier = "==1.7.7.20250408" },
-]
-tracing = [
-    { name = "opentelemetry-api", specifier = ">=1.36.0" },
-    { name = "opentelemetry-instrumentation-openai", specifier = ">=0.44.1" },
-    { name = "opentelemetry-sdk", specifier = ">=1.36.0" },
-]
-
-[[package]]
 name = "h11"
 version = "0.16.0"
 source = { registry = "https://pypi.org/simple" }
@@ -223,6 +180,67 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/f2/97/ebf4da567aa6827c909642694d71c9fcf53e5b504f2d96afea02718862f3/iniconfig-2.1.0.tar.gz", hash = "sha256:3abbd2e30b36733fee78f9c7f7308f2d0050e88f0087fd25c2645f63c773e1c7", size = 4793 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/2c/e1/e6716421ea10d38022b952c159d5161ca1193197fb744506875fbb87ea7b/iniconfig-2.1.0-py3-none-any.whl", hash = "sha256:9deba5723312380e77435581c6bf4935c94cbfab9b1ed33ef8d238ea168eb760", size = 6050 },
+]
+
+[[package]]
+name = "luml-sdk"
+version = "0.1.0"
+source = { editable = "." }
+dependencies = [
+    { name = "pyfnx-utils" },
+]
+
+[package.optional-dependencies]
+api = [
+    { name = "httpx" },
+    { name = "pydantic" },
+]
+
+[package.dev-dependencies]
+dev = [
+    { name = "mypy" },
+    { name = "pytest" },
+    { name = "pytest-asyncio" },
+    { name = "pytest-cov" },
+    { name = "respx" },
+    { name = "ruff" },
+    { name = "types-passlib" },
+]
+packaging = [
+    { name = "cloudpickle" },
+    { name = "pyfnx-utils" },
+]
+tracing = [
+    { name = "opentelemetry-api" },
+    { name = "opentelemetry-instrumentation-openai" },
+    { name = "opentelemetry-sdk" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "httpx", marker = "extra == 'api'", specifier = ">=0.28.1,<1.0.0" },
+    { name = "pydantic", marker = "extra == 'api'", specifier = ">=2.11.7,<3.0.0" },
+    { name = "pyfnx-utils", specifier = ">=0.0.1,<1.0.0" },
+]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "mypy", specifier = "==1.15.0" },
+    { name = "pytest", specifier = "==8.3.5" },
+    { name = "pytest-asyncio", specifier = "==0.26.0" },
+    { name = "pytest-cov", specifier = "==6.0.0" },
+    { name = "respx", specifier = "==0.22.0" },
+    { name = "ruff", specifier = "==0.11.5" },
+    { name = "types-passlib", specifier = "==1.7.7.20250408" },
+]
+packaging = [
+    { name = "cloudpickle", specifier = ">=3.1.2" },
+    { name = "pyfnx-utils", specifier = ">=0.0.2" },
+]
+tracing = [
+    { name = "opentelemetry-api", specifier = ">=1.36.0" },
+    { name = "opentelemetry-instrumentation-openai", specifier = ">=0.44.1" },
+    { name = "opentelemetry-sdk", specifier = ">=1.36.0" },
 ]
 
 [[package]]
@@ -415,11 +433,11 @@ wheels = [
 
 [[package]]
 name = "pyfnx-utils"
-version = "0.0.1"
+version = "0.0.2"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/0d/4e/b002e4d7a0ef9354fd20ef3373dd214a621d2afa4b3941c0b01559927f13/pyfnx_utils-0.0.1.tar.gz", hash = "sha256:25a7aaf4c4cb1821dd2c588078b83fb21a716de843c5fc2adf3de93500eab771", size = 7119 }
+sdist = { url = "https://files.pythonhosted.org/packages/5e/64/6dbc5da5f3f91a016b5a9a1323826283a409c9d38ce77cd56ac5ab778b00/pyfnx_utils-0.0.2.tar.gz", hash = "sha256:7251e9fb3f1e0e892ff7a1b941a945191e42214e228460f369c6c190ec1e1515", size = 7170 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/3e/5e/94ce61bf75a9578b9ca6ea91b23a9de508818175603530149e07e174e0b1/pyfnx_utils-0.0.1-py3-none-any.whl", hash = "sha256:294669d97b3a1df1ec45d7b1868074753d0964b87e3a956ac7741fecc16de3f9", size = 9212 },
+    { url = "https://files.pythonhosted.org/packages/df/08/720e5d78e7ef6d6acbab3ae39c0d1b87c67b8c60ce0ac30dab0f145648f0/pyfnx_utils-0.0.2-py3-none-any.whl", hash = "sha256:c4b53d85dd285049e5d8de505b8cbcdc50303f1ce860a75ee6842e04a54fe9e7", size = 9218 },
 ]
 
 [[package]]
@@ -536,15 +554,6 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/f8/b1/0c11f5058406b3af7609f121aaa6b609744687f1d158b3c3a5bf4cc94238/typing_inspection-0.4.1.tar.gz", hash = "sha256:6ae134cc0203c33377d43188d4064e9b357dba58cff3185f22924610e70a9d28", size = 75726 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/17/69/cd203477f944c353c31bade965f880aa1061fd6bf05ded0726ca845b6ff7/typing_inspection-0.4.1-py3-none-any.whl", hash = "sha256:389055682238f53b04f7badcb49b989835495a96700ced5dab2d8feae4b26f51", size = 14552 },
-]
-
-[[package]]
-name = "uuid6"
-version = "2025.0.1"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/ca/b7/4c0f736ca824b3a25b15e8213d1bcfc15f8ac2ae48d1b445b310892dc4da/uuid6-2025.0.1.tar.gz", hash = "sha256:cd0af94fa428675a44e32c5319ec5a3485225ba2179eefcf4c3f205ae30a81bd", size = 13932 }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/3d/b2/93faaab7962e2aa8d6e174afb6f76be2ca0ce89fde14d3af835acebcaa59/uuid6-2025.0.1-py3-none-any.whl", hash = "sha256:80530ce4d02a93cdf82e7122ca0da3ebbbc269790ec1cb902481fa3e9cc9ff99", size = 6979 },
 ]
 
 [[package]]

@@ -39,6 +39,10 @@ tracing = [
     "opentelemetry-instrumentation-openai>=0.44.1",
     "opentelemetry-sdk>=1.36.0",
 ]
+packaging = [
+    "cloudpickle>=3.1.2",
+    "pyfnx-utils>=0.0.2",
+]
 
 [tool.ruff]
 # Target Python 3.12
