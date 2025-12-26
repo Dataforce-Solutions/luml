@@ -50,17 +50,25 @@ class ModelArtifactRepository(RepositoryBase, CrudMixin):
                 else error_mess
             ) from error
 
-    async def get_collection_model_artifact(
-        self, collection_id: UUID
+    async def get_collection_model_artifacts(
+        self,
+        collection_id: UUID,
+        limit: int,
+        cursor: UUID | None = None,
     ) -> list[ModelArtifact]:
         async with self._get_session() as session:
-            result = await session.execute(
+            query = (
                 select(ModelArtifactOrm)
                 .where(ModelArtifactOrm.collection_id == collection_id)
-                .order_by(ModelArtifactOrm.created_at)
+                .order_by(ModelArtifactOrm.id)
+                .limit(limit)
             )
-            db_versions = result.scalars().all()
-            return [v.to_model_artifact() for v in db_versions]
+            if cursor:
+                query = query.where(ModelArtifactOrm.id > cursor)
+
+            result = await session.execute(query)
+            db_models = result.scalars().all()
+            return [model.to_model_artifact() for model in db_models]
 
     async def get_model_artifact(self, model_artifact_id: UUID) -> ModelArtifact | None:
         async with self._get_session() as session:

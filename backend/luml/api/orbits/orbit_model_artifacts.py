@@ -1,7 +1,7 @@
 from typing import Any
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Request, status
+from fastapi import APIRouter, Depends, Query, Request, status
 
 from luml.handlers.model_artifacts import ModelArtifactHandler
 from luml.infra.dependencies import UserAuthentication
@@ -10,6 +10,7 @@ from luml.schemas.model_artifacts import (
     CreateModelArtifactResponse,
     ModelArtifact,
     ModelArtifactIn,
+    ModelArtifactsList,
     ModelArtifactUpdateIn,
 )
 
@@ -67,19 +68,18 @@ async def update_model_artifact(
 @model_artifacts_router.get(
     "",
     responses=endpoint_responses,
-    response_model=list[ModelArtifact],
+    response_model=ModelArtifactsList,
 )
-async def get_model_artifact(
+async def get_model_artifacts(
     request: Request,
     organization_id: UUID,
     orbit_id: UUID,
     collection_id: UUID,
-) -> list[ModelArtifact]:
-    return await model_artifacts_handler.get_collection_model_artifact(
-        request.user.id,
-        organization_id,
-        orbit_id,
-        collection_id,
+    cursor: UUID | None = None,
+    limit: int = Query(default=50, le=100),
+) -> ModelArtifactsList:
+    return await model_artifacts_handler.get_collection_model_artifacts(
+        request.user.id, organization_id, orbit_id, collection_id, cursor, limit
     )
 
 

@@ -28,6 +28,7 @@ from luml.schemas.model_artifacts import (
     ModelArtifactCreate,
     ModelArtifactDetails,
     ModelArtifactIn,
+    ModelArtifactsList,
     ModelArtifactStatus,
     ModelArtifactUpdate,
     ModelArtifactUpdateIn,
@@ -357,13 +358,15 @@ class ModelArtifactHandler:
 
         await self.__repository.delete_model_artifact(model_artifact_id)
 
-    async def get_collection_model_artifact(
+    async def get_collection_model_artifacts(
         self,
         user_id: UUID,
         organization_id: UUID,
         orbit_id: UUID,
         collection_id: UUID,
-    ) -> list[ModelArtifact]:
+        cursor: UUID | None = None,
+        limit: int = 100,
+    ) -> ModelArtifactsList:
         await self.__permissions_handler.check_permissions(
             organization_id,
             user_id,
@@ -374,7 +377,12 @@ class ModelArtifactHandler:
         await self._check_orbit_and_collection_access(
             organization_id, orbit_id, collection_id
         )
-        return await self.__repository.get_collection_model_artifact(collection_id)
+        items = await self.__repository.get_collection_model_artifacts(
+            collection_id, limit, cursor
+        )
+        return ModelArtifactsList(
+            items=items, cursor=items[-1].id if len(items) == limit else None
+        )
 
     async def get_model_artifact(
         self,

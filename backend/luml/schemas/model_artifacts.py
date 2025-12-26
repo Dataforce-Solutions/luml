@@ -233,3 +233,8 @@ class CreateModelArtifactResponse(BaseModel):
 class SatelliteModelArtifactResponse(BaseModel):
     model: ModelArtifact
     url: str
+
+
+class ModelArtifactsList(BaseModel):
+    items: list[ModelArtifact]
+    cursor: UUID | None

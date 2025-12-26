@@ -1,16 +1,18 @@
 import builtins
 from abc import ABC, abstractmethod
-from collections.abc import Coroutine
+from collections.abc import AsyncIterator, Coroutine, Iterator
 from typing import TYPE_CHECKING, Any
 
 from luml.api._exceptions import FileError, FileUploadError
 from luml.api._types import (
     CreatedModel,
     ModelArtifact,
+    ModelArtifactsList,
     ModelArtifactStatus,
     is_uuid,
 )
 from luml.api._utils import find_by_value
+from luml.api.resources._mixins import ListedResource
 from luml.api.resources._validators import validate_collection
 from luml.api.services.upload_service import AsyncUploadService, UploadService
 from luml.api.utils.model_artifacts import ModelFileHandler
@@ -121,7 +123,7 @@ class ModelArtifactResourceBase(ABC):
         raise NotImplementedError()
 
 
-class ModelArtifactResource(ModelArtifactResourceBase):
+class ModelArtifactResource(ModelArtifactResourceBase, ListedResource):
     """Resource for managing Model Artifacts."""
 
     def __init__(self, client: "LumlClient") -> None:
@@ -191,7 +193,7 @@ class ModelArtifactResource(ModelArtifactResourceBase):
         self, collection_id: str | None, name: str
     ) -> ModelArtifact | None:
         return find_by_value(
-            self.list(collection_id=collection_id),
+            self.list(collection_id=collection_id).items,
             name,
             condition=lambda m: m.model_name == name or m.file_name == name,
         )
@@ -199,19 +201,57 @@ class ModelArtifactResource(ModelArtifactResourceBase):
     def _get_by_id(
         self, collection_id: str | None, model_value: str
     ) -> ModelArtifact | None:
-        for model in self.list(collection_id=collection_id):
+        for model in self.list(collection_id=collection_id).items:
             if model.id == model_value:
                 return model
         return None
 
     @validate_collection
-    def list(self, *, collection_id: str | None = None) -> list[ModelArtifact]:
+    def list_all(
+        self, *, collection_id: str | None = None, limit: int | None = 100
+    ) -> Iterator[ModelArtifact]:
+        """
+        List all collection model artifacts with auto-paging.
+
+        Args:
+            collection_id: ID of the collection to list models from. If not provided,
+                uses the default collection set in the client.
+            limit: Page size (default: 100).
+
+        Returns:
+            ModelArtifact objects from all pages.
+
+        Example:
+        ```python
+        luml = LumlClient(
+            api_key="luml_your_key",
+            organization="0199c455-21ec-7c74-8efe-41470e29bae5",
+            orbit="0199c455-21ed-7aba-9fe5-5231611220de",
+            collection="0199c455-21ee-74c6-b747-19a82f1a1e75"
+        )
+
+        for artifact in luml.model_artifacts.list_all(limit=50):
+            print(artifact.id)
+        ```
+        """
+        return self._auto_paginate(self.list, collection_id=collection_id, limit=limit)
+
+    @validate_collection
+    def list(
+        self,
+        *,
+        collection_id: str | None = None,
+        start_after: str | None = None,
+        limit: int | None = 100,
+    ) -> ModelArtifactsList:
         """
         List all model artifacts in the collection.
 
         If collection_id is None, uses the default collection from client.
 
         Args:
+            limit: Limit number of models per page
+            start_after: ID of the model artifact to start listing from.
             collection_id: ID of the collection to list models from. If not provided,
                 uses the default collection set in the client.
 
@@ -250,12 +290,19 @@ class ModelArtifactResource(ModelArtifactResourceBase):
         ]
         ```
         """
+        params = {"limit": limit}
+        if start_after:
+            params["cursor"] = start_after
+
         response = self._client.get(
-            f"/organizations/{self._client.organization}/orbits/{self._client.orbit}/collections/{collection_id}/model_artifacts"
+            f"/organizations/{self._client.organization}/orbits/{self._client.orbit}/collections/{collection_id}/model_artifacts",
+            params=params,
         )
+
         if response is None:
-            return []
-        return [ModelArtifact.model_validate(model) for model in response]
+            return ModelArtifactsList(items=[])
+
+        return ModelArtifactsList.model_validate(response)
 
     @validate_collection
     def download_url(self, model_id: str, *, collection_id: str | None = None) -> dict:
@@ -710,7 +757,7 @@ class ModelArtifactResource(ModelArtifactResourceBase):
         )
 
 
-class AsyncModelArtifactResource(ModelArtifactResourceBase):
+class AsyncModelArtifactResource(ModelArtifactResourceBase, ListedResource):
     """Resource for managing Model Artifacts for async client."""
 
     def __init__(self, client: "AsyncLumlClient") -> None:
@@ -798,7 +845,49 @@ class AsyncModelArtifactResource(ModelArtifactResourceBase):
         return None
 
     @validate_collection
-    async def list(self, *, collection_id: str | None = None) -> list[ModelArtifact]:
+    def list_all(
+        self, *, collection_id: str | None = None, limit: int | None = 100
+    ) -> AsyncIterator[ModelArtifact]:
+        """
+        List all collection model artifacts with auto-paging.
+
+        Args:
+            collection_id: ID of the collection to list models from. If not provided,
+                uses the default collection set in the client.
+            limit: Page size (default: 100).
+
+        Returns:
+            ModelArtifact objects from all pages.
+
+        Example:
+        ```python
+        luml = AsyncLumlClient(
+            api_key="luml_your_key",
+        )
+
+        async def main():
+            await luml.setup_config(
+                organization="0199c455-21ec-7c74-8efe-41470e29bae5",
+                orbit="0199c455-21ed-7aba-9fe5-5231611220de",
+                collection="0199c455-21ee-74c6-b747-19a82f1a1e75"
+            )
+
+            async for artifact in luml.model_artifacts.list_all(limit=50):
+                print(artifact.id)
+        ```
+        """
+        return self._auto_paginate_async(
+            self.list, collection_id=collection_id, limit=limit
+        )
+
+    @validate_collection
+    async def list(
+        self,
+        *,
+        collection_id: str | None = None,
+        start_after: str | None = None,
+        limit: int | None = 100,
+    ) -> list[ModelArtifact]:
         """
         List all model artifacts in the collection.
 
@@ -847,12 +936,19 @@ class AsyncModelArtifactResource(ModelArtifactResourceBase):
         ]
         ```
         """
+
+        params = {"limit": limit}
+        if start_after:
+            params["cursor"] = start_after
+
         response = await self._client.get(
-            f"/organizations/{self._client.organization}/orbits/{self._client.orbit}/collections/{collection_id}/model_artifacts"
+            f"/organizations/{self._client.organization}/orbits/{self._client.orbit}/collections/{collection_id}/model_artifacts",
+            params=params,
         )
         if response is None:
-            return []
-        return [ModelArtifact.model_validate(model) for model in response]
+            return ModelArtifactsList(items=[])
+
+        return ModelArtifactsList.model_validate(response)
 
     @validate_collection
     async def download_url(

@@ -72,6 +72,10 @@ class Orbit(BaseModel):
 
 
 class CollectionType(StrEnum):
+    """
+    Options: "model", "dataset".
+    """
+
     MODEL = "model"
     DATASET = "dataset"
 
@@ -112,6 +116,11 @@ class ModelArtifact(BaseModel):
     status: str
     created_at: str
     updated_at: str | None = None
+
+
+class ModelArtifactsList(BaseModel):
+    items: list[ModelArtifact]
+    cursor: str | None = None
 
 
 class ModelDetails(BaseModel):
