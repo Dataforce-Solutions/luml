@@ -111,6 +111,6 @@ try:
         logger.info("Starting server...")
         uvicorn.run(app, host="0.0.0.0", port=port)
 
-except Exception as e:
-    logger.exception(f"Fatal error in conda worker: {e}")
+except Exception:
+    logger.exception("Fatal error in conda worker")
     sys.exit(1)

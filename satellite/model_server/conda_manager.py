@@ -14,6 +14,9 @@ logger = logging.getLogger(__name__)
 
 
 class ModelCondaManager:
+    WORKER_LOGS_LINES = 50
+    THREAD_SHUTDOWN_TIMEOUT = 2
+
     def __init__(
         self,
         env_name: str,
@@ -29,7 +32,7 @@ class ModelCondaManager:
         self.port: int | None = 8080
         self.worker_script = Path(__file__).parent / "conda_worker.py"
         self._error_output: list[str] = []
-        self._monitor_thread_stderr: threading.Thread | None = None
+        self._stderr_monitor_thread: threading.Thread | None = None
 
     @property
     def worker_url(self) -> str | None:
@@ -62,7 +65,7 @@ class ModelCondaManager:
         if exit_code is not None and exit_code != 0:
             error_msg = f"Conda worker process exited with code {exit_code}"
             if self._error_output:
-                error_msg += "\n" + "\n".join(self._error_output[-50:])
+                error_msg += "\n" + "\n".join(self._error_output[-self.WORKER_LOGS_LINES :])
             raise RuntimeError(error_msg)
 
     def _wait_for_health_check(self, timeout: int = 90) -> None:
@@ -97,8 +100,8 @@ class ModelCondaManager:
             cmd, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, text=True
         )
 
-        self._monitor_thread_stderr = threading.Thread(target=self._monitor_stderr, daemon=True)
-        self._monitor_thread_stderr.start()
+        self._stderr_monitor_thread = threading.Thread(target=self._monitor_stderr, daemon=True)
+        self._stderr_monitor_thread.start()
 
         try:
             self._wait_for_health_check()
@@ -115,8 +118,8 @@ class ModelCondaManager:
             self.process.wait()
             self.process = None
 
-        if self._monitor_thread_stderr and self._monitor_thread_stderr.is_alive():
-            self._monitor_thread_stderr.join(timeout=2.0)
-            self._monitor_thread_stderr = None
+        if self._stderr_monitor_thread and self._stderr_monitor_thread.is_alive():
+            self._stderr_monitor_thread.join(timeout=self.THREAD_SHUTDOWN_TIMEOUT)
+            self._stderr_monitor_thread = None
 
         self.port = None
