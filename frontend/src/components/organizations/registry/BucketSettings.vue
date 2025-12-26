@@ -99,7 +99,7 @@ const initialData = computed<BucketFormData>(() => {
         endpoint: props.bucket.endpoint,
       }
     default:
-      throw new Error('Invalid bucket type')
+      throw new Error(`Invalid bucket type: ${props.bucket?.type}`)
   }
 })
 
