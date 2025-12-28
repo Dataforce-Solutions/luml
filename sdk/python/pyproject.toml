@@ -40,8 +40,9 @@ tracing = [
     "opentelemetry-sdk>=1.36.0",
 ]
 packaging = [
-    "cloudpickle>=3.1.2",
-    "pyfnx-utils>=0.0.2",
+    "cloudpickle>=3.1.2,<4.0.0",
+    "fnnx>=0.0.8,<0.1.0",
+    "pydantic>=2.11.7,<3.0.0",
 ]
 
 [tool.ruff]
