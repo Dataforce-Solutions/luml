@@ -9,9 +9,10 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from pyfnx_utils.reader import Reader  # type: ignore[import-untyped]
+if TYPE_CHECKING:
+    from fnnx.extras.reader import Reader
 
 from luml.model_card.builder import ModelCardBuilder
 
@@ -135,4 +136,6 @@ class ModelReference:
         )
 
     def read(self) -> Reader:
+        from fnnx.extras.reader import Reader
+
         return Reader(self.path)

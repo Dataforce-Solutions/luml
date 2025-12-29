@@ -22,8 +22,8 @@ import os
 import tempfile
 
 import numpy as np  # type: ignore[import-not-found]
-from pyfnx_utils.builder import PyfuncBuilder  # type: ignore[import-untyped]
-from pyfnx_utils.models.manifest import NDJSON  # type: ignore[import-untyped]
+from fnnx.extras.builder import PyfuncBuilder
+from fnnx.extras.pydantic_models.manifest import NDJSON
 
 from luml.integrations.sklearn.packaging._template import SKlearnPyFunc
 from luml.modelref import ModelReference
@@ -68,7 +68,12 @@ def save_sklearn(  # noqa: C901
         for col in input_order:
             dtype = _resolve_dtype(inputs[col].dtype)  # type: ignore
             builder.add_input(
-                NDJSON(name=col, dtype=f"Array[{dtype}]", shape=["batch"])
+                NDJSON(
+                    name=col,
+                    content_type="NDJSON",
+                    dtype=f"Array[{dtype}]",
+                    shape=["batch"],
+                )
             )
         x = inputs
     else:
@@ -82,13 +87,23 @@ def save_sklearn(  # noqa: C901
             for i, name in enumerate(input_order):
                 col_dtype = _resolve_dtype(example[:, i].dtype)
                 builder.add_input(
-                    NDJSON(name=name, dtype=f"Array[{col_dtype}]", shape=["batch"])
+                    NDJSON(
+                        name=name,
+                        content_type="NDJSON",
+                        dtype=f"Array[{col_dtype}]",
+                        shape=["batch"],
+                    )
                 )
         else:
             shape = ["batch"] + list(example.shape[1:])
             dtype = _resolve_dtype(example.dtype)
             builder.add_input(
-                NDJSON(name="input", dtype=f"Array[{dtype}]", shape=shape)  # type: ignore
+                NDJSON(
+                    name="input",
+                    content_type="NDJSON",
+                    dtype=f"Array[{dtype}]",
+                    shape=shape,  # type: ignore
+                )
             )
             input_order = ["input"]
         x = example
@@ -100,7 +115,14 @@ def save_sklearn(  # noqa: C901
     y_shape = ["batch"] + list(y_array.shape[1:])
     y_dtype = _resolve_dtype(y_array.dtype)
 
-    builder.add_output(NDJSON(name="y", dtype=f"Array[{y_dtype}]", shape=y_shape))  # type: ignore
+    builder.add_output(
+        NDJSON(
+            name="y",
+            content_type="NDJSON",
+            dtype=f"Array[{y_dtype}]",
+            shape=y_shape,  # type: ignore
+        )
+    )
 
     dependencies = [
         "scikit-learn==" + get_version("sklearn"),
