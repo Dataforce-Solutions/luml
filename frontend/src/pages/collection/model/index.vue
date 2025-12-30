@@ -19,6 +19,7 @@ import { useModelsStore } from '@/stores/models'
 import { computed, onUnmounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { FnnxService } from '@/lib/fnnx/FnnxService'
+import { hasAttachments } from '@/modules/model-attachments'
 import CollectionModelTabs from '@/components/orbits/tabs/registry/collection/model/CollectionModelTabs.vue'
 
 const modelsStore = useModelsStore()
@@ -46,10 +47,7 @@ const isModelAttachmentsAvailable = computed(() => {
   if (!currentModel.value) return false
   const fileIndex = currentModel.value.file_index
   if (!fileIndex) return false
-  return !!(
-    Object.keys(fileIndex).find((path) => path.includes('attachments.tar')) &&
-    Object.keys(fileIndex).find((path) => path.includes('attachments.index.json'))
-  )
+  return hasAttachments(fileIndex)
 })
 
 onUnmounted(() => {

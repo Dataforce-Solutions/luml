@@ -1,175 +1,78 @@
 <template>
-  <div class="attachments-wrapper">
-    <UiPageLoader v-if="loading"></UiPageLoader>
-    <template v-else-if="isEmpty">
-      <div class="empty-state">
-        <p>This attachment is empty.</p>
-      </div>
-    </template>
-    <template v-else>
-      <FileTree :tree="tree" :selected="selectedFile" @select="handleSelect" />
-      <FilePreview
-        :file="selectedFile"
-        :file-index="attachmentsIndex"
-        :organization-id="organizationId"
-        :orbit-id="orbitId"
-        :collection-id="collectionId"
-        :model-id="modelId"
-      />
-    </template>
+  <div v-if="isInitializing || loading">
+    <UiPageLoader></UiPageLoader>
+  </div>
+
+  <AttachmentsView
+    v-else-if="tree.length"
+    :tree="tree"
+    :selected-file="selectedFile"
+    :attachments-index="attachmentsIndex"
+    :tar-base-offset="tarBaseOffset"
+    :download-url="downloadUrl"
+    @select="selectFile"
+  />
+
+  <div v-else-if="error" class="error-state">
+    <p>{{ error }}</p>
+  </div>
+
+  <div v-else class="empty-state">
+    <p>This attachment is empty.</p>
   </div>
 </template>
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { useModelsStore } from '@/stores/models'
-import FileTree from '../../../components/orbits/tabs/registry/collection/model/modell-attachments/FileTree.vue'
-import FilePreview from '../../../components/orbits/tabs/registry/collection/model/modell-attachments/FilePreview.vue'
+import { ModelDownloader } from '@/lib/bucket-service'
+import { AttachmentsView, useModelAttachments } from '@/modules/model-attachments'
 import UiPageLoader from '@/components/ui/UiPageLoader.vue'
-interface AttachmentNode {
-  name: string
-  path?: string
-  type: 'file' | 'folder'
-  size?: number
-  children?: AttachmentNode[]
-}
-const props = defineProps<{ model: any }>()
+
 const route = useRoute()
 const modelsStore = useModelsStore()
-const organizationId = route.params.organizationId as string
-const orbitId = route.params.id as string
-const collectionId = route.params.collectionId as string
-const modelId = route.params.modelId as string
-const tree = ref<AttachmentNode[]>([])
-const selectedFile = ref<AttachmentNode | null>(null)
-const attachmentsIndex = ref<Record<string, [number, number]>>({})
-const loading = ref(true)
-const error = ref<string | null>(null)
-const isEmpty = computed(() => {
-  return !loading.value && tree.value.length === 0
+
+const {
+  tree,
+  selectedFile,
+  attachmentsIndex,
+  tarBaseOffset,
+  downloadUrl,
+  loading,
+  error,
+  init,
+  selectFile,
+  reset,
+} = useModelAttachments()
+
+const isInitializing = ref(true)
+
+const currentModel = computed(() => {
+  if (typeof route.params.modelId !== 'string') return undefined
+  return modelsStore.modelsList.find((model) => model.id === route.params.modelId)
 })
 
-async function fetchFileBlob(url: string, offset: number, length: number): Promise<Blob> {
-  const end = offset + length - 1
-  const response = await fetch(url, {
-    headers: { Range: `bytes=${offset}-${end}` },
-  })
-  if (!response.ok) {
-    throw new Error(`HTTP Error: ${response.status}`)
+onMounted(async () => {
+  const model = currentModel.value
+  if (!model?.file_index) {
+    isInitializing.value = false
+    return
   }
-  return response.blob()
-}
 
-async function loadAttachmentsData() {
   try {
-    loading.value = true
-    error.value = null
-    const downloadUrl = await modelsStore.getDownloadUrl(modelId)
-    const indexPath = Object.keys(props.model.file_index).find((path) =>
-      path.includes('attachments.index.json'),
-    )
+    const url = await modelsStore.getDownloadUrl(model.id)
+    const downloader = new ModelDownloader(url)
 
-    if (!indexPath) {
-      return
-    }
-
-    const indexRange = props.model.file_index[indexPath]
-    if (!indexRange) {
-      return
-    }
-    const [indexOffset, indexLength] = indexRange
-    const indexBlob = await fetchFileBlob(downloadUrl, indexOffset, indexLength)
-    const indexText = await indexBlob.text()
-    const index = JSON.parse(indexText) as Record<string, [number, number]>
-
-    const tarPath = Object.keys(props.model.file_index).find((path) =>
-      path.includes('attachments.tar'),
-    )
-
-    if (!tarPath) {
-      return
-    }
-
-    const tarRange = props.model.file_index[tarPath]
-    if (!tarRange) {
-      return
-    }
-    const [tarOffset] = tarRange
-    attachmentsIndex.value = index
-    ;(window as any).__tarOffset = tarOffset
-    ;(window as any).__modelDownloadUrl = downloadUrl
-    tree.value = buildTreeFromIndex(index)
+    await init(downloader, model)
   } catch (e) {
-    console.error('Failed to load attachments:', e)
+    console.error(e)
   } finally {
-    loading.value = false
+    isInitializing.value = false
   }
-}
+})
 
-function buildTreeFromIndex(index: Record<string, [number, number]>): AttachmentNode[] {
-  const root: Record<string, any> = {}
-  const filePaths = Object.entries(index)
-    .filter(([path, [, size]]) => size > 0)
-    .map(([path]) => path)
-
-  filePaths.forEach((fullPath) => {
-    const path = fullPath.replace(/^attachments\//, '')
-    const parts = path.split('/')
-    const [, size] = index[fullPath]
-
-    let current = root
-
-    parts.forEach((part, idx) => {
-      if (idx === parts.length - 1) {
-        current[part] = {
-          type: 'file',
-          path: fullPath,
-          size,
-        }
-      } else {
-        if (!current[part]) {
-          current[part] = {
-            type: 'folder',
-            children: {},
-          }
-        }
-        current = current[part].children
-      }
-    })
-  })
-
-  function convertToArray(obj: any): AttachmentNode[] {
-    return Object.entries(obj).map(([name, data]: [string, any]) => {
-      if (data.type === 'file') {
-        return {
-          name,
-          path: data.path,
-          type: 'file',
-          size: data.size,
-        }
-      } else {
-        return {
-          name,
-          type: 'folder',
-          children: convertToArray(data.children),
-        }
-      }
-    })
-  }
-
-  return convertToArray(root)
-}
-
-function handleSelect(node: AttachmentNode) {
-  if (node.type === 'file') {
-    selectedFile.value = node
-  }
-}
-
-onMounted(() => {
-  if (props.model?.file_index) {
-    loadAttachmentsData()
-  }
+onUnmounted(() => {
+  reset()
 })
 </script>
 <style scoped>
