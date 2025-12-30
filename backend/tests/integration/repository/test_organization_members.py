@@ -1,14 +1,14 @@
 import uuid
 
 import pytest
-
-from dataforce_studio.repositories.users import UserRepository
-from dataforce_studio.schemas.organization import (
+from luml.repositories.users import UserRepository
+from luml.schemas.organization import (
     OrganizationMemberCreate,
     OrgRole,
     UpdateOrganizationMember,
 )
-from dataforce_studio.schemas.user import CreateUser
+from luml.schemas.user import CreateUser
+
 from tests.conftest import OrganizationFixtureData, OrganizationWithMembersFixtureData
 
 
@@ -19,7 +19,7 @@ async def test_create_organization_member(
     data = create_organization_with_user
     repo = UserRepository(data.engine)
     created_organization = data.organization
-    test_user_create.email = f"{uuid.uuid4()}@gmail.com"
+    test_user_create.email = f"test_{uuid.uuid4()}@example.com"
     user = await repo.create_user(test_user_create)
     created_member = await repo.create_organization_member(
         OrganizationMemberCreate(

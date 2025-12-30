@@ -3,17 +3,16 @@ from collections.abc import AsyncGenerator
 from dataclasses import dataclass
 from time import time
 from unittest.mock import AsyncMock, MagicMock, Mock, patch
-from uuid import uuid7
 
 import jwt
 import pytest
 import pytest_asyncio
 from jwt.exceptions import InvalidTokenError
-
-from dataforce_studio.handlers.auth import AuthHandler
-from dataforce_studio.infra.exceptions import AuthError
-from dataforce_studio.schemas.auth import OAuthLogin, Token, UserInfo
-from dataforce_studio.schemas.user import (
+from luml.clients.oauth_providers import OAuthGoogleProvider
+from luml.handlers.auth import AuthHandler
+from luml.infra.exceptions import AuthError
+from luml.schemas.auth import OAuthLogin, Token, UserInfo
+from luml.schemas.user import (
     AuthProvider,
     CreateUser,
     CreateUserIn,
@@ -24,7 +23,6 @@ from dataforce_studio.schemas.user import (
     User,
     UserOut,
 )
-from dataforce_studio.services.oauth_providers import OAuthGoogleProvider
 
 secret_key = "test"
 algorithm = "HS256"
@@ -89,7 +87,7 @@ def test_verify_password(passwords: Passwords) -> None:
 
 
 @patch.object(AuthHandler, "_verify_password")
-@patch("dataforce_studio.handlers.auth.UserRepository.get_user", new_callable=AsyncMock)
+@patch("luml.handlers.auth.UserRepository.get_user", new_callable=AsyncMock)
 @pytest.mark.asyncio
 async def test_authenticate_user(
     mock_get_user: AsyncMock,
@@ -112,7 +110,7 @@ async def test_authenticate_user(
     )
 
 
-@patch("dataforce_studio.handlers.auth.UserRepository.get_user", new_callable=AsyncMock)
+@patch("luml.handlers.auth.UserRepository.get_user", new_callable=AsyncMock)
 @pytest.mark.asyncio
 async def test_authenticate_user_user_not_found(
     mock_get_user: AsyncMock, test_user: User, passwords: Passwords
@@ -128,7 +126,7 @@ async def test_authenticate_user_user_not_found(
     mock_get_user.assert_awaited_once_with(expected.email)
 
 
-@patch("dataforce_studio.handlers.auth.UserRepository.get_user", new_callable=AsyncMock)
+@patch("luml.handlers.auth.UserRepository.get_user", new_callable=AsyncMock)
 @pytest.mark.asyncio
 async def test_authenticate_user_invalid_auth_method(
     mock_get_user: AsyncMock, test_user: User, passwords: Passwords
@@ -144,7 +142,7 @@ async def test_authenticate_user_invalid_auth_method(
     mock_get_user.assert_awaited_once_with(user_with_google.email)
 
 
-@patch("dataforce_studio.handlers.auth.UserRepository.get_user", new_callable=AsyncMock)
+@patch("luml.handlers.auth.UserRepository.get_user", new_callable=AsyncMock)
 @pytest.mark.asyncio
 async def test_authenticate_user_password_is_invalid(
     mock_get_user: AsyncMock, test_user: User
@@ -163,7 +161,7 @@ async def test_authenticate_user_password_is_invalid(
 
 
 @patch.object(AuthHandler, "_verify_password")
-@patch("dataforce_studio.handlers.auth.UserRepository.get_user", new_callable=AsyncMock)
+@patch("luml.handlers.auth.UserRepository.get_user", new_callable=AsyncMock)
 @pytest.mark.asyncio
 async def test_authenticate_user_password_not_verified(
     mock_get_user: AsyncMock,
@@ -187,7 +185,7 @@ async def test_authenticate_user_password_not_verified(
 
 
 @patch.object(AuthHandler, "_verify_password")
-@patch("dataforce_studio.handlers.auth.UserRepository.get_user", new_callable=AsyncMock)
+@patch("luml.handlers.auth.UserRepository.get_user", new_callable=AsyncMock)
 @pytest.mark.asyncio
 async def test_authenticate_user_email_not_verified(
     mock_get_user: AsyncMock,
@@ -212,7 +210,7 @@ async def test_authenticate_user_email_not_verified(
 
 @pytest.mark.asyncio
 async def test_create_tokens() -> None:
-    actual = handler._create_tokens("some_user_email@gmail.com")
+    actual = handler._create_tokens("test@example.com")
 
     assert actual
     assert actual.access_token
@@ -220,9 +218,9 @@ async def test_create_tokens() -> None:
     assert actual.token_type == "bearer"
 
 
-@patch("dataforce_studio.handlers.auth.jwt.decode")
+@patch("luml.handlers.auth.jwt.decode")
 def test_verify_token_valid(mock_jwt_decode: MagicMock) -> None:
-    email = "some_user_email@gmail.com"
+    email = "test@example.com"
     mock_jwt_decode.return_value = {"sub": email}
 
     actual = handler._verify_token("token")
@@ -231,7 +229,7 @@ def test_verify_token_valid(mock_jwt_decode: MagicMock) -> None:
     mock_jwt_decode.assert_called_once()
 
 
-@patch("dataforce_studio.handlers.auth.jwt.decode")
+@patch("luml.handlers.auth.jwt.decode")
 def test_verify_token_cant_get_email(mock_jwt_decode: MagicMock) -> None:
     mock_jwt_decode.return_value = {"sub": None}
 
@@ -242,7 +240,7 @@ def test_verify_token_cant_get_email(mock_jwt_decode: MagicMock) -> None:
     mock_jwt_decode.assert_called_once()
 
 
-@patch("dataforce_studio.handlers.auth.jwt.decode")
+@patch("luml.handlers.auth.jwt.decode")
 def test_verify_token_invalid_jwt(mock_jwt_decode: MagicMock) -> None:
     mock_jwt_decode.side_effect = InvalidTokenError()
 
@@ -254,14 +252,9 @@ def test_verify_token_invalid_jwt(mock_jwt_decode: MagicMock) -> None:
 
 
 @patch.object(AuthHandler, "_get_password_hash")
-@patch("dataforce_studio.handlers.auth.UserRepository.get_user", new_callable=AsyncMock)
-@patch(
-    "dataforce_studio.handlers.auth.UserRepository.create_user", new_callable=AsyncMock
-)
-@patch(
-    "dataforce_studio.handlers.auth.EmailHandler.send_activation_email",
-    new_callable=MagicMock,
-)
+@patch("luml.handlers.auth.UserRepository.get_user", new_callable=AsyncMock)
+@patch("luml.handlers.auth.UserRepository.create_user", new_callable=AsyncMock)
+@patch("luml.handlers.auth.EmailHandler.send_activation_email", new_callable=MagicMock)
 @pytest.mark.asyncio
 async def test_handle_signup(
     mock_send_activation_email: MagicMock,
@@ -289,7 +282,7 @@ async def test_handle_signup(
     mock_create_user.assert_awaited_once_with(create_user=create_user)
 
 
-@patch("dataforce_studio.handlers.auth.UserRepository.get_user", new_callable=AsyncMock)
+@patch("luml.handlers.auth.UserRepository.get_user", new_callable=AsyncMock)
 @pytest.mark.asyncio
 async def test_handle_signup_already_exist(
     mock_get_user: AsyncMock,
@@ -338,17 +331,14 @@ async def test_handle_signin(
     mock_create_tokens.assert_called_once_with(create_user.email)
 
 
-@patch("dataforce_studio.handlers.auth.jwt.decode")
+@patch("luml.handlers.auth.jwt.decode")
 @patch.object(AuthHandler, "_create_tokens", new_callable=MagicMock)
-@patch("dataforce_studio.handlers.auth.UserRepository.get_user", new_callable=AsyncMock)
+@patch("luml.handlers.auth.UserRepository.get_user", new_callable=AsyncMock)
 @patch(
-    "dataforce_studio.handlers.auth.TokenBlackListRepository.is_token_blacklisted",
+    "luml.handlers.auth.TokenBlackListRepository.is_token_blacklisted",
     new_callable=AsyncMock,
 )
-@patch(
-    "dataforce_studio.handlers.auth.TokenBlackListRepository.add_token",
-    new_callable=AsyncMock,
-)
+@patch("luml.handlers.auth.TokenBlackListRepository.add_token", new_callable=AsyncMock)
 @pytest.mark.asyncio
 async def test_handle_refresh_token(
     mock_add_token: AsyncMock,
@@ -382,7 +372,7 @@ async def test_handle_refresh_token(
     mock_create_tokens.assert_called_once_with(user.email)
 
 
-@patch("dataforce_studio.handlers.auth.jwt.decode")
+@patch("luml.handlers.auth.jwt.decode")
 @pytest.mark.asyncio
 async def test_handle_refresh_token_type_isnt_refresh(
     mock_jwt_decode: MagicMock, test_user_create: CreateUser, get_tokens: Token
@@ -404,7 +394,7 @@ async def test_handle_refresh_token_type_isnt_refresh(
     assert error.value.status_code == 400
 
 
-@patch("dataforce_studio.handlers.auth.jwt.decode")
+@patch("luml.handlers.auth.jwt.decode")
 @pytest.mark.asyncio
 async def test_handle_refresh_token_email_is_none(
     mock_jwt_decode: MagicMock, get_tokens: Token
@@ -425,9 +415,9 @@ async def test_handle_refresh_token_email_is_none(
     assert error.value.status_code == 400
 
 
-@patch("dataforce_studio.handlers.auth.jwt.decode")
+@patch("luml.handlers.auth.jwt.decode")
 @patch(
-    "dataforce_studio.handlers.auth.TokenBlackListRepository.is_token_blacklisted",
+    "luml.handlers.auth.TokenBlackListRepository.is_token_blacklisted",
     new_callable=AsyncMock,
 )
 @pytest.mark.asyncio
@@ -456,10 +446,10 @@ async def test_handle_refresh_token_has_been_revoked(
     mock_is_token_blacklisted.assert_awaited_once_with(tokens.refresh_token)
 
 
-@patch("dataforce_studio.handlers.auth.jwt.decode")
-@patch("dataforce_studio.handlers.auth.UserRepository.get_user", new_callable=AsyncMock)
+@patch("luml.handlers.auth.jwt.decode")
+@patch("luml.handlers.auth.UserRepository.get_user", new_callable=AsyncMock)
 @patch(
-    "dataforce_studio.handlers.auth.TokenBlackListRepository.is_token_blacklisted",
+    "luml.handlers.auth.TokenBlackListRepository.is_token_blacklisted",
     new_callable=AsyncMock,
 )
 @pytest.mark.asyncio
@@ -491,10 +481,8 @@ async def test_handle_refresh_token_user_not_found(
     mock_get_user.assert_awaited_once_with(user.email)
 
 
-@patch("dataforce_studio.handlers.auth.UserRepository.get_user", new_callable=AsyncMock)
-@patch(
-    "dataforce_studio.handlers.auth.UserRepository.update_user", new_callable=AsyncMock
-)
+@patch("luml.handlers.auth.UserRepository.get_user", new_callable=AsyncMock)
+@patch("luml.handlers.auth.UserRepository.update_user", new_callable=AsyncMock)
 @pytest.mark.asyncio
 async def test_update_user(
     mock_update_user: AsyncMock, mock_get_user: AsyncMock, test_user: User
@@ -513,7 +501,7 @@ async def test_update_user(
     mock_update_user.assert_awaited_once_with(expected_update)
 
 
-@patch("dataforce_studio.handlers.auth.UserRepository.get_user", new_callable=AsyncMock)
+@patch("luml.handlers.auth.UserRepository.get_user", new_callable=AsyncMock)
 @pytest.mark.asyncio
 async def test_update_user_not_found(mock_get_user: AsyncMock) -> None:
     email = "test@example.com"
@@ -528,9 +516,7 @@ async def test_update_user_not_found(mock_get_user: AsyncMock) -> None:
     mock_get_user.assert_awaited_once_with(email)
 
 
-@patch(
-    "dataforce_studio.handlers.auth.UserRepository.delete_user", new_callable=AsyncMock
-)
+@patch("luml.handlers.auth.UserRepository.delete_user", new_callable=AsyncMock)
 @pytest.mark.asyncio
 async def test_handle_delete_account(mock_delete_user: AsyncMock) -> None:
     email = "test@example.com"
@@ -540,10 +526,7 @@ async def test_handle_delete_account(mock_delete_user: AsyncMock) -> None:
     mock_delete_user.assert_awaited_once_with(email)
 
 
-@patch(
-    "dataforce_studio.handlers.auth.UserRepository.get_public_user",
-    new_callable=AsyncMock,
-)
+@patch("luml.handlers.auth.UserRepository.get_public_user", new_callable=AsyncMock)
 @pytest.mark.asyncio
 async def test_handle_get_current_user(
     mock_get_public_user: AsyncMock, test_user_out: UserOut
@@ -557,10 +540,7 @@ async def test_handle_get_current_user(
     mock_get_public_user.assert_awaited_once_with(user.email)
 
 
-@patch(
-    "dataforce_studio.handlers.auth.UserRepository.get_public_user",
-    new_callable=AsyncMock,
-)
+@patch("luml.handlers.auth.UserRepository.get_public_user", new_callable=AsyncMock)
 @pytest.mark.asyncio
 async def test_handle_get_current_user_not_found(
     mock_get_public_user: AsyncMock, test_user_out: UserOut
@@ -575,10 +555,7 @@ async def test_handle_get_current_user_not_found(
     mock_get_public_user.assert_awaited_once_with(user.email)
 
 
-@patch(
-    "dataforce_studio.handlers.auth.UserRepository.get_public_user",
-    new_callable=AsyncMock,
-)
+@patch("luml.handlers.auth.UserRepository.get_public_user", new_callable=AsyncMock)
 @pytest.mark.asyncio
 async def test_handle_get_current_account_is_disabled(
     mock_get_public_user: AsyncMock, test_user_out: UserOut
@@ -595,9 +572,9 @@ async def test_handle_get_current_account_is_disabled(
     mock_get_public_user.assert_awaited_once_with(user.email)
 
 
-@patch("dataforce_studio.handlers.auth.jwt.decode")
+@patch("luml.handlers.auth.jwt.decode")
 @patch(
-    "dataforce_studio.handlers.auth.TokenBlackListRepository.add_token",
+    "luml.handlers.auth.TokenBlackListRepository.add_token",
     new_callable=AsyncMock,
 )
 @pytest.mark.asyncio
@@ -615,7 +592,7 @@ async def test_handle_logout(mock_add_token: AsyncMock, mock_jwt_decode: Mock) -
     assert mock_add_token.await_count == 2
 
 
-@patch("dataforce_studio.handlers.auth.jwt.decode")
+@patch("luml.handlers.auth.jwt.decode")
 @pytest.mark.asyncio
 async def test_handle_logout_invalid_refresh_token(mock_jwt_decode: Mock) -> None:
     mock_jwt_decode.side_effect = InvalidTokenError("Invalid refresh")
@@ -627,23 +604,17 @@ async def test_handle_logout_invalid_refresh_token(mock_jwt_decode: Mock) -> Non
 
 
 @patch(
-    "dataforce_studio.services.oauth_providers.OAuthGoogleProvider.exchange_code_for_token",
+    "luml.clients.oauth_providers.OAuthGoogleProvider.exchange_code_for_token",
     new_callable=AsyncMock,
 )
 @patch(
-    "dataforce_studio.services.oauth_providers.OAuthGoogleProvider.get_user_info",
+    "luml.clients.oauth_providers.OAuthGoogleProvider.get_user_info",
     new_callable=AsyncMock,
 )
-@patch(
-    "dataforce_studio.handlers.auth.AuthHandler._create_tokens", new_callable=MagicMock
-)
-@patch("dataforce_studio.handlers.auth.UserRepository.get_user", new_callable=AsyncMock)
-@patch(
-    "dataforce_studio.handlers.auth.UserRepository.create_user", new_callable=AsyncMock
-)
-@patch(
-    "dataforce_studio.handlers.auth.UserRepository.update_user", new_callable=AsyncMock
-)
+@patch("luml.handlers.auth.AuthHandler._create_tokens", new_callable=MagicMock)
+@patch("luml.handlers.auth.UserRepository.get_user", new_callable=AsyncMock)
+@patch("luml.handlers.auth.UserRepository.create_user", new_callable=AsyncMock)
+@patch("luml.handlers.auth.UserRepository.update_user", new_callable=AsyncMock)
 @pytest.mark.asyncio
 async def test_handle_oauth_google(
     mock_update_user: AsyncMock,
@@ -653,12 +624,12 @@ async def test_handle_oauth_google(
     mock_get_user_info: AsyncMock,
     mock_exchange_code: AsyncMock,
     get_tokens: Token,
-    test_user_create: CreateUser,
+    test_user: User,
 ) -> None:
     created_user = User(
-        id=uuid7(),
-        email=test_user_create.email,
-        full_name=test_user_create.full_name,
+        id=uuid.uuid7(),
+        email=test_user.email,
+        full_name=test_user.full_name,
         email_verified=True,
         auth_method=AuthProvider.GOOGLE,
         photo="http://example.com/photo.jpg",
@@ -670,8 +641,8 @@ async def test_handle_oauth_google(
 
     mock_exchange_code.return_value = "access_token"
     mock_get_user_info.return_value = UserInfo(
-        email=test_user_create.email,
-        full_name=test_user_create.full_name,
+        email=test_user.email,
+        full_name=test_user.full_name,
         photo_url="http://example.com/photo.jpg",
     )
 
@@ -689,20 +660,16 @@ async def test_handle_oauth_google(
 
 
 @patch(
-    "dataforce_studio.services.oauth_providers.OAuthGoogleProvider.exchange_code_for_token",
+    "luml.clients.oauth_providers.OAuthGoogleProvider.exchange_code_for_token",
     new_callable=AsyncMock,
 )
 @patch(
-    "dataforce_studio.services.oauth_providers.OAuthGoogleProvider.get_user_info",
+    "luml.clients.oauth_providers.OAuthGoogleProvider.get_user_info",
     new_callable=AsyncMock,
 )
-@patch("dataforce_studio.handlers.auth.UserRepository.get_user", new_callable=AsyncMock)
-@patch(
-    "dataforce_studio.handlers.auth.AuthHandler._create_tokens", new_callable=MagicMock
-)
-@patch(
-    "dataforce_studio.handlers.auth.UserRepository.update_user", new_callable=AsyncMock
-)
+@patch("luml.handlers.auth.UserRepository.get_user", new_callable=AsyncMock)
+@patch("luml.handlers.auth.AuthHandler._create_tokens", new_callable=MagicMock)
+@patch("luml.handlers.auth.UserRepository.update_user", new_callable=AsyncMock)
 @pytest.mark.asyncio
 async def test_oauth_updates_auth_method_for_existing_user(
     mock_update_user: AsyncMock,
@@ -711,8 +678,9 @@ async def test_oauth_updates_auth_method_for_existing_user(
     mock_get_user_info: AsyncMock,
     mock_exchange_code: AsyncMock,
     get_tokens: Token,
+    test_user: User,
 ) -> None:
-    email = "user@example.com"
+    email = "test@example.com"
     photo = "http://example.com/photo.jpg"
 
     mock_exchange_code.return_value = "access_token"
@@ -749,10 +717,10 @@ def test_generate_password_reset_token(
 
 
 @patch(
-    "dataforce_studio.handlers.auth.EmailHandler.send_password_reset_email",
+    "luml.handlers.auth.EmailHandler.send_password_reset_email",
     new_callable=MagicMock,
 )
-@patch("dataforce_studio.handlers.auth.UserRepository.get_user", new_callable=AsyncMock)
+@patch("luml.handlers.auth.UserRepository.get_user", new_callable=AsyncMock)
 @patch.object(AuthHandler, "_generate_password_reset_token")
 @patch.object(AuthHandler, "_get_password_reset_link")
 @pytest.mark.asyncio
@@ -779,7 +747,7 @@ async def test_send_password_reset_email(
     mock_send_email.assert_called_once_with(user.email, link, user.full_name)
 
 
-@patch("dataforce_studio.handlers.auth.UserRepository.get_user", new_callable=AsyncMock)
+@patch("luml.handlers.auth.UserRepository.get_user", new_callable=AsyncMock)
 @pytest.mark.asyncio
 async def test_send_password_reset_email_user_not_found(
     mock_get_user: AsyncMock, test_user: User
@@ -792,7 +760,7 @@ async def test_send_password_reset_email_user_not_found(
     mock_get_user.assert_awaited_once_with(user.email)
 
 
-@patch("dataforce_studio.handlers.auth.config.CHANGE_PASSWORD_URL", "https://test.com/")
+@patch("luml.handlers.auth.config.CHANGE_PASSWORD_URL", "https://test.com/")
 def test_get_password_reset_link() -> None:
     token = "token"
     expected = "https://test.com/" + token
@@ -802,11 +770,9 @@ def test_get_password_reset_link() -> None:
     assert actual == expected
 
 
-@patch("dataforce_studio.handlers.auth.jwt.decode")
-@patch("dataforce_studio.handlers.auth.UserRepository.get_user", new_callable=AsyncMock)
-@patch(
-    "dataforce_studio.handlers.auth.UserRepository.update_user", new_callable=AsyncMock
-)
+@patch("luml.handlers.auth.jwt.decode")
+@patch("luml.handlers.auth.UserRepository.get_user", new_callable=AsyncMock)
+@patch("luml.handlers.auth.UserRepository.update_user", new_callable=AsyncMock)
 @pytest.mark.asyncio
 async def test_handle_email_confirmation(
     mock_update_user: AsyncMock,
@@ -827,7 +793,7 @@ async def test_handle_email_confirmation(
     mock_update_user.assert_awaited_once()
 
 
-@patch("dataforce_studio.handlers.auth.jwt.decode")
+@patch("luml.handlers.auth.jwt.decode")
 @pytest.mark.asyncio
 async def test_handle_email_confirmation_invalid_token(
     mock_jwt_decode: MagicMock,
@@ -840,7 +806,7 @@ async def test_handle_email_confirmation_invalid_token(
     assert error.value.status_code == 400
 
 
-@patch("dataforce_studio.handlers.auth.jwt.decode")
+@patch("luml.handlers.auth.jwt.decode")
 @pytest.mark.asyncio
 async def test_handle_email_confirmation_cant_get_email(
     mock_jwt_decode: MagicMock,
@@ -853,8 +819,8 @@ async def test_handle_email_confirmation_cant_get_email(
     assert error.value.status_code == 400
 
 
-@patch("dataforce_studio.handlers.auth.jwt.decode")
-@patch("dataforce_studio.handlers.auth.UserRepository.get_user", new_callable=AsyncMock)
+@patch("luml.handlers.auth.jwt.decode")
+@patch("luml.handlers.auth.UserRepository.get_user", new_callable=AsyncMock)
 @pytest.mark.asyncio
 async def test_handle_email_confirmation_user_not_found(
     mock_get_user: AsyncMock, mock_jwt_decode: MagicMock, test_user: User
@@ -871,8 +837,8 @@ async def test_handle_email_confirmation_user_not_found(
     mock_get_user.assert_awaited_once()
 
 
-@patch("dataforce_studio.handlers.auth.jwt.decode")
-@patch("dataforce_studio.handlers.auth.UserRepository.get_user", new_callable=AsyncMock)
+@patch("luml.handlers.auth.jwt.decode")
+@patch("luml.handlers.auth.UserRepository.get_user", new_callable=AsyncMock)
 @pytest.mark.asyncio
 async def test_handle_email_confirmation_already_verified(
     mock_get_user: AsyncMock, mock_jwt_decode: MagicMock, test_user: User
@@ -891,12 +857,10 @@ async def test_handle_email_confirmation_already_verified(
     mock_get_user.assert_awaited_once()
 
 
-@patch("dataforce_studio.handlers.auth.jwt.decode")
-@patch("dataforce_studio.handlers.auth.UserRepository.get_user", new_callable=AsyncMock)
-@patch(
-    "dataforce_studio.handlers.auth.UserRepository.update_user", new_callable=AsyncMock
-)
-@patch("dataforce_studio.handlers.auth.AuthHandler._get_password_hash")
+@patch("luml.handlers.auth.jwt.decode")
+@patch("luml.handlers.auth.UserRepository.get_user", new_callable=AsyncMock)
+@patch("luml.handlers.auth.UserRepository.update_user", new_callable=AsyncMock)
+@patch("luml.handlers.auth.AuthHandler._get_password_hash")
 @pytest.mark.asyncio
 async def test_handle_reset_password(
     mock_hash: MagicMock,
@@ -920,7 +884,7 @@ async def test_handle_reset_password(
     mock_update.assert_awaited_once_with(update_user)
 
 
-@patch("dataforce_studio.handlers.auth.jwt.decode")
+@patch("luml.handlers.auth.jwt.decode")
 @pytest.mark.asyncio
 async def test_handle_reset_expired(
     mock_jwt_decode: MagicMock, test_user_create: CreateUser
@@ -936,7 +900,7 @@ async def test_handle_reset_expired(
     mock_jwt_decode.assert_called_once()
 
 
-@patch("dataforce_studio.handlers.auth.jwt.decode")
+@patch("luml.handlers.auth.jwt.decode")
 @pytest.mark.asyncio
 async def test_handle_reset_password_cant_get_email(mock_jwt_decode: MagicMock) -> None:
     new_password = "new_pass"
@@ -949,8 +913,8 @@ async def test_handle_reset_password_cant_get_email(mock_jwt_decode: MagicMock) 
     mock_jwt_decode.assert_called_once()
 
 
-@patch("dataforce_studio.handlers.auth.jwt.decode")
-@patch("dataforce_studio.handlers.auth.UserRepository.get_user", new_callable=AsyncMock)
+@patch("luml.handlers.auth.jwt.decode")
+@patch("luml.handlers.auth.UserRepository.get_user", new_callable=AsyncMock)
 @pytest.mark.asyncio
 async def test_handle_reset_password_user_not_found(
     mock_get_user: AsyncMock, mock_jwt_decode: MagicMock, test_user: User
@@ -968,7 +932,7 @@ async def test_handle_reset_password_user_not_found(
     mock_get_user.assert_awaited_once_with(user.email)
 
 
-@patch("dataforce_studio.handlers.auth.jwt.decode")
+@patch("luml.handlers.auth.jwt.decode")
 @pytest.mark.asyncio
 async def test_handle_reset_password_invalid_token(mock_jwt_decode: MagicMock) -> None:
     mock_jwt_decode.side_effect = InvalidTokenError()
@@ -981,7 +945,7 @@ async def test_handle_reset_password_invalid_token(mock_jwt_decode: MagicMock) -
 
 
 @patch(
-    "dataforce_studio.handlers.auth.TokenBlackListRepository.is_token_blacklisted",
+    "luml.handlers.auth.TokenBlackListRepository.is_token_blacklisted",
     new_callable=AsyncMock,
 )
 @pytest.mark.asyncio

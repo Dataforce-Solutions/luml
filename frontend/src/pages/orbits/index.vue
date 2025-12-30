@@ -13,7 +13,11 @@
         :orbits="orbitsStore.orbitsList"
         @create-new="showCreator = true"
       ></OrbitsList>
-      <OrbitCreator v-model:visible="showCreator"></OrbitCreator>
+      <OrbitCreator
+        v-if="organizationStore.currentOrganization"
+        v-model:visible="showCreator"
+        :organization-id="organizationStore.currentOrganization.id"
+      ></OrbitCreator>
     </div>
 
     <Ui404 v-else></Ui404>
@@ -32,7 +36,7 @@ import OrbitsList from '@/components/orbits/OrbitsList.vue'
 import OrbitCreator from '@/components/orbits/creator/OrbitCreator.vue'
 import UiPageLoader from '@/components/ui/UiPageLoader.vue'
 import { useRoute, useRouter } from 'vue-router'
-import { PermissionEnum } from '@/lib/api/DataforceApi.interfaces'
+import { PermissionEnum } from '@/lib/api/api.interfaces'
 
 const organizationStore = useOrganizationStore()
 const orbitsStore = useOrbitsStore()
@@ -60,10 +64,14 @@ async function loadOrbits(organizationId: string, skipHideLoading = false) {
   }
 }
 
+function getSingleParam(param: string | string[] | undefined): string {
+  return Array.isArray(param) ? param[0] : param || ''
+}
+
 watch(
   () => organizationStore.currentOrganization?.id,
   async (id) => {
-    if (!id || route.params.organizationId === id) return
+    if (!id || getSingleParam(route.params.organizationId) === id) return
 
     await router.push({ name: route.name, params: { organizationId: id } })
     loadOrbits(id)
@@ -71,8 +79,7 @@ watch(
 )
 
 onBeforeMount(async () => {
-  const idParam = route.params.organizationId
-  const organizationId = Array.isArray(idParam) ? idParam[0] : idParam
+  const organizationId = getSingleParam(route.params.organizationId)
   if (!organizationId) {
     toast.add(simpleErrorToast('Organization ID is missing in the URL.'))
     loading.value = false

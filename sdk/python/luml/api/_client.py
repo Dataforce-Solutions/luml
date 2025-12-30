@@ -5,28 +5,34 @@ from typing import TYPE_CHECKING
 
 from httpx import URL
 
-from ._base_client import AsyncBaseClient, SyncBaseClient
-from ._exceptions import (
+from luml.api._base_client import AsyncBaseClient, SyncBaseClient
+from luml.api._exceptions import (
     CollectionResourceNotFoundError,
     ConfigurationError,
     LumlAPIError,
     OrbitResourceNotFoundError,
     OrganizationResourceNotFoundError,
 )
-from ._types import is_uuid
+from luml.api._types import is_uuid
 
 if TYPE_CHECKING:
-    from .resources.bucket_secrets import (
+    from luml.api.resources.bucket_secrets import (
         AsyncBucketSecretResource,
         BucketSecretResource,
     )
-    from .resources.collections import AsyncCollectionResource, CollectionResource
-    from .resources.model_artifacts import (
+    from luml.api.resources.collections import (
+        AsyncCollectionResource,
+        CollectionResource,
+    )
+    from luml.api.resources.model_artifacts import (
         AsyncModelArtifactResource,
         ModelArtifactResource,
     )
-    from .resources.orbits import AsyncOrbitResource, OrbitResource
-    from .resources.organizations import AsyncOrganizationResource, OrganizationResource
+    from luml.api.resources.orbits import AsyncOrbitResource, OrbitResource
+    from luml.api.resources.organizations import (
+        AsyncOrganizationResource,
+        OrganizationResource,
+    )
 
 
 class LumlClientBase(ABC):
@@ -280,35 +286,35 @@ class AsyncLumlClient(LumlClientBase, AsyncBaseClient):
     @cached_property
     def organizations(self) -> "AsyncOrganizationResource":
         """Organizations interface."""
-        from .resources.organizations import AsyncOrganizationResource
+        from luml.api.resources.organizations import AsyncOrganizationResource
 
         return AsyncOrganizationResource(self)
 
     @cached_property
     def bucket_secrets(self) -> "AsyncBucketSecretResource":
         """Bucket Secrets interface."""
-        from .resources.bucket_secrets import AsyncBucketSecretResource
+        from luml.api.resources.bucket_secrets import AsyncBucketSecretResource
 
         return AsyncBucketSecretResource(self)
 
     @cached_property
     def orbits(self) -> "AsyncOrbitResource":
         """Orbits interface."""
-        from .resources.orbits import AsyncOrbitResource
+        from luml.api.resources.orbits import AsyncOrbitResource
 
         return AsyncOrbitResource(self)
 
     @cached_property
     def collections(self) -> "AsyncCollectionResource":
         """Collections interface."""
-        from .resources.collections import AsyncCollectionResource
+        from luml.api.resources.collections import AsyncCollectionResource
 
         return AsyncCollectionResource(self)
 
     @cached_property
     def model_artifacts(self) -> "AsyncModelArtifactResource":
         """Model Artifacts interface."""
-        from .resources.model_artifacts import AsyncModelArtifactResource
+        from luml.api.resources.model_artifacts import AsyncModelArtifactResource
 
         return AsyncModelArtifactResource(self)
 
@@ -440,34 +446,34 @@ class LumlClient(LumlClientBase, SyncBaseClient):
     @cached_property
     def organizations(self) -> "OrganizationResource":
         """Organizations interface."""
-        from .resources.organizations import OrganizationResource
+        from luml.api.resources.organizations import OrganizationResource
 
         return OrganizationResource(self)
 
     @cached_property
     def bucket_secrets(self) -> "BucketSecretResource":
         """Bucket Secrets interface."""
-        from .resources.bucket_secrets import BucketSecretResource
+        from luml.api.resources.bucket_secrets import BucketSecretResource
 
         return BucketSecretResource(self)
 
     @cached_property
     def orbits(self) -> "OrbitResource":
         """Orbits interface."""
-        from .resources.orbits import OrbitResource
+        from luml.api.resources.orbits import OrbitResource
 
         return OrbitResource(self)
 
     @cached_property
     def collections(self) -> "CollectionResource":
         """Collections interface."""
-        from .resources.collections import CollectionResource
+        from luml.api.resources.collections import CollectionResource
 
         return CollectionResource(self)
 
     @cached_property
     def model_artifacts(self) -> "ModelArtifactResource":
         """Model Artifacts interface."""
-        from .resources.model_artifacts import ModelArtifactResource
+        from luml.api.resources.model_artifacts import ModelArtifactResource
 
         return ModelArtifactResource(self)

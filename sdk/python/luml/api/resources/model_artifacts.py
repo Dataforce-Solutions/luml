@@ -3,22 +3,21 @@ from abc import ABC, abstractmethod
 from collections.abc import Coroutine
 from typing import TYPE_CHECKING, Any
 
-from .._exceptions import FileError, FileUploadError, LumlAPIError
-from .._types import (
+from luml.api._exceptions import FileError, FileUploadError
+from luml.api._types import (
     CreatedModel,
     ModelArtifact,
     ModelArtifactStatus,
     is_uuid,
 )
-from .._utils import find_by_value
-from ..utils.file_handler import FileHandler
-from ..utils.model_artifacts import ModelFileHandler
-from ._validators import validate_collection
+from luml.api._utils import find_by_value
+from luml.api.resources._validators import validate_collection
+from luml.api.services.upload_service import AsyncUploadService, UploadService
+from luml.api.utils.model_artifacts import ModelFileHandler
+from luml.api.utils.s3_file_handler import S3FileHandler
 
 if TYPE_CHECKING:
-    from .._client import AsyncLumlClient, LumlClient
-
-file_handler = FileHandler()
+    from luml.api._client import AsyncLumlClient, LumlClient
 
 
 class ModelArtifactResourceBase(ABC):
@@ -419,7 +418,7 @@ class ModelArtifactResource(ModelArtifactResourceBase):
         model_details = ModelFileHandler(file_path).model_details()
 
         file_format = model_details.file_name.split(".")[1]
-        if file_format not in ["fnnx", "pyfnx", "dfs"]:
+        if file_format not in ["fnnx", "pyfnx", "dfs", "luml"]:
             raise FileError("File format error")
 
         created_model_data = self.create(
@@ -437,39 +436,18 @@ class ModelArtifactResource(ModelArtifactResourceBase):
         model = created_model_data.model
 
         try:
-            upload_details = created_model_data.upload_details
+            upload_service = UploadService(self._client.bucket_secrets)
 
-            if upload_details.multipart:
-                upload_id = file_handler.initiate_multipart_upload(upload_details.url)
-
-                if not upload_id:
-                    raise LumlAPIError("Failed to initiate multipart upload")
-
-                multipart_urls = self._client.bucket_secrets.get_multipart_upload_urls(
-                    upload_details.bucket_secret_id,
-                    upload_details.bucket_location,
-                    model_details.size,
-                    upload_id,
-                )
-
-                response = file_handler.upload_multipart(
-                    parts=multipart_urls.parts,
-                    complete_url=multipart_urls.complete_url,
-                    file_size=model.size,
-                    file_path=file_path,
-                    file_name=model.file_name,
-                )
-            else:
-                response = file_handler.upload_simple_file_with_progress(
-                    url=upload_details.url,
-                    file_path=file_path,
-                    file_size=model.size,
-                    file_name=model.file_name,
-                )
+            response = upload_service.upload_file(
+                upload_details=created_model_data.upload_details,
+                file_path=file_path,
+                file_size=model.size,
+                file_name=model.file_name,
+            )
 
             status = (
                 ModelArtifactStatus.UPLOADED
-                if response.status_code == 200
+                if 200 <= response.status_code < 300
                 else ModelArtifactStatus.UPLOAD_FAILED
             )
         except FileUploadError as error:
@@ -544,7 +522,8 @@ class ModelArtifactResource(ModelArtifactResourceBase):
         )
         download_url = download_info["url"]
 
-        file_handler.download_file_with_progress(
+        handler = S3FileHandler()
+        handler.download_file_with_progress(
             url=download_url,
             file_path=file_path,
             file_name=f'model id="{model_id}"',
@@ -1142,7 +1121,7 @@ class AsyncModelArtifactResource(ModelArtifactResourceBase):
         model_details = ModelFileHandler(file_path).model_details()
 
         file_format = model_details.file_name.split(".")[1]
-        if file_format not in ["fnnx", "pyfnx", "dfs"]:
+        if file_format not in ["fnnx", "pyfnx", "dfs", "luml"]:
             raise FileError("File format error")
 
         created_model_data = await self.create(
@@ -1158,42 +1137,20 @@ class AsyncModelArtifactResource(ModelArtifactResourceBase):
             collection_id=collection_id,
         )
         model = created_model_data.model
+
         try:
-            upload_details = created_model_data.upload_details
+            upload_service = AsyncUploadService(self._client.bucket_secrets)
 
-            if upload_details.multipart:
-                upload_id = file_handler.initiate_multipart_upload(upload_details.url)
-
-                if not upload_id:
-                    raise LumlAPIError("Failed to initiate multipart upload")
-
-                multipart_urls = (
-                    await self._client.bucket_secrets.get_multipart_upload_urls(
-                        upload_details.bucket_secret_id,
-                        upload_details.bucket_location,
-                        model.size,
-                        upload_id,
-                    )
-                )
-
-                response = file_handler.upload_multipart(
-                    parts=multipart_urls.parts,
-                    complete_url=multipart_urls.complete_url,
-                    file_size=model.size,
-                    file_path=file_path,
-                    file_name=model.file_name,
-                )
-            else:
-                response = file_handler.upload_simple_file_with_progress(
-                    url=upload_details.url,
-                    file_path=file_path,
-                    file_size=model.size,
-                    file_name=model.file_name,
-                )
+            response = await upload_service.upload_file(
+                upload_details=created_model_data.upload_details,
+                file_path=file_path,
+                file_size=model.size,
+                file_name=model.file_name,
+            )
 
             status = (
                 ModelArtifactStatus.UPLOADED
-                if response.status_code == 200
+                if 200 <= response.status_code < 300
                 else ModelArtifactStatus.UPLOAD_FAILED
             )
         except FileUploadError as error:
@@ -1274,7 +1231,8 @@ class AsyncModelArtifactResource(ModelArtifactResourceBase):
         )
         download_url = download_info["url"]
 
-        file_handler.download_file_with_progress(
+        handler = S3FileHandler()
+        handler.download_file_with_progress(
             url=download_url,
             file_path=file_path,
             file_name=f'model id="{model_id}"',

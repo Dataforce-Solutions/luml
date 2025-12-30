@@ -1,9 +1,9 @@
-import { dataforceApi } from '@/lib/api'
+import { api } from '@/lib/api'
 import type {
   IPostSignInRequest,
   IPostSignInResponse,
   IPostSignupRequest,
-} from '@/lib/api/DataforceApi.interfaces'
+} from '@/lib/api/api.interfaces'
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { useUserStore } from './user'
@@ -14,74 +14,81 @@ export const useAuthStore = defineStore('auth', () => {
   const usersStore = useUserStore()
   const route = useRoute()
   const router = useRouter()
-
   const isAuth = ref(false)
+  const isLoggingOut = ref(false)
 
   const signUp = async (data: IPostSignupRequest) => {
-    await dataforceApi.signUp(data)
+    await api.signUp(data)
   }
 
   const signIn = async (data: IPostSignInRequest) => {
-    const { token, user_id }: IPostSignInResponse = await dataforceApi.signIn(data)
-    saveTokens(token.access_token, token.refresh_token)
+    const response: IPostSignInResponse = await api.signIn(data)
     isAuth.value = true
-    AnalyticsService.identify(user_id, data.email)
     await usersStore.loadUser()
-  }
-
-  const logout = async () => {
-    const refresh_token = localStorage.getItem('refreshToken')
-    if (!refresh_token) throw new Error('Refresh token is not exist')
-    try {
-      await dataforceApi.logout({ refresh_token })
-    } catch (e) {
-      throw e
-    } finally {
-      localStorage.removeItem('token')
-      localStorage.removeItem('refreshToken')
-      usersStore.resetUser()
-      isAuth.value = false
-      if (route.meta.requireAuth) router.push({ name: 'home' })
-    }
-  }
-
-  const checkIsLoggedId = async () => {
-    if (isAuth.value) return
-    const token = localStorage.getItem('token')
-    const refreshToken = localStorage.getItem('refreshToken')
-    if (!token && !refreshToken) {
-      isAuth.value = false
-      return
-    }
-    await usersStore.loadUser()
-    isAuth.value = true
-  }
-
-  const saveTokens = (token: string, refreshToken?: string) => {
-    localStorage.setItem('token', token)
-    refreshToken && localStorage.setItem('refreshToken', refreshToken)
-  }
-
-  const forgotPassword = async (email: string) => {
-    await dataforceApi.forgotPassword({ email })
+    AnalyticsService.identify(response.user_id, data.email)
   }
 
   const loginWithGoogle = async (code: string) => {
-    const { token, user_id } = await dataforceApi.googleLogin({ code })
-    if (!token.access_token) return
-    saveTokens(token.access_token, token.refresh_token)
+    const response = await api.googleLogin({ code })
     isAuth.value = true
     await usersStore.loadUser()
-    if (usersStore.getUserEmail) AnalyticsService.identify(user_id, usersStore.getUserEmail)
+
+    if (usersStore.getUserEmail) {
+      AnalyticsService.identify(response.user_id, usersStore.getUserEmail)
+    }
+  }
+
+  const logout = async () => {
+    if (isLoggingOut.value) {
+      return
+    }
+
+    isLoggingOut.value = true
+
+    try {
+      await api.logout()
+    } catch (e) {
+      console.error('Logout error:', e)
+    } finally {
+      usersStore.resetUser()
+      isAuth.value = false
+      isLoggingOut.value = false
+
+      if (route.meta.requireAuth) {
+        setTimeout(() => {
+          router.push({ name: 'home' }).catch(() => {})
+        }, 0)
+      }
+    }
+  }
+
+  const checkIsLoggedIn = async () => {
+    try {
+      await usersStore.loadUser()
+      isAuth.value = true
+    } catch {
+      isAuth.value = false
+    }
+  }
+
+  const forgotPassword = async (email: string) => {
+    await api.forgotPassword({ email })
+  }
+
+  if (typeof window !== 'undefined') {
+    const handleAuthLogout = () => {
+      logout()
+    }
+    window.addEventListener('auth:logout', handleAuthLogout)
   }
 
   const loginWithMicrosoft = async (code: string) => {
-    const { token, user_id } = await dataforceApi.microsoftLogin({ code })
-    if (!token.access_token) return
-    saveTokens(token.access_token, token.refresh_token)
+    const response = await api.microsoftLogin({ code })
     isAuth.value = true
     await usersStore.loadUser()
-    if (usersStore.getUserEmail) AnalyticsService.identify(user_id, usersStore.getUserEmail)
+    if (usersStore.getUserEmail) {
+      AnalyticsService.identify(response.user_id, usersStore.getUserEmail)
+    }
   }
 
   return {
@@ -89,7 +96,7 @@ export const useAuthStore = defineStore('auth', () => {
     signUp,
     signIn,
     logout,
-    checkIsLoggedId,
+    checkIsLoggedIn,
     forgotPassword,
     loginWithGoogle,
     loginWithMicrosoft,

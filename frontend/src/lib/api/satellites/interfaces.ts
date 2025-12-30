@@ -40,6 +40,7 @@ export interface Satellite {
   updated_at: string
   last_seen_at: string
   status: SatelliteStatusEnum
+  slug?: string
 }
 
 export interface SatelliteCapabilities {

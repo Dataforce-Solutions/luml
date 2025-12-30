@@ -11,7 +11,6 @@ from urllib.parse import urlparse
 
 from conda_manager import ModelCondaManager
 from fnnx.envs.conda import CondaLikeEnvManager, install_micromamba
-from pydantic import BaseModel, Field, create_model
 from utils.logging import log_success
 
 from .file_handler import FileHandler
@@ -33,14 +32,13 @@ class ModelHandler:
             self.extracted_path = self._get_or_extract_model(self._model_url)
             self._model_envs = self._create_model_env()
 
-            if self._model_envs:
-                self.conda_worker = ModelCondaManager(
-                    self._get_env_name(),
-                    self._model_envs["manager"],
-                    self.extracted_path,
-                    self._get_model_data_for_worker(),
-                )
-                self.conda_worker.start()
+            self.conda_worker = ModelCondaManager(
+                self._get_env_name(),
+                self._model_envs["manager"],
+                self.extracted_path,
+                self._get_model_data_for_worker(),
+            )
+            self.conda_worker.start()
         except Exception as error:
             logger.error(
                 f"Model handler initialization failed: {error}\nTraceback: {traceback.format_exc()}"
@@ -53,8 +51,6 @@ class ModelHandler:
             "model_name": os.getenv("MODEL_NAME", ""),
             "manifest": self._get_manifest(),
             "dtypes_schemas": self._load_dtypes_schemas(),
-            "request_schema": self._get_request_model(),
-            "response_schema": self._get_response_model(),
             "model_path": self.extracted_path,
         }
 
@@ -67,7 +63,7 @@ class ModelHandler:
     @staticmethod
     def _generate_model_id(url: str) -> str:
         parsed_url = urlparse(url)
-        url_path = parsed_url.path.split("?")[0]  # Remove query params
+        url_path = parsed_url.path.split("?")[0]
         return hashlib.md5(url_path.encode()).hexdigest()
 
     @log_success("Model downloaded successfully.")
@@ -104,74 +100,6 @@ class ModelHandler:
 
         return extracted_path
 
-    @staticmethod
-    def _get_base_type(dtype_inner: str) -> type:
-        return {
-            "string": str,
-            "integer": int,
-            "float": float,
-            "float32": float,
-            "float64": float,
-            "int": int,
-            "int32": int,
-            "int64": int,
-            "boolean": bool,
-        }.get(dtype_inner, Any)
-
-    @staticmethod
-    def _create_nested_list_type(base_type: type, shape: list[int | str]) -> type:
-        for _ in range(len(shape)):
-            base_type = list[base_type]
-        return base_type
-
-    def _get_field_type(
-        self, content_type: str, dtype: str, shape: list[int | str] | None = None
-    ) -> type:
-        if content_type == "NDJSON":
-            if dtype.startswith("Array["):
-                inner = dtype[6:-1]
-                base_type = self._get_base_type(inner)
-            elif dtype.startswith("NDContainer["):
-                inner = dtype[12:-1]
-                base_type = dict[str, Any]
-            else:
-                raise ValueError(f"Unsupported dtype for NDJSON: {dtype}")
-
-            if shape:
-                return self._create_nested_list_type(base_type, shape)
-            else:
-                return list[base_type]
-
-        elif content_type == "JSON":
-            return dict[str, Any]
-
-        return Any
-
-    def _create_input_model(self, manifest: dict) -> type[BaseModel]:
-        fields = {}
-
-        for input_spec in manifest["inputs"]:
-            name = input_spec["name"]
-            dtype = input_spec["dtype"]
-            content_type = input_spec["content_type"]
-            field_type = self._get_field_type(
-                content_type, dtype, shape=input_spec.get("shape", None)
-            )
-
-            description = input_spec.get("description", f"Input field of type {dtype}")
-
-            fields[name] = (field_type, Field(..., description=description))
-        return create_model("InputsModel", **fields)
-
-    @staticmethod
-    def _create_dynamic_attributes_model(manifest: dict) -> type[BaseModel]:
-        fields = {}
-        for attr in manifest.get("dynamic_attributes", []):
-            name = attr["name"]
-            desc = attr.get("description", f"Dynamic attribute '{name}'")
-            fields[name] = (str | None, Field(default=f"<<<{name}>>>", description=desc))
-        return create_model("DynamicAttributesModel", **fields)
-
     @log_success("Model manifest.json loaded successfully.")
     def _get_manifest(self) -> dict[str, Any]:
         manifest_path = Path(self.extracted_path) / "manifest.json"
@@ -194,46 +122,6 @@ class ModelHandler:
             with open(dtypes_path) as f:
                 return json.load(f)
         return {}
-
-    @log_success("Request Model generated successfully.")
-    def _get_request_model(self) -> dict[str, Any]:
-        if self._request_model_schema is None:
-            manifest = self._get_manifest()
-            input_model = self._create_input_model(manifest)
-            dynamic_attrs_model = self._create_dynamic_attributes_model(manifest)
-
-            self._request_model_schema = create_model(
-                "ComputeRequest",
-                inputs=(input_model, Field(..., description="Input data for the model")),
-                dynamic_attributes=(
-                    dynamic_attrs_model,
-                    Field(..., description="Dynamic attributes"),
-                ),
-            )
-        return self._request_model_schema.model_json_schema()
-
-    def _create_output_model(self, manifest: dict) -> type[BaseModel]:
-        fields = {}
-
-        for output_spec in manifest.get("outputs", []):
-            name = output_spec["name"]
-            dtype = output_spec["dtype"]
-            content_type = output_spec["content_type"]
-            field_type = self._get_field_type(
-                content_type, dtype, shape=output_spec.get("shape", None)
-            )
-
-            description = output_spec.get("description", f"Output field of type {dtype}")
-
-            fields[name] = (field_type, Field(..., description=description))
-        return create_model("OutputsModel", **fields)
-
-    @log_success("Response Model generated successfully.")
-    def _get_response_model(self) -> dict[str, Any]:
-        if self._response_model_schema is None:
-            manifest = self._get_manifest()
-            self._response_model_schema = self._create_output_model(manifest)
-        return self._response_model_schema.model_json_schema()
 
     def _get_env_name(self) -> str:
         if not self._model_envs:
@@ -265,7 +153,7 @@ class ModelHandler:
         }
 
     @log_success("Model env created successfully.")
-    def _create_model_env(self) -> dict[str, Any] | None:
+    def _create_model_env(self) -> dict[str, Any]:
         env_spec = self._get_env()
         if not env_spec:
             env_spec = self._get_default_env_spec()
@@ -283,7 +171,9 @@ class ModelHandler:
                     existing_packages.add(
                         dep["package"].split("==")[0].split(">=")[0].split("<=")[0].strip()
                     )
-            for pkg_name in ["uvicorn"]:
+            for pkg_name in [
+                "uvicorn",
+            ]:
                 if pkg_name not in existing_packages:
                     version = importlib_metadata.version(pkg_name)
                     env_config["dependencies"].append({"package": f"{pkg_name}=={version}"})
@@ -299,4 +189,4 @@ class ModelHandler:
                 f"[CREATE_ENV] Failed to create model environment: {e}\n"
                 f"Traceback: {traceback.format_exc()}"
             )
-            return None
+            raise RuntimeError(f"Failed to create conda environment: {e}") from e

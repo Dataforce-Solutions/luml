@@ -1,16 +1,18 @@
 <template>
   <Dialog v-model:visible="visible" :pt="dialogPt" modal :draggable="false">
     <template #header>
-      <h3>Create deployment</h3>
-      <div class="buttons">
-        <Button
-          form="createDeploymentForm"
-          label="Deploy"
-          :disabled="!isFormValid"
-          :loading="loading"
-          type="submit"
-        ></Button>
-        <Button label="Cancel" severity="secondary" @click="onCancel"></Button>
+      <div class="header-content">
+        <h3>Create deployment</h3>
+        <div class="buttons">
+          <Button
+            form="createDeploymentForm"
+            label="Deploy"
+            :disabled="!isFormValid"
+            :loading="loading"
+            type="submit"
+          ></Button>
+          <Button label="Cancel" severity="secondary" @click="onCancel"></Button>
+        </div>
       </div>
     </template>
     <template #default>
@@ -60,7 +62,7 @@ import { Form } from '@primevue/forms'
 import { dialogPt, getInitialFormData } from '../deployments.const'
 import { computed, ref } from 'vue'
 import { createDeploymentResolver } from '@/utils/forms/resolvers'
-import { getErrorMessage, getNumberOrString } from '@/helpers/helpers'
+import { getErrorMessage } from '@/helpers/helpers'
 import { useCollectionsStore } from '@/stores/collections'
 import { useDeploymentsStore } from '@/stores/deployments'
 import { simpleErrorToast } from '@/lib/primevue/data/toasts'
@@ -87,7 +89,27 @@ const selectedModel = ref<MlModel | null>(null)
 const initialValues = ref(getInitialFormData(props.initialCollectionId, props.initialModelId))
 const resolver = ref(createDeploymentResolver(initialValues))
 
-const isFormValid = computed(() => formRef.value?.valid)
+function areFieldsFilled(fields: FieldInfo<any>[] | undefined): boolean {
+  if (!fields || fields.length === 0) return true
+  return fields.every(
+    (field) => field.value !== null && field.value !== '' && field.value !== undefined,
+  )
+}
+
+const isFormValid = computed(() => {
+  const form = initialValues.value
+
+  const basicFieldsValid = !!(form.name && form.collectionId && form.modelId && form.satelliteId)
+
+  if (!basicFieldsValid) return false
+
+  return (
+    areFieldsFilled(form.secretEnvs) &&
+    areFieldsFilled(form.notSecretEnvs) &&
+    areFieldsFilled(form.secretDynamicAttributes) &&
+    areFieldsFilled(form.satelliteFields)
+  )
+})
 
 function onCancel() {
   visible.value = false
@@ -137,7 +159,7 @@ function getPayload(form: CreateDeploymentForm): CreateDeploymentPayload {
       (v) => v,
     ) as unknown as Record<string, string>,
     env_variables_secrets: fieldsToRecord<string>(form.secretEnvs, (v) => String(v)),
-    env_variables: fieldsToRecord(form.notSecretEnvs, getNumberOrString),
+    env_variables: fieldsToRecord(form.notSecretEnvs, (v) => String(v)),
     tags: form.tags,
   }
 }
@@ -172,5 +194,26 @@ function onModelChanged(model: MlModel | null) {
   grid-template-columns: repeat(3, 1fr);
   height: 100%;
   overflow: hidden;
+}
+
+.header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+@media (max-width: 992px) {
+  .content {
+    grid-template-columns: 1fr;
+    height: auto;
+    overflow: visible;
+  }
+
+  .header-content {
+    flex-direction: column;
+    gap: 12px;
+    text-align: center;
+  }
 }
 </style>

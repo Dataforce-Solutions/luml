@@ -1,11 +1,11 @@
 import uuid
 
 import pytest
+from luml.models import OrganizationOrm
+from luml.repositories.invites import InviteRepository
+from luml.schemas.organization import CreateOrganizationInvite, OrgRole
+from luml.schemas.user import User
 
-from dataforce_studio.models import OrganizationOrm
-from dataforce_studio.repositories.invites import InviteRepository
-from dataforce_studio.schemas.organization import CreateOrganizationInvite, OrgRole
-from dataforce_studio.schemas.user import User
 from tests.conftest import OrganizationFixtureData
 
 
@@ -13,7 +13,7 @@ def get_invite_obj(
     organization: OrganizationOrm, user: User
 ) -> CreateOrganizationInvite:
     return CreateOrganizationInvite(
-        email=f"invite_{uuid.uuid4()}@gmail.com",
+        email=f"test_{uuid.uuid4()}@example.com",
         role=OrgRole.MEMBER,
         organization_id=organization.id,
         invited_by=user.id,

@@ -7,19 +7,16 @@ from uuid import uuid7
 
 import asyncpg  # type: ignore[import-untyped]
 import pytest_asyncio
-from sqlalchemy.ext.asyncio import AsyncConnection, AsyncEngine, create_async_engine
-from utils.db import migrate_db
-
-from dataforce_studio.models import OrganizationOrm
-from dataforce_studio.repositories.bucket_secrets import BucketSecretRepository
-from dataforce_studio.repositories.collections import CollectionRepository
-from dataforce_studio.repositories.invites import InviteRepository
-from dataforce_studio.repositories.model_artifacts import ModelArtifactRepository
-from dataforce_studio.repositories.orbits import OrbitRepository
-from dataforce_studio.repositories.satellites import SatelliteRepository
-from dataforce_studio.repositories.users import UserRepository
-from dataforce_studio.schemas.bucket_secrets import BucketSecret, BucketSecretCreate
-from dataforce_studio.schemas.model_artifacts import (
+from luml.models import OrganizationOrm
+from luml.repositories.bucket_secrets import BucketSecretRepository
+from luml.repositories.collections import CollectionRepository
+from luml.repositories.invites import InviteRepository
+from luml.repositories.model_artifacts import ModelArtifactRepository
+from luml.repositories.orbits import OrbitRepository
+from luml.repositories.satellites import SatelliteRepository
+from luml.repositories.users import UserRepository
+from luml.schemas.bucket_secrets import S3BucketSecret, S3BucketSecretCreate
+from luml.schemas.model_artifacts import (
     NDJSON,
     Collection,
     CollectionCreate,
@@ -29,7 +26,7 @@ from dataforce_studio.schemas.model_artifacts import (
     ModelArtifactCreate,
     ModelArtifactStatus,
 )
-from dataforce_studio.schemas.orbit import (
+from luml.schemas.orbit import (
     Orbit,
     OrbitCreateIn,
     OrbitDetails,
@@ -37,7 +34,7 @@ from dataforce_studio.schemas.orbit import (
     OrbitMemberCreate,
     OrbitRole,
 )
-from dataforce_studio.schemas.organization import (
+from luml.schemas.organization import (
     CreateOrganizationInvite,
     Organization,
     OrganizationCreateIn,
@@ -49,17 +46,19 @@ from dataforce_studio.schemas.organization import (
     OrgRole,
     UserInvite,
 )
-from dataforce_studio.schemas.satellite import Satellite, SatelliteCreate
-from dataforce_studio.schemas.user import (
+from luml.schemas.satellite import Satellite, SatelliteCreate
+from luml.schemas.user import (
     AuthProvider,
     CreateUser,
     CreateUserIn,
     User,
     UserOut,
 )
-from dataforce_studio.settings import config
+from luml.settings import config
+from sqlalchemy.ext.asyncio import AsyncConnection, AsyncEngine, create_async_engine
+from utils.db import migrate_db
 
-TEST_DB_NAME = "df_studio_test"
+TEST_DB_NAME = "luml_studio_test"
 TEST_PASSWORD = "test_password"
 
 
@@ -98,7 +97,7 @@ class BaseFixtureData:
 @dataclass
 class OrganizationFixtureData(BaseFixtureData):
     user: User
-    bucket_secret: BucketSecret
+    bucket_secret: S3BucketSecret
     member: OrganizationMember
 
 
@@ -111,7 +110,7 @@ class OrganizationWithMembersFixtureData(OrganizationFixtureData):
 @dataclass
 class OrbitFixtureData(BaseFixtureData):
     orbit: OrbitDetails
-    bucket_secret: BucketSecret
+    bucket_secret: S3BucketSecret
     user: User
 
 
@@ -216,7 +215,7 @@ async def member_data() -> AsyncGenerator[OrganizationMember]:
         role=OrgRole.OWNER,
         user=UserOut(
             id=uuid7(),
-            email="test@gmail.com",
+            email="test@example.com",
             full_name="Full Name",
             disabled=False,
             photo=None,
@@ -229,7 +228,7 @@ async def member_data() -> AsyncGenerator[OrganizationMember]:
 @pytest_asyncio.fixture(scope="function")
 async def test_user_create() -> AsyncGenerator[CreateUser]:
     yield CreateUser(
-        email=f"testuser_{uuid.uuid4()}@example.com",
+        email=f"test_{uuid.uuid4()}@example.com",
         full_name="Test User",
         disabled=None,
         email_verified=False,
@@ -354,8 +353,8 @@ async def manifest_example() -> AsyncGenerator[Manifest]:
 
 
 @pytest_asyncio.fixture
-async def test_bucket() -> AsyncGenerator[BucketSecret]:
-    yield BucketSecret(
+async def test_bucket() -> AsyncGenerator[S3BucketSecret]:
+    yield S3BucketSecret(
         id=uuid7(),
         organization_id=uuid7(),
         endpoint="url",
@@ -376,13 +375,13 @@ async def test_model_artifact(
 ) -> AsyncGenerator[ModelArtifactCreate]:
     yield ModelArtifactCreate(
         collection_id=uuid7(),
-        file_name="model.dfs",
+        file_name="model.luml",
         model_name="Test Model",
         metrics={"accuracy": 0.95, "precision": 0.92},
         manifest=manifest_example,
         file_hash=str(uuid.uuid4()),
         file_index={"model": (0, 1000)},
-        bucket_location="orbit/collection/model.dfs",
+        bucket_location="orbit/collection/model.luml",
         size=1000,
         unique_identifier="test_uid_123",
         tags=["test", "model"],
@@ -422,10 +421,11 @@ async def create_organization_with_user(
     )
 
     secret = await secret_repo.create_bucket_secret(
-        BucketSecretCreate(
+        S3BucketSecretCreate(
             organization_id=created_organization.id,
             endpoint="s3",
             bucket_name="test-bucket",
+            region="us-east-1",
         )
     )
     assert secret is not None, (
@@ -455,7 +455,7 @@ async def create_organization_with_members(
 
     for _ in range(10):
         user_data = test_user_create.model_copy()
-        user_data.email = f"user_{uuid.uuid4()}@gmail.com"
+        user_data.email = f"test_{uuid.uuid4()}@example.com"
         user = await repo.create_user(user_data)
         users.append(user)
 
@@ -473,7 +473,7 @@ async def create_organization_with_members(
         invited_by_user = random.choice(users)
         invite = await invites_repo.create_organization_invite(
             CreateOrganizationInvite(
-                email=f"invited_{uuid.uuid4()}_@gmail.com",
+                email=f"test_{uuid.uuid4()}@example.com",
                 role=OrgRole.MEMBER,
                 organization_id=data.organization.id,
                 invited_by=invited_by_user.id,
@@ -513,10 +513,11 @@ async def create_orbit(
     )
 
     bucket_secret = await secret_repo.create_bucket_secret(
-        BucketSecretCreate(
+        S3BucketSecretCreate(
             organization_id=organization.id,
             endpoint="s3",
             bucket_name="test-bucket",
+            region="us-east-1",
         )
     )
     assert bucket_secret is not None, (
@@ -551,7 +552,7 @@ async def create_orbit_with_members(
 
     for _ in range(10):
         user_data = test_user_create.model_copy()
-        user_data.email = f"{uuid.uuid4()}@example.com"
+        user_data.email = f"test_{uuid.uuid4()}@example.com"
         created_user = await user_repo.create_user(user_data)
         member = await repo.create_orbit_member(
             OrbitMemberCreate(

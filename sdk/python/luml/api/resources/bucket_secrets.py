@@ -2,15 +2,16 @@ from abc import ABC, abstractmethod
 from collections.abc import Coroutine
 from typing import TYPE_CHECKING, Any
 
-from .._types import (
+from luml.api._types import (
     BucketSecret,
     MultiPartUploadDetails,
     is_uuid,
+    model_validate_bucket_secret,
 )
-from .._utils import find_by_value
+from luml.api._utils import find_by_value
 
 if TYPE_CHECKING:
-    from .._client import AsyncLumlClient, LumlClient
+    from luml.api._client import AsyncLumlClient, LumlClient
 
 
 class BucketSecretResourceBase(ABC):
@@ -134,7 +135,7 @@ class BucketSecretResource(BucketSecretResourceBase):
         response = self._client.get(
             f"/organizations/{self._client.organization}/bucket-secrets/{secret_id}"
         )
-        return BucketSecret.model_validate(response)
+        return model_validate_bucket_secret(response)
 
     def _get_by_name(self, name: str) -> BucketSecret | None:
         return find_by_value(self.list(), name, lambda b: b.bucket_name == name)
@@ -179,7 +180,7 @@ class BucketSecretResource(BucketSecretResourceBase):
         )
         if response is None:
             return []
-        return [BucketSecret.model_validate(secret) for secret in response]
+        return [model_validate_bucket_secret(secret) for secret in response]
 
     def create(
         self,
@@ -258,7 +259,7 @@ class BucketSecretResource(BucketSecretResourceBase):
                 }
             ),
         )
-        return BucketSecret.model_validate(response)
+        return model_validate_bucket_secret(response)
 
     def update(
         self,
@@ -339,7 +340,7 @@ class BucketSecretResource(BucketSecretResourceBase):
                 }
             ),
         )
-        return BucketSecret.model_validate(response)
+        return model_validate_bucket_secret(response)
 
     def delete(self, secret_id: str) -> None:
         """
@@ -376,7 +377,11 @@ class BucketSecretResource(BucketSecretResourceBase):
         )
 
     def get_multipart_upload_urls(
-        self, bucket_id: str, bucket_location: str, size: int, upload_id: str
+        self,
+        bucket_id: str,
+        bucket_location: str,
+        size: int,
+        upload_id: str | None = None,
     ) -> MultiPartUploadDetails:
         """
         Get presigned URLs for multipart upload parts.
@@ -419,12 +424,14 @@ class BucketSecretResource(BucketSecretResourceBase):
 
         response = self._client.post(
             "/bucket-secrets/upload/multipart",
-            json={
-                "bucket_id": bucket_id,
-                "bucket_location": bucket_location,
-                "size": size,
-                "upload_id": upload_id,
-            },
+            json=self._client.filter_none(
+                {
+                    "bucket_id": bucket_id,
+                    "bucket_location": bucket_location,
+                    "size": size,
+                    "upload_id": upload_id,
+                }
+            ),
         )
         return MultiPartUploadDetails.model_validate(response)
 
@@ -495,7 +502,7 @@ class AsyncBucketSecretResource(BucketSecretResourceBase):
         response = await self._client.get(
             f"/organizations/{self._client.organization}/bucket-secrets/{secret_id}"
         )
-        return BucketSecret.model_validate(response)
+        return model_validate_bucket_secret(response)
 
     async def _get_by_name(self, name: str) -> BucketSecret | None:
         return find_by_value(await self.list(), name, lambda b: b.bucket_name == name)
@@ -544,10 +551,14 @@ class AsyncBucketSecretResource(BucketSecretResourceBase):
         )
         if response is None:
             return []
-        return [BucketSecret.model_validate(secret) for secret in response]
+        return [model_validate_bucket_secret(secret) for secret in response]
 
     async def get_multipart_upload_urls(
-        self, bucket_id: str, bucket_location: str, size: int, upload_id: str
+        self,
+        bucket_id: str,
+        bucket_location: str,
+        size: int,
+        upload_id: str | None = None,
     ) -> MultiPartUploadDetails:
         """
         Get presigned URLs for multipart upload parts.
@@ -589,12 +600,14 @@ class AsyncBucketSecretResource(BucketSecretResourceBase):
         """
         response = await self._client.post(
             "/bucket-secrets/upload/multipart",
-            json={
-                "bucket_id": bucket_id,
-                "bucket_location": bucket_location,
-                "size": size,
-                "upload_id": upload_id,
-            },
+            json=self._client.filter_none(
+                {
+                    "bucket_id": bucket_id,
+                    "bucket_location": bucket_location,
+                    "size": size,
+                    "upload_id": upload_id,
+                }
+            ),
         )
         return MultiPartUploadDetails.model_validate(response)
 
@@ -679,7 +692,7 @@ class AsyncBucketSecretResource(BucketSecretResourceBase):
                 }
             ),
         )
-        return BucketSecret.model_validate(response)
+        return model_validate_bucket_secret(response)
 
     async def update(
         self,
@@ -764,7 +777,7 @@ class AsyncBucketSecretResource(BucketSecretResourceBase):
                 }
             ),
         )
-        return BucketSecret.model_validate(response)
+        return model_validate_bucket_secret(response)
 
     async def delete(self, secret_id: str) -> None:
         """

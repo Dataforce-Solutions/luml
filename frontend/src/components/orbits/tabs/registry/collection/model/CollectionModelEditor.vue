@@ -85,7 +85,7 @@ import { simpleErrorToast, simpleSuccessToast } from '@/lib/primevue/data/toasts
 import { deleteModelConfirmOptions } from '@/lib/primevue/data/confirm'
 import { modelEditorResolver } from '@/utils/forms/resolvers'
 import { useOrbitsStore } from '@/stores/orbits'
-import { PermissionEnum } from '@/lib/api/DataforceApi.interfaces'
+import { PermissionEnum } from '@/lib/api/api.interfaces'
 import { useModelsStore } from '@/stores/models'
 
 const dialogPT: DialogPassThroughOptions = {
@@ -101,6 +101,7 @@ type Props = {
 const props = defineProps<Props>()
 
 const visible = defineModel<boolean>('visible')
+const emit = defineEmits(['model-deleted'])
 
 const toast = useToast()
 const confirm = useConfirm()
@@ -158,11 +159,17 @@ function onDeleteClick() {
 async function deleteModel() {
   try {
     loading.value = true
-    await modelsStore.deleteModels([props.data.id])
-    toast.add(
-      simpleSuccessToast(`Model “${props.data.model_name}” was removed from the collection.`),
-    )
-    visible.value = false
+    const result = await modelsStore.deleteModels([props.data.id])
+    if (result.deleted?.length) {
+      toast.add(
+        simpleSuccessToast(`Model "${props.data.model_name}" was removed from the collection.`),
+      )
+      emit('model-deleted')
+      visible.value = false
+      await new Promise((resolve) => setTimeout(resolve, 100))
+    } else if (result.failed?.length) {
+      toast.add(simpleErrorToast(`Failed to delete model "${props.data.model_name}".`))
+    }
   } catch (e) {
     toast.add(simpleErrorToast('Failed to delete model'))
   } finally {

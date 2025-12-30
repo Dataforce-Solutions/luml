@@ -4,19 +4,19 @@ from unittest.mock import AsyncMock, Mock, patch
 from uuid import UUID, uuid4
 
 import pytest
-
-from dataforce_studio.handlers.satellites import SatelliteHandler
-from dataforce_studio.infra.exceptions import (
+from luml.handlers.satellites import SatelliteHandler
+from luml.infra.exceptions import (
     ApplicationError,
     DatabaseConstraintError,
     NotFoundError,
 )
-from dataforce_studio.schemas.permissions import Action, Resource
-from dataforce_studio.schemas.satellite import (
+from luml.schemas.permissions import Action, Resource
+from luml.schemas.satellite import (
     Satellite,
     SatelliteCapability,
     SatelliteCreateIn,
     SatelliteCreateOut,
+    SatellitePairIn,
     SatelliteQueueTask,
     SatelliteTaskStatus,
     SatelliteTaskType,
@@ -27,11 +27,11 @@ handler = SatelliteHandler()
 
 
 @patch(
-    "dataforce_studio.handlers.satellites.SatelliteRepository.list_satellites",
+    "luml.handlers.satellites.SatelliteRepository.list_satellites",
     new_callable=AsyncMock,
 )
 @patch(
-    "dataforce_studio.handlers.satellites.PermissionsHandler.check_permissions",
+    "luml.handlers.satellites.PermissionsHandler.check_permissions",
     new_callable=AsyncMock,
 )
 @pytest.mark.asyncio
@@ -74,11 +74,11 @@ async def test_list_satellites(
 
 
 @patch(
-    "dataforce_studio.handlers.satellites.SatelliteRepository.get_satellite",
+    "luml.handlers.satellites.SatelliteRepository.get_satellite",
     new_callable=AsyncMock,
 )
 @patch(
-    "dataforce_studio.handlers.satellites.PermissionsHandler.check_permissions",
+    "luml.handlers.satellites.PermissionsHandler.check_permissions",
     new_callable=AsyncMock,
 )
 @pytest.mark.asyncio
@@ -117,11 +117,11 @@ async def test_get_satellite(
 
 
 @patch(
-    "dataforce_studio.handlers.satellites.SatelliteRepository.get_satellite",
+    "luml.handlers.satellites.SatelliteRepository.get_satellite",
     new_callable=AsyncMock,
 )
 @patch(
-    "dataforce_studio.handlers.satellites.PermissionsHandler.check_permissions",
+    "luml.handlers.satellites.PermissionsHandler.check_permissions",
     new_callable=AsyncMock,
 )
 @pytest.mark.asyncio
@@ -147,25 +147,25 @@ async def test_get_satellite_not_found(
 
 
 @patch(
-    "dataforce_studio.handlers.satellites.SatelliteHandler._check_organization_satellites_limit",
+    "luml.handlers.satellites.SatelliteHandler._check_organization_satellites_limit",
 )
 @patch(
-    "dataforce_studio.handlers.satellites.SatelliteHandler._get_key_hash",
+    "luml.handlers.satellites.SatelliteHandler._get_key_hash",
 )
 @patch(
-    "dataforce_studio.handlers.satellites.SatelliteRepository.create_satellite",
+    "luml.handlers.satellites.SatelliteRepository.create_satellite",
     new_callable=AsyncMock,
 )
 @patch(
-    "dataforce_studio.handlers.satellites.UserRepository.get_public_user_by_id",
+    "luml.handlers.satellites.UserRepository.get_public_user_by_id",
     new_callable=AsyncMock,
 )
 @patch(
-    "dataforce_studio.handlers.satellites.OrbitRepository.get_orbit_simple",
+    "luml.handlers.satellites.OrbitRepository.get_orbit_simple",
     new_callable=AsyncMock,
 )
 @patch(
-    "dataforce_studio.handlers.satellites.PermissionsHandler.check_permissions",
+    "luml.handlers.satellites.PermissionsHandler.check_permissions",
     new_callable=AsyncMock,
 )
 @pytest.mark.asyncio
@@ -216,14 +216,14 @@ async def test_create_satellite(
 
 
 @patch(
-    "dataforce_studio.handlers.satellites.SatelliteHandler._check_organization_satellites_limit",
+    "luml.handlers.satellites.SatelliteHandler._check_organization_satellites_limit",
 )
 @patch(
-    "dataforce_studio.handlers.satellites.OrbitRepository.get_orbit_simple",
+    "luml.handlers.satellites.OrbitRepository.get_orbit_simple",
     new_callable=AsyncMock,
 )
 @patch(
-    "dataforce_studio.handlers.satellites.PermissionsHandler.check_permissions",
+    "luml.handlers.satellites.PermissionsHandler.check_permissions",
     new_callable=AsyncMock,
 )
 @pytest.mark.asyncio
@@ -254,18 +254,18 @@ async def test_create_satellite_orbit_not_found(
 
 
 @patch(
-    "dataforce_studio.handlers.satellites.SatelliteHandler._check_organization_satellites_limit",
+    "luml.handlers.satellites.SatelliteHandler._check_organization_satellites_limit",
 )
 @patch(
-    "dataforce_studio.handlers.satellites.UserRepository.get_public_user_by_id",
+    "luml.handlers.satellites.UserRepository.get_public_user_by_id",
     new_callable=AsyncMock,
 )
 @patch(
-    "dataforce_studio.handlers.satellites.OrbitRepository.get_orbit_simple",
+    "luml.handlers.satellites.OrbitRepository.get_orbit_simple",
     new_callable=AsyncMock,
 )
 @patch(
-    "dataforce_studio.handlers.satellites.PermissionsHandler.check_permissions",
+    "luml.handlers.satellites.PermissionsHandler.check_permissions",
     new_callable=AsyncMock,
 )
 @pytest.mark.asyncio
@@ -299,11 +299,11 @@ async def test_create_satellite_user_not_found(
 
 
 @patch(
-    "dataforce_studio.handlers.satellites.SatelliteRepository.pair_satellite",
+    "luml.handlers.satellites.SatelliteRepository.pair_satellite",
     new_callable=AsyncMock,
 )
 @patch(
-    "dataforce_studio.handlers.satellites.SatelliteRepository.get_satellite",
+    "luml.handlers.satellites.SatelliteRepository.get_satellite",
     new_callable=AsyncMock,
 )
 @pytest.mark.asyncio
@@ -347,11 +347,15 @@ async def test_pair_satellite(
     mock_get_satellite.return_value = unpaired_satellite
     mock_pair_satellite.return_value = expected
 
-    satellite = await handler.pair_satellite(satellite_id, base_url, capabilities)
+    satellite_pair_in = SatellitePairIn(
+        base_url=base_url,
+        capabilities=capabilities,
+    )
+    satellite = await handler.pair_satellite(satellite_id, satellite_pair_in)
 
     assert satellite == expected
     mock_get_satellite.assert_awaited_once_with(satellite_id)
-    mock_pair_satellite.assert_awaited_once_with(satellite_id, base_url, capabilities)
+    mock_pair_satellite.assert_awaited_once()
 
 
 @pytest.mark.asyncio
@@ -361,14 +365,19 @@ async def test_pair_satellite_empty_capabilities() -> None:
     base_url = "https://satellite.example.com"
     capabilities: dict[SatelliteCapability, dict[str, Any] | None] = {}
 
+    satellite_pair_in = SatellitePairIn(
+        base_url=base_url,
+        capabilities=capabilities,
+    )
+
     with pytest.raises(ApplicationError, match="Invalid capabilities") as error:
-        await handler.pair_satellite(satellite_id, base_url, capabilities)
+        await handler.pair_satellite(satellite_id, satellite_pair_in)
 
     assert error.value.status_code == 400
 
 
 @patch(
-    "dataforce_studio.handlers.satellites.SatelliteRepository.get_satellite",
+    "luml.handlers.satellites.SatelliteRepository.get_satellite",
     new_callable=AsyncMock,
 )
 @pytest.mark.asyncio
@@ -384,19 +393,24 @@ async def test_pair_satellite_satellite_not_found(
 
     mock_get_satellite.return_value = None
 
+    satellite_pair_in = SatellitePairIn(
+        base_url=base_url,
+        capabilities=capabilities,
+    )
+
     with pytest.raises(NotFoundError, match="Satellite not found") as error:
-        await handler.pair_satellite(satellite_id, base_url, capabilities)
+        await handler.pair_satellite(satellite_id, satellite_pair_in)
 
     assert error.value.status_code == 404
     mock_get_satellite.assert_awaited_once_with(satellite_id)
 
 
 @patch(
-    "dataforce_studio.handlers.satellites.SatelliteRepository.pair_satellite",
+    "luml.handlers.satellites.SatelliteRepository.pair_satellite",
     new_callable=AsyncMock,
 )
 @patch(
-    "dataforce_studio.handlers.satellites.SatelliteRepository.get_satellite",
+    "luml.handlers.satellites.SatelliteRepository.get_satellite",
     new_callable=AsyncMock,
 )
 @pytest.mark.asyncio
@@ -427,7 +441,11 @@ async def test_pair_satellite_already_paired(
 
     mock_get_satellite.return_value = expected
 
-    satellite = await handler.pair_satellite(satellite_id, base_url, capabilities)
+    satellite_pair_in = SatellitePairIn(
+        base_url=base_url,
+        capabilities=capabilities,
+    )
+    satellite = await handler.pair_satellite(satellite_id, satellite_pair_in)
 
     assert satellite == expected
     mock_get_satellite.assert_awaited_once_with(satellite_id)
@@ -435,11 +453,11 @@ async def test_pair_satellite_already_paired(
 
 
 @patch(
-    "dataforce_studio.handlers.satellites.SatelliteRepository.pair_satellite",
+    "luml.handlers.satellites.SatelliteRepository.pair_satellite",
     new_callable=AsyncMock,
 )
 @patch(
-    "dataforce_studio.handlers.satellites.SatelliteRepository.get_satellite",
+    "luml.handlers.satellites.SatelliteRepository.get_satellite",
     new_callable=AsyncMock,
 )
 @pytest.mark.asyncio
@@ -471,16 +489,21 @@ async def test_pair_satellite_update_error(
     mock_get_satellite.return_value = unpaired_satellite
     mock_pair_satellite.return_value = None
 
+    satellite_pair_in = SatellitePairIn(
+        base_url=base_url,
+        capabilities=capabilities,
+    )
+
     with pytest.raises(NotFoundError, match="Satellite not found") as error:
-        await handler.pair_satellite(satellite_id, base_url, capabilities)
+        await handler.pair_satellite(satellite_id, satellite_pair_in)
 
     assert error.value.status_code == 404
     mock_get_satellite.assert_awaited_once_with(satellite_id)
-    mock_pair_satellite.assert_awaited_once_with(satellite_id, base_url, capabilities)
+    mock_pair_satellite.assert_awaited_once()
 
 
 @patch(
-    "dataforce_studio.handlers.satellites.SatelliteRepository.touch_last_seen",
+    "luml.handlers.satellites.SatelliteRepository.touch_last_seen",
     new_callable=AsyncMock,
 )
 @pytest.mark.asyncio
@@ -493,7 +516,7 @@ async def test_touch_last_seen(mock_touch_last_seen: AsyncMock) -> None:
 
 
 @patch(
-    "dataforce_studio.handlers.satellites.SatelliteRepository.list_tasks",
+    "luml.handlers.satellites.SatelliteRepository.list_tasks",
     new_callable=AsyncMock,
 )
 @pytest.mark.asyncio
@@ -528,7 +551,7 @@ async def test_list_tasks(mock_list_tasks: AsyncMock) -> None:
 
 
 @patch(
-    "dataforce_studio.handlers.satellites.SatelliteRepository.list_tasks",
+    "luml.handlers.satellites.SatelliteRepository.list_tasks",
     new_callable=AsyncMock,
 )
 @pytest.mark.asyncio
@@ -549,7 +572,7 @@ async def test_list_tasks_with_status(mock_list_tasks: AsyncMock) -> None:
 
 
 @patch(
-    "dataforce_studio.handlers.satellites.SatelliteRepository.update_task_status",
+    "luml.handlers.satellites.SatelliteRepository.update_task_status",
     new_callable=AsyncMock,
 )
 @pytest.mark.asyncio
@@ -589,7 +612,7 @@ async def test_update_task_status_success(mock_update_task_status: AsyncMock) ->
 
 
 @patch(
-    "dataforce_studio.handlers.satellites.SatelliteRepository.update_task_status",
+    "luml.handlers.satellites.SatelliteRepository.update_task_status",
     new_callable=AsyncMock,
 )
 @pytest.mark.asyncio
@@ -611,18 +634,18 @@ async def test_update_task_status_not_found(mock_update_task_status: AsyncMock) 
 
 
 @patch(
-    "dataforce_studio.handlers.satellites.SatelliteHandler._get_key_hash",
+    "luml.handlers.satellites.SatelliteHandler._get_key_hash",
 )
 @patch(
-    "dataforce_studio.handlers.satellites.SatelliteRepository.update_satellite",
+    "luml.handlers.satellites.SatelliteRepository.update_satellite",
     new_callable=AsyncMock,
 )
 @patch(
-    "dataforce_studio.handlers.satellites.SatelliteRepository.get_satellite",
+    "luml.handlers.satellites.SatelliteRepository.get_satellite",
     new_callable=AsyncMock,
 )
 @patch(
-    "dataforce_studio.handlers.satellites.PermissionsHandler.check_permissions",
+    "luml.handlers.satellites.PermissionsHandler.check_permissions",
     new_callable=AsyncMock,
 )
 @pytest.mark.asyncio
@@ -666,11 +689,11 @@ async def test_regenerate_satellite_api_key(
 
 
 @patch(
-    "dataforce_studio.handlers.satellites.SatelliteRepository.get_satellite",
+    "luml.handlers.satellites.SatelliteRepository.get_satellite",
     new_callable=AsyncMock,
 )
 @patch(
-    "dataforce_studio.handlers.satellites.PermissionsHandler.check_permissions",
+    "luml.handlers.satellites.PermissionsHandler.check_permissions",
     new_callable=AsyncMock,
 )
 @pytest.mark.asyncio
@@ -698,15 +721,15 @@ async def test_regenerate_satellite_api_key_not_found(
 
 
 @patch(
-    "dataforce_studio.handlers.satellites.SatelliteRepository.update_satellite",
+    "luml.handlers.satellites.SatelliteRepository.update_satellite",
     new_callable=AsyncMock,
 )
 @patch(
-    "dataforce_studio.handlers.satellites.SatelliteRepository.get_satellite",
+    "luml.handlers.satellites.SatelliteRepository.get_satellite",
     new_callable=AsyncMock,
 )
 @patch(
-    "dataforce_studio.handlers.satellites.PermissionsHandler.check_permissions",
+    "luml.handlers.satellites.PermissionsHandler.check_permissions",
     new_callable=AsyncMock,
 )
 @pytest.mark.asyncio
@@ -766,11 +789,11 @@ async def test_update_satellite(
 
 
 @patch(
-    "dataforce_studio.handlers.satellites.SatelliteRepository.get_satellite",
+    "luml.handlers.satellites.SatelliteRepository.get_satellite",
     new_callable=AsyncMock,
 )
 @patch(
-    "dataforce_studio.handlers.satellites.PermissionsHandler.check_permissions",
+    "luml.handlers.satellites.PermissionsHandler.check_permissions",
     new_callable=AsyncMock,
 )
 @pytest.mark.asyncio
@@ -799,15 +822,15 @@ async def test_update_satellite_not_found(
 
 
 @patch(
-    "dataforce_studio.handlers.satellites.SatelliteRepository.update_satellite",
+    "luml.handlers.satellites.SatelliteRepository.update_satellite",
     new_callable=AsyncMock,
 )
 @patch(
-    "dataforce_studio.handlers.satellites.SatelliteRepository.get_satellite",
+    "luml.handlers.satellites.SatelliteRepository.get_satellite",
     new_callable=AsyncMock,
 )
 @patch(
-    "dataforce_studio.handlers.satellites.PermissionsHandler.check_permissions",
+    "luml.handlers.satellites.PermissionsHandler.check_permissions",
     new_callable=AsyncMock,
 )
 @pytest.mark.asyncio
@@ -848,15 +871,15 @@ async def test_update_satellite_update_failed(
 
 
 @patch(
-    "dataforce_studio.handlers.satellites.SatelliteRepository.delete_satellite",
+    "luml.handlers.satellites.SatelliteRepository.delete_satellite",
     new_callable=AsyncMock,
 )
 @patch(
-    "dataforce_studio.handlers.satellites.SatelliteRepository.get_satellite",
+    "luml.handlers.satellites.SatelliteRepository.get_satellite",
     new_callable=AsyncMock,
 )
 @patch(
-    "dataforce_studio.handlers.satellites.PermissionsHandler.check_permissions",
+    "luml.handlers.satellites.PermissionsHandler.check_permissions",
     new_callable=AsyncMock,
 )
 @pytest.mark.asyncio
@@ -896,15 +919,15 @@ async def test_delete_satellite(
 
 
 @patch(
-    "dataforce_studio.handlers.satellites.SatelliteRepository.delete_satellite",
+    "luml.handlers.satellites.SatelliteRepository.delete_satellite",
     new_callable=AsyncMock,
 )
 @patch(
-    "dataforce_studio.handlers.satellites.SatelliteRepository.get_satellite",
+    "luml.handlers.satellites.SatelliteRepository.get_satellite",
     new_callable=AsyncMock,
 )
 @patch(
-    "dataforce_studio.handlers.satellites.PermissionsHandler.check_permissions",
+    "luml.handlers.satellites.PermissionsHandler.check_permissions",
     new_callable=AsyncMock,
 )
 @pytest.mark.asyncio
@@ -948,11 +971,11 @@ async def test_delete_satellite_with_deployments(
 
 
 @patch(
-    "dataforce_studio.handlers.satellites.SatelliteRepository.get_satellite",
+    "luml.handlers.satellites.SatelliteRepository.get_satellite",
     new_callable=AsyncMock,
 )
 @patch(
-    "dataforce_studio.handlers.satellites.PermissionsHandler.check_permissions",
+    "luml.handlers.satellites.PermissionsHandler.check_permissions",
     new_callable=AsyncMock,
 )
 @pytest.mark.asyncio
@@ -978,15 +1001,15 @@ async def test_delete_satellite_not_found(
 
 
 @patch(
-    "dataforce_studio.handlers.satellites.SatelliteRepository.list_satellites",
+    "luml.handlers.satellites.SatelliteRepository.list_satellites",
     new_callable=AsyncMock,
 )
 @patch(
-    "dataforce_studio.handlers.satellites.PermissionsHandler._PermissionsHandler__user_repository.get_organization_member_role",
+    "luml.handlers.satellites.PermissionsHandler._PermissionsHandler__user_repository.get_organization_member_role",
     new_callable=AsyncMock,
 )
 @patch(
-    "dataforce_studio.handlers.satellites.PermissionsHandler._PermissionsHandler__orbits_repository.get_orbit_member_role",
+    "luml.handlers.satellites.PermissionsHandler._PermissionsHandler__orbits_repository.get_orbit_member_role",
     new_callable=AsyncMock,
 )
 @pytest.mark.asyncio
@@ -1032,15 +1055,15 @@ async def test_list_satellites_orbit_member_permissions(
 
 
 @patch(
-    "dataforce_studio.handlers.satellites.SatelliteRepository.list_satellites",
+    "luml.handlers.satellites.SatelliteRepository.list_satellites",
     new_callable=AsyncMock,
 )
 @patch(
-    "dataforce_studio.handlers.satellites.PermissionsHandler._PermissionsHandler__user_repository.get_organization_member_role",
+    "luml.handlers.satellites.PermissionsHandler._PermissionsHandler__user_repository.get_organization_member_role",
     new_callable=AsyncMock,
 )
 @patch(
-    "dataforce_studio.handlers.satellites.PermissionsHandler._PermissionsHandler__orbits_repository.get_orbit_member_role",
+    "luml.handlers.satellites.PermissionsHandler._PermissionsHandler__orbits_repository.get_orbit_member_role",
     new_callable=AsyncMock,
 )
 @pytest.mark.asyncio
@@ -1085,7 +1108,7 @@ async def test_list_satellites_organization_admin_permissions(
 
 
 @patch(
-    "dataforce_studio.handlers.satellites.SatelliteRepository.get_satellite_by_hash",
+    "luml.handlers.satellites.SatelliteRepository.get_satellite_by_hash",
     new_callable=AsyncMock,
 )
 @pytest.mark.asyncio

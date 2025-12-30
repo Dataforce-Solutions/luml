@@ -1,0 +1,148 @@
+from typing import Any
+
+from luml.utils.time import get_epoch
+
+try:
+    from sklearn.base import BaseEstimator  # type: ignore[import-not-found]
+except ImportError:
+    BaseEstimator = None
+
+try:
+    import cloudpickle  # type: ignore[import-not-found]
+except ImportError:
+    cloudpickle = None
+
+try:
+    import pandas as pd  # type: ignore[import-untyped]
+except ImportError:
+    pd = None
+
+
+import os
+import tempfile
+
+import numpy as np  # type: ignore[import-not-found]
+from fnnx.extras.builder import PyfuncBuilder
+from fnnx.extras.pydantic_models.manifest import NDJSON
+
+from luml.integrations.sklearn.packaging._template import SKlearnPyFunc
+from luml.modelref import ModelReference
+from luml.utils.imports import get_version
+
+
+def _resolve_dtype(dtype: np.dtype) -> str:
+    if np.issubdtype(dtype, np.floating):
+        return "float"
+    if np.issubdtype(dtype, np.integer):
+        return "int"
+    return "str"
+
+
+def save_sklearn(  # noqa: C901
+    estimator: Any,  # noqa: ANN401
+    inputs: Any,  # noqa: ANN401
+    path: str | None = None,
+    manifest_model_name: str | None = None,
+    manifest_model_version: str | None = None,
+    manifest_model_description: str | None = None,
+    extra_dependencies: list[str] | None = None,
+) -> ModelReference:
+    path = path or f"model_{get_epoch()}.luml"
+    if not cloudpickle:
+        raise RuntimeError("cloudpickle is not installed")
+    if not BaseEstimator:
+        raise RuntimeError("sklearn is not installed")
+
+    if not callable(getattr(estimator, "predict", None)):
+        raise TypeError("Provided estimator must implement a .predict() method")
+
+    builder = PyfuncBuilder(
+        pyfunc=SKlearnPyFunc,
+        model_name=manifest_model_name,
+        model_version=manifest_model_version,
+        model_description=manifest_model_description,
+    )
+
+    if pd is not None and isinstance(inputs, pd.DataFrame):
+        input_order = list(inputs.columns)
+        for col in input_order:
+            dtype = _resolve_dtype(inputs[col].dtype)  # type: ignore
+            builder.add_input(
+                NDJSON(
+                    name=col,
+                    content_type="NDJSON",
+                    dtype=f"Array[{dtype}]",
+                    shape=["batch"],
+                )
+            )
+        x = inputs
+    else:
+        example = np.asarray(inputs)
+        if example.ndim < 2:
+            raise ValueError(
+                "Input example must be at least 2D for batch dimension inference."
+            )
+        if example.ndim == 2:
+            input_order = [f"x{i}" for i in range(example.shape[1])]
+            for i, name in enumerate(input_order):
+                col_dtype = _resolve_dtype(example[:, i].dtype)
+                builder.add_input(
+                    NDJSON(
+                        name=name,
+                        content_type="NDJSON",
+                        dtype=f"Array[{col_dtype}]",
+                        shape=["batch"],
+                    )
+                )
+        else:
+            shape = ["batch"] + list(example.shape[1:])
+            dtype = _resolve_dtype(example.dtype)
+            builder.add_input(
+                NDJSON(
+                    name="input",
+                    content_type="NDJSON",
+                    dtype=f"Array[{dtype}]",
+                    shape=shape,  # type: ignore
+                )
+            )
+            input_order = ["input"]
+        x = example
+
+    builder.set_extra_values({"input_order": input_order})
+
+    y_pred = estimator.predict(x)
+    y_array = np.asarray(y_pred)
+    y_shape = ["batch"] + list(y_array.shape[1:])
+    y_dtype = _resolve_dtype(y_array.dtype)
+
+    builder.add_output(
+        NDJSON(
+            name="y",
+            content_type="NDJSON",
+            dtype=f"Array[{y_dtype}]",
+            shape=y_shape,  # type: ignore
+        )
+    )
+
+    dependencies = [
+        "scikit-learn==" + get_version("sklearn"),
+        "scipy==" + get_version("scipy"),
+        "numpy==" + get_version("numpy"),
+        "cloudpickle==" + get_version("cloudpickle"),
+    ]
+    for dep in dependencies:
+        builder.add_runtime_dependency(dep)
+    if extra_dependencies:
+        for dep in extra_dependencies:
+            builder.add_runtime_dependency(dep)
+    builder.add_fnnx_runtime_dependency()
+
+    with tempfile.NamedTemporaryFile("wb", delete=False) as tmp:
+        cloudpickle.dump(estimator, tmp)
+        estimator_path = tmp.name
+    builder.add_file(estimator_path, "estimator.pkl")
+
+    builder.save(path)
+
+    os.remove(estimator_path)
+    return ModelReference(path)

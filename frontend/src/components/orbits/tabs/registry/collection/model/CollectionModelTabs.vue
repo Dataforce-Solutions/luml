@@ -45,7 +45,7 @@ const items = computed(() => [
   {
     label: 'Model card',
     routeName: 'model-card',
-    icon: FolderDot,
+    icon: FileChartLine,
     disabled: !props.showModelCard,
   },
   {

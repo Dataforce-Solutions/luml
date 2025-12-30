@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import io
 import json
 import tarfile
@@ -7,9 +9,12 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from pyfnx_utils.reader import Reader  # type: ignore[import-untyped]
+if TYPE_CHECKING:
+    from fnnx.extras.reader import Reader
+
+from luml.model_card.builder import ModelCardBuilder
 
 
 class PathSeparators(str, Enum):
@@ -94,7 +99,23 @@ class ModelReference:
                 file_info.size = len(file_content)
                 tar.addfile(file_info, fileobj=io.BytesIO(file_content))
 
-    def add_model_card(self, html_content: str) -> None:
+    def add_model_card(self, html_content: str | ModelCardBuilder) -> None:
+        """
+        Add a model card to the model artifact.
+
+        Args:
+            html_content: Either an HTML string or a ModelCardBuilder instance
+        """
+        # Handle ModelCardBuilder
+        if not isinstance(html_content, str):
+            # Runtime import to avoid circular dependency
+
+            if isinstance(html_content, ModelCardBuilder):
+                html_content = html_content.build()
+            else:
+                msg = "html_content must be a string or ModelCardBuilder instance"
+                raise TypeError(msg)
+
         tag = "dataforce.studio::model_card:v1"
 
         zip_buffer = io.BytesIO()
@@ -115,4 +136,6 @@ class ModelReference:
         )
 
     def read(self) -> Reader:
+        from fnnx.extras.reader import Reader
+
         return Reader(self.path)

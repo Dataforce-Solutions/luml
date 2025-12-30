@@ -36,6 +36,7 @@
         <div class="capabilities">
           <Rocket v-if="data.capabilities.deploy" v-tooltip="'Deploy'" :size="16"></Rocket>
         </div>
+        <div v-if="data.slug" class="slug">{{ data.slug }}</div>
       </div>
     </div>
   </div>
@@ -117,10 +118,18 @@ const toggle = (event: MouseEvent) => {
   cursor: pointer;
   color: inherit;
   text-decoration: none;
+  display: flex;
+  flex-direction: column;
 }
 
 .card:hover {
   background-color: var(--p-autocomplete-chip-focus-background);
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
 }
 
 .header {
@@ -189,6 +198,9 @@ const toggle = (event: MouseEvent) => {
 
 .body {
   padding: 0 8px 0 4px;
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
 }
 
 .text {
@@ -210,6 +222,7 @@ const toggle = (event: MouseEvent) => {
   display: flex;
   gap: 12px;
   color: var(--p-icon-muted-color);
+  flex: 1 1 auto;
 }
 
 .id-row {
@@ -218,5 +231,12 @@ const toggle = (event: MouseEvent) => {
 
 .id-text {
   color: var(--p-text-muted-color);
+}
+
+.slug {
+  padding-top: 12px;
+  font-size: 10px;
+  color: var(--p-text-muted-color);
+  text-align: right;
 }
 </style>

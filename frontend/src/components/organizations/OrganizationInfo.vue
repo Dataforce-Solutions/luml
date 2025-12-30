@@ -1,12 +1,15 @@
 <template>
   <div class="info">
-    <Avatar size="large" :label="avatarLabel" />
+    <Avatar size="large" :label="avatarLabel" class="avatar" />
     <div class="name">{{ organizationStore.currentOrganization?.name }}</div>
-    <Button severity="secondary" variant="text" @click="visible = true">
+    <Button severity="secondary" variant="text" @click="visible = true" class="edit-button">
       <template #icon>
         <PenLine :size="14" />
       </template>
     </Button>
+    <div class="id-row" v-if="organizationStore.currentOrganization?.id">
+      <UiId :id="organizationStore.currentOrganization.id" variant="button"></UiId>
+    </div>
     <Dialog
       v-model:visible="visible"
       position="topright"
@@ -58,6 +61,7 @@ import { useOrganizationStore } from '@/stores/organization'
 import { Avatar, Button, Dialog, useToast, InputText } from 'primevue'
 import ImageInput from '../ui/ImageInput.vue'
 import OrganizationDelete from './OrganizationDelete.vue'
+import UiId from '../ui/UiId.vue'
 import { simpleErrorToast, simpleSuccessToast } from '@/lib/primevue/data/toasts'
 
 const organizationStore = useOrganizationStore()
@@ -129,6 +133,12 @@ onMounted(() => {
   align-items: center;
   gap: 12px;
 }
+.avatar {
+  flex: 0 0 auto;
+}
+.edit-button {
+  flex: 0 0 auto;
+}
 .popup-title {
   display: flex;
   gap: 8px;
@@ -145,6 +155,10 @@ onMounted(() => {
   font-weight: 500;
   line-height: 1.25;
 }
+.id-row {
+  margin-left: auto;
+}
+
 .body {
   padding-top: 20px;
   display: flex;
@@ -153,6 +167,11 @@ onMounted(() => {
 }
 .label {
   font-weight: 500;
+}
+@media (max-width: 768px) {
+  .name {
+    font-size: 16px;
+  }
 }
 </style>
 

@@ -11,8 +11,13 @@
           <Avatar size="large" :label="currentOrganizationAvatarLabel" />
           <div class="header-content">
             <div class="name">{{ organizationStore.currentOrganization?.name }}</div>
-            <div class="members">
-              {{ organizationStore.currentOrganization?.members_count }} member
+            <div class="members-row">
+              <div class="members">
+                {{ organizationStore.currentOrganization?.members_count }} member
+              </div>
+              <div class="id-row" v-if="organizationStore.currentOrganization?.id">
+                <UiId :id="organizationStore.currentOrganization.id" class="id-value"></UiId>
+              </div>
             </div>
           </div>
         </header>
@@ -87,7 +92,8 @@ import { Popover, Avatar, Dialog } from 'primevue'
 import { useOrganizationStore } from '@/stores/organization'
 import OrganizationCreator from './OrganizationCreator.vue'
 import OrganizationLeavePopover from './OrganizationLeavePopover.vue'
-import { PermissionEnum } from '@/lib/api/DataforceApi.interfaces'
+import UiId from '../ui/UiId.vue'
+import { PermissionEnum } from '@/lib/api/api.interfaces'
 
 const organizationStore = useOrganizationStore()
 
@@ -176,10 +182,17 @@ async function onOrganizationClick(organizationId: string) {
   overflow: hidden;
   text-overflow: ellipsis;
 }
+.members-row {
+  display: flex;
+}
 .members {
   font-weight: 300;
   color: var(--p-text-muted-color);
   font-size: 14px;
+}
+.id-row {
+  margin-left: auto;
+  color: var(--p-text-muted-color);
 }
 
 .popover-label {
