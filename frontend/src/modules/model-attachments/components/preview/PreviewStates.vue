@@ -36,7 +36,6 @@ defineProps<PreviewStatesProps>()
   color: var(--p-form-field-float-label-color);
 }
 
-
 .icon {
   flex: 0 0 auto;
   color: var(--p-text-link-color);

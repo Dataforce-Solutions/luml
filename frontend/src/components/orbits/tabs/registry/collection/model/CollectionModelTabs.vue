@@ -19,7 +19,7 @@
 
 <script setup lang="ts">
 import { Tabs, TabList, Tab, type TabPassThroughOptions } from 'primevue'
-import { LayoutDashboard, FolderDot, ScanEye, Paperclip } from 'lucide-vue-next'
+import { LayoutDashboard, FileChartLine, ScanEye, Paperclip } from 'lucide-vue-next'
 import { computed } from 'vue'
 
 type Props = {
