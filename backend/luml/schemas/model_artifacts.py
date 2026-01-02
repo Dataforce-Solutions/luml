@@ -75,6 +75,14 @@ class ModelArtifactStatus(StrEnum):
     DELETION_FAILED = "deletion_failed"
 
 
+class ModelArtifactSortBy(StrEnum):
+    CREATED_AT = "created_at"
+    MODEL_NAME = "model_name"
+    SIZE = "size"
+    DESCRIPTION = "description"
+    STATUS = "status"
+
+
 class ModelIO(BaseModel):
     name: str
     content_type: str
@@ -233,3 +241,8 @@ class CreateModelArtifactResponse(BaseModel):
 class SatelliteModelArtifactResponse(BaseModel):
     model: ModelArtifact
     url: str
+
+
+class ModelArtifactsList(BaseModel):
+    items: list[ModelArtifact]
+    cursor: UUID | None
