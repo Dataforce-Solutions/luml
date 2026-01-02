@@ -9,8 +9,11 @@ import type {
 } from '@/lib/api/api.interfaces'
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
+import { useOrganizationStore } from './organization'
 
 export const useOrbitsStore = defineStore('orbit', () => {
+  const organizationStore = useOrganizationStore()
+
   const orbitsList = ref<Orbit[]>([])
   const currentOrbitDetails = ref<OrbitDetails | null>(null)
 
@@ -23,11 +26,22 @@ export const useOrbitsStore = defineStore('orbit', () => {
   async function createOrbit(organizationId: string, payload: CreateOrbitPayload) {
     const orbit = await api.createOrbit(organizationId, payload)
     orbitsList.value.push(orbit)
+    if (!organizationStore.organizationDetails) return
+    organizationStore.organizationDetails.orbits.push(orbit)
   }
 
   async function updateOrbit(organizationId: string, payload: UpdateOrbitPayload) {
     const orbit = await api.updateOrbit(organizationId, payload)
-    orbitsList.value = orbitsList.value.map((savedOrbit) => {
+    orbitsList.value = updatedOrbitsList(orbitsList.value, orbit)
+    if (!organizationStore.organizationDetails) return
+    organizationStore.organizationDetails.orbits = updatedOrbitsList(
+      organizationStore.organizationDetails.orbits,
+      orbit,
+    )
+  }
+
+  function updatedOrbitsList(list: Orbit[], orbit: Orbit) {
+    return list.map((savedOrbit) => {
       if (savedOrbit.id !== orbit.id) return savedOrbit
       return orbit
     })
