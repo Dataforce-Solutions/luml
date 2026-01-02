@@ -59,6 +59,7 @@ import { useModelsStore } from '@/stores/models'
 import { computed, onUnmounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { FnnxService } from '@/lib/fnnx/FnnxService'
+import { hasAttachments } from '@/modules/model-attachments'
 import CollectionModelTabs from '@/components/orbits/tabs/registry/collection/model/CollectionModelTabs.vue'
 import { Button } from 'primevue'
 import { Bolt, Rocket, Download } from 'lucide-vue-next'
@@ -101,10 +102,7 @@ const isModelAttachmentsAvailable = computed(() => {
   if (!currentModel.value) return false
   const fileIndex = currentModel.value.file_index
   if (!fileIndex) return false
-  const hasExtraFiles = Object.keys(fileIndex).some((path) =>
-    path.startsWith('variant_artifacts/extra_files/'),
-  )
-  return hasExtraFiles
+  return hasAttachments(fileIndex)
 })
 
 function initDeploy() {

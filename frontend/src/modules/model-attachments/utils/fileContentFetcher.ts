@@ -1,14 +1,12 @@
-import { getFileType } from '@/components/orbits/tabs/registry/collection/model/modell-attachments/utils/fileTypes'
-import { processFileContent } from '@/components/orbits/tabs/registry/collection/model/modell-attachments/utils/fileContentProcessors'
-import type {
-  FetchFileContentParams,
-  FileContentResult,
-} from '@/components/orbits/tabs/registry/collection/model/modell-attachments/attachments.interfaces'
+import { getFileType } from './fileTypes'
+import { processFileContent } from './fileContentProcessors'
+import type { FetchFileContentParams, FileContentResult } from '../interfaces/interfaces'
 
 const MAX_PREVIEW_SIZE = 10 * 1024 * 1024
 
 export async function fetchFileContent(params: FetchFileContentParams): Promise<FileContentResult> {
-  const { file, fileIndex, downloadUrl } = params
+  const { file, fileIndex, tarBaseOffset, downloadUrl } = params
+
   if (!file.path || file.type !== 'file') {
     return {}
   }
@@ -17,22 +15,33 @@ export async function fetchFileContent(params: FetchFileContentParams): Promise<
   if (!fileType) {
     return { error: 'unsupported' }
   }
+
   try {
     const rangeData = fileIndex[file.path]
     if (!rangeData) {
       return { error: 'not-found' }
     }
-    const [offset, length] = rangeData
+
+    const [offsetInTar, length] = rangeData
+
     if (length === 0) {
       return { error: 'empty' }
     }
+
     if (length > MAX_PREVIEW_SIZE) {
       return { error: 'too-big' }
     }
-    const blob = await fetchFileBlob(downloadUrl, offset, length)
-    const processed = await processFileContent(blob, fileType, file.name)
+
+    if (typeof tarBaseOffset !== 'number' || !downloadUrl) {
+      throw new Error('TAR metadata not found')
+    }
+
+    const absoluteOffset = tarBaseOffset + offsetInTar
+    const fileBlob = await fetchFileBlob(downloadUrl, absoluteOffset, length)
+    const processed = await processFileContent(fileBlob, fileType, file.name)
+
     return {
-      blob,
+      blob: fileBlob,
       text: processed.text,
       contentUrl: processed.contentUrl,
     }
