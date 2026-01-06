@@ -61,12 +61,9 @@ class CollectionRepository(RepositoryBase, CrudMixin):
                     ModelArtifactOrm.tags.is_not(None),
                 )
                 tags_query_result = await session.execute(tags_query)
-                all_tags = set()
-                for row in tags_query_result.all():
-                    tags_list = row[0]
-                    if tags_list:
-                        all_tags.update(tags_list)
-                tags = sorted(all_tags)
+                tags = self.collect_unique_values_from_array_column(
+                    tags_query_result.all()
+                )
 
                 return db_collection.to_collection_details(metrics, tags)
             return None
