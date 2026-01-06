@@ -8,6 +8,7 @@ from luml.infra.endpoint_responses import endpoint_responses
 from luml.schemas.model_artifacts import (
     Collection,
     CollectionCreateIn,
+    CollectionDetails,
     CollectionUpdateIn,
 )
 
@@ -46,6 +47,25 @@ async def get_orbit_collections(
 ) -> list[Collection]:
     return await collection_handler.get_orbit_collections(
         request.user.id, organization_id, orbit_id
+    )
+
+
+@collections_router.get(
+    "/{collection_id}",
+    responses=endpoint_responses,
+    response_model=CollectionDetails,
+)
+async def get_collection_details(
+    request: Request,
+    organization_id: UUID,
+    orbit_id: UUID,
+    collection_id: UUID,
+) -> CollectionDetails | None:
+    return await collection_handler.get_collection_details(
+        request.user.id,
+        organization_id,
+        orbit_id,
+        collection_id,
     )
 
 
