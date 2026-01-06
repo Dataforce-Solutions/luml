@@ -34,7 +34,7 @@ class PaginationMixin:
             return None, None, None
 
     def get_cursor(self, items: list[Any], limit: int, sort_by: str) -> str | None:
-        if not items or len(items) < limit:
+        if not items or len(items) <= limit:
             return None
         cursor_rec = items[-1]
         return self.encode_cursor(cursor_rec.id, getattr(cursor_rec, sort_by), sort_by)
