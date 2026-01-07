@@ -7,6 +7,7 @@ import numpy as np  # type: ignore[import-not-found]
 from fnnx.extras.builder import PyfuncBuilder
 from fnnx.extras.pydantic_models.manifest import NDJSON
 
+from luml._constants import FNNX_PRODUCER_NAME
 from luml.integrations.sklearn.packaging._template import SKlearnPyFunc
 from luml.modelref import ModelReference
 from luml.utils.deps import find_dependencies, has_dependency
@@ -37,6 +38,10 @@ def _get_default_deps() -> list[str]:
         "numpy==" + get_version("numpy"),
         "cloudpickle==" + get_version("cloudpickle"),
     ]
+
+
+def _get_default_tags() -> list[str]:
+    return [FNNX_PRODUCER_NAME + "::sklearn:v1"]
 
 
 def _add_io(
@@ -146,6 +151,7 @@ def save_sklearn(  # noqa: C901
     manifest_model_name: str | None = None,
     manifest_model_version: str | None = None,
     manifest_model_description: str | None = None,
+    manifest_extra_producer_tags: list[str] | None = None,
 ) -> ModelReference:
     import cloudpickle
     from sklearn.base import BaseEstimator
@@ -179,6 +185,12 @@ def save_sklearn(  # noqa: C901
         model_name=manifest_model_name,
         model_version=manifest_model_version,
         model_description=manifest_model_description,
+    )
+
+    builder.set_producer_info(
+        name=FNNX_PRODUCER_NAME,
+        version=get_version("luml"),
+        tags=_get_default_tags() + (manifest_extra_producer_tags or []),
     )
 
     _add_io(builder, estimator, inputs)

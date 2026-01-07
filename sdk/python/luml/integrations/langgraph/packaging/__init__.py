@@ -9,11 +9,17 @@ from fnnx.extras.pydantic_models.manifest import JSON, Var
 from langgraph.pregel import Pregel
 from pydantic import BaseModel, create_model
 
+from luml._constants import FNNX_PRODUCER_NAME
 from luml.integrations.langgraph.packaging._templates.mermaid import create_mermaid_html
 from luml.integrations.langgraph.packaging._templates.pyfunc import LangGraphFunc
 from luml.modelref import ModelReference
 from luml.utils.deps import find_dependencies, has_dependency
-from luml.utils.imports import dyn_import, extract_top_level_modules, get_object_path
+from luml.utils.imports import (
+    dyn_import,
+    extract_top_level_modules,
+    get_object_path,
+    get_version,
+)
 from luml.utils.time import get_epoch
 
 
@@ -94,6 +100,10 @@ def _add_io(builder: PyfuncBuilder, graph: Pregel) -> None:
     )
 
 
+def _get_default_tags() -> list[str]:
+    return [FNNX_PRODUCER_NAME + "::langgraph:v1"]
+
+
 def save_langgraph(  # noqa: C901
     graph: Pregel | Callable[[], Pregel] | str,
     path: str | None = None,
@@ -151,6 +161,13 @@ def save_langgraph(  # noqa: C901
         model_description=manifest_model_description,
         model_version=manifest_model_version,
     )
+
+    builder.set_producer_info(
+        name=FNNX_PRODUCER_NAME,
+        version=get_version("luml"),
+        tags=_get_default_tags() + [],
+    )
+
     if not graph_creator_callable:
         builder.set_extra_values({"graph_path": graph_path})
     else:
