@@ -7,7 +7,7 @@ import type {
 } from '../interfaces/interfaces'
 
 export function useFilePreview(options: UseFilePreviewOptions) {
-  const { file, fileIndex, tarBaseOffset, downloadUrl } = options
+  const { file, fileIndex, tarBaseOffset, downloader } = options
 
   const error = ref<string | null>(null)
   const contentUrl = ref<string | null>(null)
@@ -28,7 +28,7 @@ export function useFilePreview(options: UseFilePreviewOptions) {
   const loadContent = async () => {
     cleanup()
 
-    if (!file.value) {
+    if (!file.value || !downloader.value) {
       previewState.value = null
       return
     }
@@ -40,7 +40,7 @@ export function useFilePreview(options: UseFilePreviewOptions) {
         file: file.value,
         fileIndex: fileIndex.value,
         tarBaseOffset: tarBaseOffset.value,
-        downloadUrl: downloadUrl.value,
+        downloader: downloader.value,
       })
 
       if (result.error) {

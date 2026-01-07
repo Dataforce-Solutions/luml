@@ -5,7 +5,7 @@ import type { FetchFileContentParams, FileContentResult } from '../interfaces/in
 const MAX_PREVIEW_SIZE = 10 * 1024 * 1024
 
 export async function fetchFileContent(params: FetchFileContentParams): Promise<FileContentResult> {
-  const { file, fileIndex, tarBaseOffset, downloadUrl } = params
+  const { file, fileIndex, tarBaseOffset, downloader } = params
 
   if (!file.path || file.type !== 'file') {
     return {}
@@ -22,7 +22,7 @@ export async function fetchFileContent(params: FetchFileContentParams): Promise<
       return { error: 'not-found' }
     }
 
-    const [offsetInTar, length] = rangeData
+    const [, length] = rangeData
 
     if (length === 0) {
       return { error: 'empty' }
@@ -32,12 +32,14 @@ export async function fetchFileContent(params: FetchFileContentParams): Promise<
       return { error: 'too-big' }
     }
 
-    if (typeof tarBaseOffset !== 'number' || !downloadUrl) {
-      throw new Error('TAR metadata not found')
-    }
+    const arrayBuffer = await downloader.getFileFromBucket<ArrayBuffer>(
+      fileIndex,
+      file.path,
+      true,
+      tarBaseOffset,
+    )
+    const fileBlob = new Blob([arrayBuffer])
 
-    const absoluteOffset = tarBaseOffset + offsetInTar
-    const fileBlob = await fetchFileBlob(downloadUrl, absoluteOffset, length)
     const processed = await processFileContent(fileBlob, fileType, file.name)
 
     return {
@@ -49,17 +51,4 @@ export async function fetchFileContent(params: FetchFileContentParams): Promise<
     console.error('Failed to fetch file content:', e)
     return { error: 'unknown' }
   }
-}
-
-async function fetchFileBlob(url: string, offset: number, length: number): Promise<Blob> {
-  const end = offset + length - 1
-  const response = await fetch(url, {
-    headers: { Range: `bytes=${offset}-${end}` },
-  })
-
-  if (!response.ok) {
-    throw new Error(`HTTP Error: ${response.status}`)
-  }
-
-  return response.blob()
 }

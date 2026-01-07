@@ -1,12 +1,12 @@
 <template>
   <div class="attachments-wrapper">
-    <template v-if="isEmpty()">
+    <template v-if="isEmpty">
       <div class="empty-state">
         <p>This attachment is empty.</p>
       </div>
     </template>
     <template v-else>
-      <FileTree :tree="tree" :selected="selectedFile" @select="selectFile" />
+      <FileTree :tree="provider.getTree()" :selected="selectedFile" @select="handleSelect" />
       <FilePreview
         :file-name="fileName"
         :file-size="fileSize"
@@ -25,28 +25,22 @@
 </template>
 
 <script setup lang="ts">
-import { computed, toRef } from 'vue'
+import { computed, ref, toRef } from 'vue'
 import { useToast } from 'primevue'
 import FileTree from './components/FileTree.vue'
 import FilePreview from './components/FilePreview.vue'
 import { useFilePreview } from './hooks/useFilePreview'
 import { getFileType } from './utils/fileTypes'
+import type { ModelAttachmentsProvider, FileNode } from './interfaces/interfaces'
 
 interface Props {
-  tree: import('./interfaces/interfaces').FileNode[]
-  selectedFile: import('./interfaces/interfaces').FileNode | null
-  attachmentsIndex: import('./interfaces/interfaces').FileIndex
-  tarBaseOffset: number
-  downloadUrl: string
+  provider: ModelAttachmentsProvider
 }
 
 const props = defineProps<Props>()
 
-const emit = defineEmits<{
-  (e: 'select', node: import('./interfaces/interfaces').FileNode): void
-}>()
-
 const toast = useToast()
+const selectedFile = ref<FileNode | null>(null)
 
 const {
   error: previewError,
@@ -56,28 +50,27 @@ const {
   downloadFile,
   previewState,
 } = useFilePreview({
-  file: toRef(() => props.selectedFile),
-  fileIndex: toRef(() => props.attachmentsIndex),
-  tarBaseOffset: toRef(() => props.tarBaseOffset),
-  downloadUrl: toRef(() => props.downloadUrl),
+  file: toRef(() => selectedFile.value),
+  fileIndex: toRef(() => props.provider.getAttachmentsIndex()),
+  tarBaseOffset: toRef(() => props.provider.getTarBaseOffset()),
+  downloader: toRef(() => props.provider.getDownloader()),
 })
 
-const fileName = computed(() => props.selectedFile?.name || '')
-const fileSize = computed(() => props.selectedFile?.size || 0)
-const filePath = computed(() => props.selectedFile?.path || '')
-const fileType = computed(() => (props.selectedFile ? getFileType(props.selectedFile.name) : null))
+const isEmpty = computed(() => props.provider.isEmpty())
+const fileName = computed(() => selectedFile.value?.name || '')
+const fileSize = computed(() => selectedFile.value?.size || 0)
+const filePath = computed(() => selectedFile.value?.path || '')
+const fileType = computed(() => (selectedFile.value ? getFileType(selectedFile.value.name) : null))
 
-function isEmpty(): boolean {
-  return props.tree.length === 0
-}
-
-function selectFile(node: import('./interfaces/interfaces').FileNode) {
-  emit('select', node)
+function handleSelect(node: FileNode) {
+  if (node.type === 'file') {
+    selectedFile.value = node
+  }
 }
 
 async function handleCopyPath() {
-  if (!props.selectedFile?.path) return
-  await navigator.clipboard.writeText(props.selectedFile.path)
+  if (!selectedFile.value?.path) return
+  await navigator.clipboard.writeText(selectedFile.value.path)
   toast.add({
     severity: 'success',
     summary: 'Success',
@@ -87,8 +80,8 @@ async function handleCopyPath() {
 }
 
 function handleDownload() {
-  if (!props.selectedFile) return
-  downloadFile(props.selectedFile.name)
+  if (!selectedFile.value) return
+  downloadFile(selectedFile.value.name)
 }
 </script>
 

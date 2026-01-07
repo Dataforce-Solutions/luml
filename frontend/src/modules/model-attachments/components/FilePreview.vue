@@ -57,7 +57,7 @@ import SvgPreview from './preview/SvgPreview.vue'
 import type { PreviewState } from '../interfaces/interfaces'
 import type { FileType } from '../utils/fileTypes'
 
-defineProps<{
+interface Props {
   fileName: string
   fileSize: number
   filePath: string
@@ -67,12 +67,15 @@ defineProps<{
   contentUrl?: string | null
   textContent?: string | null
   contentBlob?: Blob | null
-}>()
+}
 
-defineEmits<{
+interface Emits {
   (e: 'copyPath'): void
   (e: 'download'): void
-}>()
+}
+
+defineProps<Props>()
+defineEmits<Emits>()
 </script>
 
 <style scoped>

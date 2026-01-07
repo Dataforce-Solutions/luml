@@ -1,5 +1,21 @@
 import type { Ref } from 'vue'
 
+export interface MlModel {
+  file_index: FileIndex
+}
+
+export interface ModelDownloader {
+  url: string
+  getFileFromBucket<T = unknown>(
+    fileIndex: FileIndex,
+    fileName: string,
+    buffer?: boolean,
+    outerOffset?: number,
+  ): Promise<T>
+}
+
+export type FileIndex = Record<string, [number, number]>
+
 export interface FileNode {
   name: string
   path?: string
@@ -8,28 +24,16 @@ export interface FileNode {
   children?: FileNode[]
 }
 
-export type FileIndex = Record<string, [number, number]>
-
 export type PreviewState = 'loading' | 'unsupported' | 'too-big' | 'empty' | 'error' | null
 
 export type FileContentError = 'unsupported' | 'not-found' | 'empty' | 'too-big' | 'unknown'
 
-export interface ModelDownloader {
-  url: string
-  getFileFromBucket<T = any>(
-    fileIndex: FileIndex,
-    fileName: string,
-    buffer?: boolean,
-    outerOffset?: number,
-  ): Promise<T>
-  getRangeHeader(fileIndex: FileIndex, fileName: string, outerOffset?: number): string
-}
-
-export interface MlModel {
-  id: string
-  model_name: string
-  file_index: FileIndex
-  [key: string]: any
+export interface ModelAttachmentsProvider {
+  getDownloader(): ModelDownloader
+  getAttachmentsIndex(): FileIndex
+  getTarBaseOffset(): number
+  getTree(): FileNode[]
+  isEmpty(): boolean
 }
 
 export interface FileContentResult {
@@ -43,14 +47,14 @@ export interface FetchFileContentParams {
   file: FileNode
   fileIndex: FileIndex
   tarBaseOffset: number
-  downloadUrl: string
+  downloader: ModelDownloader
 }
 
 export interface UseFilePreviewOptions {
   file: Ref<FileNode | null>
   fileIndex: Ref<FileIndex>
   tarBaseOffset: Ref<number>
-  downloadUrl: Ref<string>
+  downloader: Ref<ModelDownloader>
 }
 
 export interface FileNodeProps {
