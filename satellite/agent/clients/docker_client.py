@@ -7,6 +7,7 @@ import aiodocker
 from aiodocker.containers import DockerContainer
 from aiodocker.exceptions import DockerError
 
+from _exceptions import ContainerNotFoundError, ContainerNotRunningError
 from agent.settings import config as config_settings
 
 logger = logging.getLogger(__name__)
@@ -107,6 +108,18 @@ class DockerService:
         await container.wait()
 
         return container
+
+    async def check_container_running(self, deployment_id: str) -> None:
+        try:
+            container = await self.client.containers.get(f"sat-{deployment_id}")
+        except DockerError as e:
+            raise ContainerNotFoundError(deployment_id) from e
+
+        container_info = await container.show()
+        status = container_info["State"]["Status"]
+
+        if status != "running":
+            raise ContainerNotRunningError(deployment_id, status)
 
     async def cleanup_model_cache(self, model_id: str) -> None:
         if await self.is_model_in_use(model_id):
