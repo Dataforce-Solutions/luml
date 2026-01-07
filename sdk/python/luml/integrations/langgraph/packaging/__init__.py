@@ -114,6 +114,7 @@ def save_langgraph(  # noqa: C901
     manifest_model_name: str | None = None,
     manifest_model_version: str | None = None,
     manifest_model_description: str | None = None,
+    manifest_extra_producer_tags: list[str] | None = None,
 ) -> ModelReference:
     path = path or f"langgraph_model_{get_epoch()}.luml"
 
@@ -165,7 +166,7 @@ def save_langgraph(  # noqa: C901
     builder.set_producer_info(
         name=FNNX_PRODUCER_NAME,
         version=get_version("luml"),
-        tags=_get_default_tags() + [],
+        tags=_get_default_tags() + (manifest_extra_producer_tags or []),
     )
 
     if not graph_creator_callable:
