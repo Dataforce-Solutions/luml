@@ -1,12 +1,12 @@
-import type { ModelAttachmentsProvider, FileNode, FileIndex } from './interfaces/interfaces'
+import type { ModelAttachmentsProvider, FileNode, AttachmentContent } from './interfaces/interfaces'
+import {
+  TarAttachmentsProvider,
+  type TarAttachmentsProviderConfig,
+} from './models/TarAttachmentsProvider'
 
 import ModelAttachments from './ModelAttachments.vue'
 
-import {
-  ModelAttachmentsDatabaseProvider,
-  type ModelAttachmentsProviderConfig,
-} from './models/ModelAttachmentsDatabaseProvider'
-
-export type { ModelAttachmentsProvider, ModelAttachmentsProviderConfig, FileNode, FileIndex }
-
-export { ModelAttachments, ModelAttachmentsDatabaseProvider }
+export { ModelAttachments }
+export { TarAttachmentsProvider }
+export type { TarAttachmentsProviderConfig }
+export type { ModelAttachmentsProvider, FileNode, AttachmentContent }

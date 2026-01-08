@@ -1,42 +1,45 @@
 <template>
   <UiPageLoader v-if="loading" />
-  <ModelAttachments v-if="provider" :provider="provider" />
+  <ModelAttachments v-else-if="provider" :provider="provider" />
 </template>
 <script setup lang="ts">
 import type { MlModel } from '@/lib/api/orbit-ml-models/interfaces'
 import { ModelAttachments } from '@/modules/model-attachments'
 import { onMounted } from 'vue'
 import { useModelsStore } from '@/stores/models'
-import { useModelAttachmentsDatabaseProvider } from '@/hooks/useModelAttachmentsDatabaseProvider'
+import { useTarAttachmentsProvider } from '@/hooks/useTarAttachmentsProvider'
 import { ModelDownloader } from '@/lib/bucket-service'
 import { FnnxService } from '@/lib/fnnx/FnnxService'
+import UiPageLoader from '@/components/ui/UiPageLoader.vue'
 
-type Props = {
+interface Props {
   model?: MlModel
 }
 
 const props = defineProps<Props>()
 
 const modelsStore = useModelsStore()
-const { provider, loading, init } = useModelAttachmentsDatabaseProvider()
+const { provider, loading, init } = useTarAttachmentsProvider()
 
 onMounted(async () => {
   if (provider.value) return
 
   try {
-    if (!props.model) throw new Error('Current model does not exist')
+    if (!props.model?.file_index) {
+      throw new Error('Model or file index does not exist')
+    }
 
     const url = await modelsStore.getDownloadUrl(props.model.id)
     const downloader = new ModelDownloader(url)
 
     await init({
       downloader,
-      model: props.model,
-      findAttachmentsTarPath: (fileIndex) => FnnxService.findAttachmentsTarPath(fileIndex),
-      findAttachmentsIndexPath: (fileIndex) => FnnxService.findAttachmentsIndexPath(fileIndex),
+      fileIndex: props.model.file_index,
+      findAttachmentsTarPath: FnnxService.findAttachmentsTarPath,
+      findAttachmentsIndexPath: FnnxService.findAttachmentsIndexPath,
     })
   } catch (e) {
-    console.error(e)
+    console.error('Failed to initialize attachments:', e)
   }
 })
 </script>

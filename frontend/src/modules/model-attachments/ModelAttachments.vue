@@ -51,9 +51,7 @@ const {
   previewState,
 } = useFilePreview({
   file: toRef(() => selectedFile.value),
-  fileIndex: toRef(() => props.provider.getAttachmentsIndex()),
-  tarBaseOffset: toRef(() => props.provider.getTarBaseOffset()),
-  downloader: toRef(() => props.provider.getDownloader()),
+  provider: toRef(() => props.provider),
 })
 
 const isEmpty = computed(() => props.provider.isEmpty())

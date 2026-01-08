@@ -34,7 +34,12 @@ export function useTablePreview(options: UseTablePreviewOptions) {
         const char = line[i]
 
         if (char === '"') {
-          inQuotes = !inQuotes
+          if (inQuotes && line[i + 1] === '"') {
+            current += '"'
+            i++
+          } else {
+            inQuotes = !inQuotes
+          }
         } else if (char === ',' && !inQuotes) {
           result.push(current.trim())
           current = ''
@@ -42,6 +47,7 @@ export function useTablePreview(options: UseTablePreviewOptions) {
           current += char
         }
       }
+
       result.push(current.trim())
 
       return result

@@ -1,17 +1,31 @@
-import type { ModelDownloader } from '@/lib/bucket-service'
-import type { MlModel, FileIndex } from '@/lib/api/orbit-ml-models/interfaces'
-import type { ModelAttachmentsProvider, FileNode } from '../interfaces/interfaces'
+import type {
+  ModelAttachmentsProvider,
+  AttachmentContent,
+  FileNode,
+} from '../interfaces/interfaces'
 
-export interface ModelAttachmentsProviderConfig {
+type FileIndex = Record<string, [number, number]>
+
+interface ModelDownloader {
+  url: string
+  getFileFromBucket<T = unknown>(
+    fileIndex: FileIndex,
+    fileName: string,
+    buffer?: boolean,
+    outerOffset?: number,
+  ): Promise<T>
+}
+
+export interface TarAttachmentsProviderConfig {
   downloader: ModelDownloader
-  model: MlModel
+  fileIndex: FileIndex
   findAttachmentsTarPath: (fileIndex: FileIndex) => string | undefined
   findAttachmentsIndexPath: (fileIndex: FileIndex) => string | undefined
 }
 
-export class ModelAttachmentsDatabaseProvider implements ModelAttachmentsProvider {
+export class TarAttachmentsProvider implements ModelAttachmentsProvider {
   private downloader: ModelDownloader
-  private model: MlModel
+  private fileIndex: FileIndex
   private findAttachmentsTarPath: (fileIndex: FileIndex) => string | undefined
   private findAttachmentsIndexPath: (fileIndex: FileIndex) => string | undefined
 
@@ -19,30 +33,27 @@ export class ModelAttachmentsDatabaseProvider implements ModelAttachmentsProvide
   private tarBaseOffset: number = 0
   private attachmentsIndex: FileIndex = {}
 
-  constructor(config: ModelAttachmentsProviderConfig) {
+  constructor(config: TarAttachmentsProviderConfig) {
     this.downloader = config.downloader
-    this.model = config.model
+    this.fileIndex = config.fileIndex
     this.findAttachmentsTarPath = config.findAttachmentsTarPath
     this.findAttachmentsIndexPath = config.findAttachmentsIndexPath
   }
 
   async init(): Promise<void> {
-    const indexPath = this.findAttachmentsIndexPath(this.model.file_index)
+    const indexPath = this.findAttachmentsIndexPath(this.fileIndex)
     if (!indexPath) {
       return
     }
 
-    const indexData = await this.downloader.getFileFromBucket<FileIndex>(
-      this.model.file_index,
-      indexPath,
-    )
+    const indexData = await this.downloader.getFileFromBucket<FileIndex>(this.fileIndex, indexPath)
 
-    const tarPath = this.findAttachmentsTarPath(this.model.file_index)
+    const tarPath = this.findAttachmentsTarPath(this.fileIndex)
     if (!tarPath) {
       return
     }
 
-    const tarRange = this.model.file_index[tarPath]
+    const tarRange = this.fileIndex[tarPath]
     if (!tarRange) {
       return
     }
@@ -51,6 +62,39 @@ export class ModelAttachmentsDatabaseProvider implements ModelAttachmentsProvide
     this.tarBaseOffset = tarOffset
     this.attachmentsIndex = indexData
     this.tree = this.buildTreeFromIndex(indexData)
+  }
+
+  getTree(): FileNode[] {
+    return this.tree
+  }
+
+  async getAttachmentContent(path: string): Promise<AttachmentContent> {
+    const rangeData = this.attachmentsIndex[path]
+    if (!rangeData) {
+      throw new Error(`Attachment not found: ${path}`)
+    }
+
+    const [, size] = rangeData
+
+    if (size === 0) {
+      throw new Error(`Attachment is empty: ${path}`)
+    }
+
+    const arrayBuffer = await this.downloader.getFileFromBucket<ArrayBuffer>(
+      this.attachmentsIndex,
+      path,
+      true,
+      this.tarBaseOffset,
+    )
+
+    return {
+      blob: new Blob([arrayBuffer]),
+      size,
+    }
+  }
+
+  isEmpty(): boolean {
+    return this.tree.length === 0
   }
 
   private buildTreeFromIndex(index: FileIndex): FileNode[] {
@@ -106,29 +150,5 @@ export class ModelAttachmentsDatabaseProvider implements ModelAttachmentsProvide
         }
       }
     })
-  }
-
-  getDownloader(): ModelDownloader {
-    return this.downloader
-  }
-
-  getDownloadUrl(): string {
-    return this.downloader.url
-  }
-
-  getAttachmentsIndex(): FileIndex {
-    return this.attachmentsIndex
-  }
-
-  getTarBaseOffset(): number {
-    return this.tarBaseOffset
-  }
-
-  getTree(): FileNode[] {
-    return this.tree
-  }
-
-  isEmpty(): boolean {
-    return this.tree.length === 0
   }
 }

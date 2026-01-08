@@ -26,7 +26,7 @@ import type { TablePreviewProps } from '../../interfaces/interfaces'
 
 const props = defineProps<TablePreviewProps>()
 
-const { tableData, loading, error } = useTablePreview({
+const { tableData, error } = useTablePreview({
   contentBlob: toRef(() => props.contentBlob),
   fileName: toRef(() => props.fileName),
 })

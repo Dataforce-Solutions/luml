@@ -30,24 +30,12 @@ defineProps<PreviewStatesProps>()
   display: flex;
   height: 100%;
 }
-
-.state-text {
-  display: left;
-  color: var(--p-form-field-float-label-color);
-}
-
-.icon {
-  flex: 0 0 auto;
-  color: var(--p-text-link-color);
-}
-
-.icon.error {
-  color: var(--p-badge-danger-background);
-}
-
-.title {
-  font-size: 16px;
-  font-weight: 500;
-  color: var(--p-form-field-float-label-color);
+.state-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 1rem;
+  color: var(--p-text-muted-color);
 }
 </style>

@@ -1,13 +1,11 @@
 import { ref, watch } from 'vue'
-import { fetchFileContent } from '../utils/fileContentFetcher'
-import type {
-  PreviewState,
-  FileContentError,
-  UseFilePreviewOptions,
-} from '../interfaces/interfaces'
+import { getFileType } from '../utils/fileTypes'
+import { processFileContent } from '../utils/fileContentProcessors'
+import type { PreviewState, UseFilePreviewOptions } from '../interfaces/interfaces'
+const MAX_PREVIEW_SIZE = 10 * 1024 * 1024
 
 export function useFilePreview(options: UseFilePreviewOptions) {
-  const { file, fileIndex, tarBaseOffset, downloader } = options
+  const { file, provider } = options
 
   const error = ref<string | null>(null)
   const contentUrl = ref<string | null>(null)
@@ -28,62 +26,53 @@ export function useFilePreview(options: UseFilePreviewOptions) {
   const loadContent = async () => {
     cleanup()
 
-    if (!file.value || !downloader.value) {
+    const currentFile = file.value
+    const currentProvider = provider.value
+
+    if (!currentFile || !currentProvider) {
       previewState.value = null
+      return
+    }
+
+    if (!currentFile.path || currentFile.type !== 'file') {
+      previewState.value = null
+      return
+    }
+
+    const fileType = getFileType(currentFile.name)
+    if (!fileType) {
+      error.value = 'This file type is not supported for preview'
+      previewState.value = 'unsupported'
+      return
+    }
+
+    if (currentFile.size && currentFile.size > MAX_PREVIEW_SIZE) {
+      error.value = 'File is too large for preview (max 10 MB)'
+      previewState.value = 'too-big'
       return
     }
 
     previewState.value = 'loading'
 
     try {
-      const result = await fetchFileContent({
-        file: file.value,
-        fileIndex: fileIndex.value,
-        tarBaseOffset: tarBaseOffset.value,
-        downloader: downloader.value,
-      })
+      const content = await currentProvider.getAttachmentContent(currentFile.path)
 
-      if (result.error) {
-        error.value = getErrorMessage(result.error)
-        previewState.value = mapErrorToState(result.error)
+      if (content.size === 0) {
+        error.value = 'File is empty'
+        previewState.value = 'empty'
         return
       }
 
-      contentUrl.value = result.contentUrl ?? null
-      textContent.value = result.text ?? null
-      contentBlob.value = result.blob ?? null
+      const processed = await processFileContent(content.blob, fileType, currentFile.name)
+
+      contentUrl.value = processed.contentUrl ?? null
+      textContent.value = processed.text ?? null
+      contentBlob.value = content.blob
       previewState.value = null
     } catch (e) {
-      error.value = e instanceof Error ? e.message : 'Unknown error'
+      console.error('Failed to load file content:', e)
+      error.value = e instanceof Error ? e.message : 'Failed to load file'
       previewState.value = 'error'
-    }
-  }
-
-  const mapErrorToState = (errorType: FileContentError): PreviewState => {
-    switch (errorType) {
-      case 'unsupported':
-        return 'unsupported'
-      case 'empty':
-        return 'empty'
-      case 'too-big':
-        return 'too-big'
-      default:
-        return 'error'
-    }
-  }
-
-  const getErrorMessage = (errorType: FileContentError): string => {
-    switch (errorType) {
-      case 'unsupported':
-        return 'This file type is not supported for preview'
-      case 'not-found':
-        return 'File not found in archive'
-      case 'empty':
-        return 'File is empty'
-      case 'too-big':
-        return 'File is too large for preview (max 10 MB)'
-      default:
-        return 'Failed to load file'
     }
   }
 
