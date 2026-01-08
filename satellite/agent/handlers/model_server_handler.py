@@ -4,7 +4,7 @@ from contextlib import suppress
 from typing import Any
 from uuid import UUID
 
-from _exceptions import ContainerNotFoundError, ContainerNotRunningError
+from agent._exceptions import ContainerNotFoundError, ContainerNotRunningError
 from agent.clients import ModelServerClient, PlatformClient
 from agent.clients.docker_client import DockerService
 from agent.schemas import (

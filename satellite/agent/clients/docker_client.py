@@ -7,7 +7,7 @@ import aiodocker
 from aiodocker.containers import DockerContainer
 from aiodocker.exceptions import DockerError
 
-from _exceptions import ContainerNotFoundError, ContainerNotRunningError
+from agent._exceptions import ContainerNotFoundError, ContainerNotRunningError
 from agent.settings import config as config_settings
 
 logger = logging.getLogger(__name__)
@@ -32,7 +32,7 @@ class DockerService:
         container_port: int = config_settings.MODEL_SERVER_PORT,
         labels: dict[str, str] | None = None,
         env: dict[str, str] | None = None,
-        restart: str = "unless-stopped",
+        restart: str = "on-failure",
     ) -> DockerContainer:
         base_env = {
             "SATELLITE_AGENT_URL": f"http://satellite-agent:{container_port}",
@@ -46,7 +46,7 @@ class DockerService:
             "ExposedPorts": {f"{container_port}/tcp": {}},
             "Env": [f"{k}={v}" for k, v in base_env.items()],
             "HostConfig": {
-                "RestartPolicy": {"Name": restart},
+                "RestartPolicy": {"Name": restart, "MaximumRetryCount": 3},
                 "NetworkMode": self.network_name,
                 # "Binds": [
                 #     "satellite-models-cache:/app/models",
