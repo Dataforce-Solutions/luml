@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from sqlalchemy import String, cast, or_, func, select
+from sqlalchemy import String, cast, func, or_, select
 
 from luml.models import CollectionOrm, ModelArtifactOrm
 from luml.repositories.base import CrudMixin, RepositoryBase
@@ -8,8 +8,8 @@ from luml.schemas.general import CursorType, SortOrder
 from luml.schemas.model_artifacts import (
     Collection,
     CollectionCreate,
-    CollectionSortBy,
     CollectionDetails,
+    CollectionSortBy,
     CollectionUpdate,
 )
 
