@@ -9,8 +9,8 @@ from luml.schemas.model_artifacts import (
     Collection,
     CollectionCreate,
     CollectionDetails,
-    CollectionSortBy,
     CollectionType,
+    CollectionSortBy,
     CollectionUpdate,
 )
 
