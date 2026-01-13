@@ -371,6 +371,7 @@ class ModelArtifactHandler(PaginationMixin):
         limit: int = 100,
         sort_by: ModelArtifactSortBy = ModelArtifactSortBy.CREATED_AT,
         order: SortOrder = SortOrder.DESC,
+        metric_key: str | None = None,
     ) -> ModelArtifactsList:
         await self.__permissions_handler.check_permissions(
             organization_id,
@@ -382,18 +383,35 @@ class ModelArtifactHandler(PaginationMixin):
         await self._check_orbit_and_collection_access(
             organization_id, orbit_id, collection_id
         )
-        cursor_id, cursor_value, cursor_sorting = self.decode_cursor(cursor)
+        cursor_id, cursor_value, cursor_sorting, cursor_metric_key = self.decode_cursor(
+            cursor
+        )
 
-        if cursor_sorting != sort_by.value:
+        sorting_changed = cursor_sorting != sort_by.value or (
+            sort_by == ModelArtifactSortBy.METRICS and cursor_metric_key != metric_key
+        )
+
+        if sorting_changed:
             items = await self.__repository.get_collection_model_artifacts(
-                collection_id=collection_id, limit=limit, sort_by=sort_by, order=order
+                collection_id=collection_id,
+                limit=limit,
+                sort_by=sort_by,
+                order=order,
+                metric_key=metric_key,
             )
         else:
             items = await self.__repository.get_collection_model_artifacts(
-                collection_id, limit, cursor_id, cursor_value, sort_by, order
+                collection_id,
+                limit,
+                cursor_id,
+                cursor_value,
+                sort_by,
+                order,
+                metric_key,
             )
         return ModelArtifactsList(
-            items=items[:limit], cursor=self.get_cursor(items, limit, sort_by)
+            items=items[:limit],
+            cursor=self.get_cursor(items, limit, sort_by, metric_key),
         )
 
     async def get_model_artifact(

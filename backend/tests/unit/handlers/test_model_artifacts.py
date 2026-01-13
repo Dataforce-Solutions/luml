@@ -219,6 +219,7 @@ async def test_get_collection_model_artifacts(
         limit=pagination_limit,
         sort_by=ModelArtifactSortBy.CREATED_AT,
         order=SortOrder.DESC,
+        metric_key=None,
     )
 
 

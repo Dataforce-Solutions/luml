@@ -75,7 +75,7 @@ class CollectionHandler(PaginationMixin):
         if not orbit or orbit.organization_id != organization_id:
             raise NotFoundError("Orbit not found")
 
-        cursor_id, cursor_value, cursor_sorting = self.decode_cursor(cursor)
+        cursor_id, cursor_value, cursor_sorting, _ = self.decode_cursor(cursor)
 
         if cursor_sorting != sort_by.value:
             items = await self.__repository.get_orbit_collections(

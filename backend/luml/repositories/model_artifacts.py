@@ -7,7 +7,7 @@ from sqlalchemy.orm import selectinload
 from luml.infra.exceptions import DatabaseConstraintError
 from luml.models import ModelArtifactOrm
 from luml.repositories.base import CrudMixin, RepositoryBase
-from luml.schemas.general import CursorType, SortOrder
+from luml.schemas.general import CursorType, PaginationParams, SortOrder
 from luml.schemas.model_artifacts import (
     ModelArtifact,
     ModelArtifactCreate,
@@ -60,17 +60,22 @@ class ModelArtifactRepository(RepositoryBase, CrudMixin):
         cursor_value: CursorType | None = None,
         sort_by: ModelArtifactSortBy = ModelArtifactSortBy.CREATED_AT,
         order: SortOrder = SortOrder.DESC,
+        metric_key: str | None = None,
     ) -> list[ModelArtifact]:
         async with self._get_session() as session:
-            db_models = await self.get_models_with_pagination(
-                session,
-                ModelArtifactOrm,
-                ModelArtifactOrm.collection_id == collection_id,
+            pagination = PaginationParams(
                 cursor_id=cursor_id,
                 cursor_value=cursor_value,
                 sort_by=sort_by,
                 order=order,
                 limit=limit,
+                metric_key=metric_key,
+            )
+            db_models = await self.get_models_with_pagination(
+                session,
+                ModelArtifactOrm,
+                ModelArtifactOrm.collection_id == collection_id,
+                pagination=pagination,
             )
             return [model.to_model_artifact() for model in db_models]
 

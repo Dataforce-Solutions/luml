@@ -81,6 +81,7 @@ async def get_model_artifacts(
     limit: Annotated[int, Query(gt=0, le=100)] = 50,
     sort_by: Annotated[ModelArtifactSortBy, Query()] = ModelArtifactSortBy.CREATED_AT,
     order: Annotated[SortOrder, Query()] = SortOrder.DESC,
+    metric_key: str | None = None,
 ) -> ModelArtifactsList:
     return await model_artifacts_handler.get_collection_model_artifacts(
         request.user.id,
@@ -91,6 +92,7 @@ async def get_model_artifacts(
         limit,
         sort_by,
         order,
+        metric_key,
     )
 
 

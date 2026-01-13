@@ -4,7 +4,7 @@ from sqlalchemy import String, cast, func, or_, select
 
 from luml.models import CollectionOrm, ModelArtifactOrm
 from luml.repositories.base import CrudMixin, RepositoryBase
-from luml.schemas.general import CursorType, SortOrder
+from luml.schemas.general import CursorType, PaginationParams, SortOrder
 from luml.schemas.model_artifacts import (
     Collection,
     CollectionCreate,
@@ -103,15 +103,18 @@ class CollectionRepository(RepositoryBase, CrudMixin):
                     )
                 )
 
-            db_collections = await self.get_models_with_pagination(
-                session,
-                CollectionOrm,
-                *conditions,
+            pagination = PaginationParams(
                 cursor_id=cursor_id,
                 cursor_value=cursor_value,
                 sort_by=sort_by,
                 order=order,
                 limit=limit,
+            )
+            db_collections = await self.get_models_with_pagination(
+                session,
+                CollectionOrm,
+                *conditions,
+                pagination=pagination,
             )
             return [mc.to_collection() for mc in db_collections]
 

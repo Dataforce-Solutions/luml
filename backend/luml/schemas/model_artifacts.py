@@ -99,6 +99,7 @@ class ModelArtifactSortBy(StrEnum):
     SIZE = "size"
     DESCRIPTION = "description"
     STATUS = "status"
+    METRICS = "metrics"
 
 
 class ModelIO(BaseModel):
