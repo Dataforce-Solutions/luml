@@ -6,7 +6,7 @@ from sqlalchemy.orm import Mapped, column_property, mapped_column, relationship
 
 from luml.models.base import Base, TimestampMixin
 from luml.models.model_artifacts import ModelArtifactOrm
-from luml.schemas.model_artifacts import Collection, CollectionDetails
+from luml.schemas.model_artifacts import Collection
 
 
 class CollectionOrm(TimestampMixin, Base):
@@ -45,6 +45,3 @@ class CollectionOrm(TimestampMixin, Base):
 
     def to_collection(self) -> Collection:
         return Collection.model_validate(self)
-
-    def to_collection_details(self) -> CollectionDetails:
-        return CollectionDetails.model_validate(self)

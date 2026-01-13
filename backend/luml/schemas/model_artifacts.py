@@ -44,8 +44,8 @@ class Collection(BaseModel, BaseOrmConfig):
 
 
 class CollectionDetails(Collection):
-    models_tags: list[str] | None = None
-    models_metrics: list[str] | None = None
+    models_tags: list[str] = []
+    models_metrics: list[str] = []
 
 
 class CollectionUpdate(BaseModel):
