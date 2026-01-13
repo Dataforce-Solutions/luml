@@ -193,10 +193,10 @@ function onTraceVisibleUpdate(value: boolean | undefined) {
   }
 }
 
-async function getUniqueTracesIds() {
+async function getUniqueTracesIds(modelId: string) {
   tracesLoading.value = true
   try {
-    tracesIds.value = await evalsStore.getUniqueTraceIds(props.modelsIds[0])
+    tracesIds.value = await evalsStore.getUniqueTraceIds(modelId)
   } catch (error: any) {
     console.error(error)
   } finally {
@@ -206,7 +206,9 @@ async function getUniqueTracesIds() {
 
 onMounted(async () => {
   evalsStore.setProvider(props.provider)
-  getUniqueTracesIds()
+  if (props.modelsIds.length === 1) {
+    getUniqueTracesIds(props.modelsIds[0])
+  }
   initStaticParams()
   initDynamicMetrics()
   initEvals()

@@ -156,8 +156,4 @@ function selectTrace(trace: BaseTraceInfo) {
     text-align: center;
   }
 }
-
-.trace-item-min-time {
-  color: var(--p-text-muted-color);
-}
 </style>
