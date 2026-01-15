@@ -1,0 +1,109 @@
+# OpenTelemetry Collector Configuration for Satellite
+# This collector receives telemetry from model servers and agent, then exports to GreptimeDB
+
+receivers:
+  # OTLP receiver for traces, metrics, and logs
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+
+processors:
+  # Batch processor to improve performance
+  batch:
+    timeout: 10s
+    send_batch_size: 1024
+    send_batch_max_size: 2048
+
+  # Memory limiter to prevent OOM
+  memory_limiter:
+    check_interval: 1s
+    limit_mib: 512
+    spike_limit_mib: 128
+
+  # Resource detection to add host information
+  resourcedetection:
+    detectors: [env, system, docker]
+    timeout: 5s
+
+  # Add satellite-specific attributes
+  resource:
+    attributes:
+      - key: deployment.type
+        value: satellite
+        action: insert
+      - key: collector.name
+        value: satellite-otel-collector
+        action: insert
+
+exporters:
+  # Export traces to GreptimeDB via OTLP
+  otlp/greptimedb-traces:
+    endpoint: greptimedb:4317
+    tls:
+      insecure: true
+    headers:
+      # GreptimeDB specific headers can be added here if needed
+      # x-greptime-db-name: "public"
+
+  # Export metrics to GreptimeDB via OTLP
+  otlp/greptimedb-metrics:
+    endpoint: greptimedb:4317
+    tls:
+      insecure: true
+    headers:
+      # GreptimeDB specific headers can be added here if needed
+      # x-greptime-db-name: "public"
+
+  # Export logs to GreptimeDB via OTLP
+  otlp/greptimedb-logs:
+    endpoint: greptimedb:4317
+    tls:
+      insecure: true
+    headers:
+      # GreptimeDB specific headers can be added here if needed
+      # x-greptime-db-name: "public"
+
+  # Debug exporter for troubleshooting (can be disabled in production)
+  debug:
+    verbosity: basic
+    sampling_initial: 5
+    sampling_thereafter: 200
+
+  # Prometheus exporter for collector's own metrics
+  prometheus:
+    endpoint: 0.0.0.0:8889
+
+service:
+  # Telemetry configuration for the collector itself
+  telemetry:
+    logs:
+      level: info
+    metrics:
+      level: detailed
+      address: 0.0.0.0:8888
+
+  # Pipeline configurations
+  pipelines:
+    # Traces pipeline
+    traces:
+      receivers: [otlp]
+      processors: [memory_limiter, resourcedetection, resource, batch]
+      exporters: [otlp/greptimedb-traces, debug]
+
+    # Metrics pipeline
+    metrics:
+      receivers: [otlp]
+      processors: [memory_limiter, resourcedetection, resource, batch]
+      exporters: [otlp/greptimedb-metrics, debug]
+
+    # Logs pipeline
+    logs:
+      receivers: [otlp]
+      processors: [memory_limiter, resourcedetection, resource, batch]
+      exporters: [otlp/greptimedb-logs, debug]
+
+  # Extensions for health checks and monitoring
+  extensions: []

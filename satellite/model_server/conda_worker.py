@@ -1,5 +1,6 @@
 import json
 import logging
+import os
 import sys
 from typing import Any
 
@@ -7,6 +8,7 @@ import uvicorn
 from openapi_generator import OpenAPIGenerator
 from services.base_service import HTTPException
 from services.service import UvicornService
+from telemetry import setup_telemetry
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
@@ -113,6 +115,13 @@ try:
             raise HTTPException(status_code=500, detail=str(error)) from error
 
     if __name__ == "__main__":
+        # Setup OpenTelemetry
+        deployment_id = os.getenv("DEPLOYMENT_ID", "unknown")
+        setup_telemetry(
+            service_name=f"model-server-{deployment_id}",
+            deployment_id=deployment_id,
+        )
+
         logger.info("Starting server...")
         uvicorn.run(app, host="0.0.0.0", port=port)
 

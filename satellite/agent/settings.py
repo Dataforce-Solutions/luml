@@ -11,6 +11,9 @@ class Settings(BaseSettings):
     MODEL_IMAGE: str = "df-random-svc:latest"
     POLL_INTERVAL_SEC: float = 2.0
     MODEL_SERVER_PORT: int = 8080
+    OTEL_ENABLED: bool = True
+    OTEL_ENDPOINT: str = "http://otel-collector:4317"
+    OTEL_SERVICE_NAME: str = "satellite-agent"
 
     model_config = SettingsConfigDict(
         env_file=".env",

@@ -9,11 +9,23 @@ from agent.clients import DockerService, PlatformClient
 from agent.controllers import PeriodicController
 from agent.handlers.tasks import TaskHandler
 from agent.settings import config
+from agent.telemetry import instrument_fastapi_app, setup_telemetry
 
 
 async def run_async() -> None:
+    # Setup OpenTelemetry
+    if config.OTEL_ENABLED:
+        setup_telemetry(
+            service_name=config.OTEL_SERVICE_NAME,
+            otlp_endpoint=config.OTEL_ENDPOINT,
+        )
+
     async with PlatformClient(str(config.PLATFORM_URL), config.SATELLITE_TOKEN) as platform:
         agent_app = create_agent_app(platform.authorize_inference_access)
+
+        # Instrument FastAPI app
+        if config.OTEL_ENABLED:
+            instrument_fastapi_app(agent_app)
 
         uv_config = uvicorn.Config(
             agent_app,

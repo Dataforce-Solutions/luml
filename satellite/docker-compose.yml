@@ -2,7 +2,67 @@ networks:
   satellite-network:
     driver: bridge
 
+volumes:
+  greptimedb-data:
+
 services:
+  # GreptimeDB - Time-series database for metrics, logs, and traces
+  greptimedb:
+    image: greptime/greptimedb:latest
+    container_name: greptimedb
+    networks:
+      - satellite-network
+    ports:
+      - "4000:4000"  # HTTP API
+      - "4001:4001"  # gRPC API
+      - "4002:4002"  # MySQL protocol
+      - "4003:4003"  # PostgreSQL protocol
+      - "4317:4317"  # OTLP gRPC
+      - "4318:4318"  # OTLP HTTP
+    volumes:
+      - greptimedb-data:/tmp/greptimedb
+    command:
+      - "standalone"
+      - "start"
+      - "--http-addr=0.0.0.0:4000"
+      - "--rpc-addr=0.0.0.0:4001"
+      - "--mysql-addr=0.0.0.0:4002"
+      - "--postgres-addr=0.0.0.0:4003"
+      - "--opentsdb-addr=0.0.0.0:4242"
+      - "--user-provider=static_user_provider:cmd:greptime_user=greptime_pwd"
+    environment:
+      - RUST_LOG=info
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # OpenTelemetry Collector - Collects and exports telemetry data
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:latest
+    container_name: otel-collector
+    networks:
+      - satellite-network
+    ports:
+      - "4317:4317"  # OTLP gRPC receiver
+      - "4318:4318"  # OTLP HTTP receiver
+      - "8888:8888"  # Prometheus metrics for collector
+      - "8889:8889"  # Prometheus exporter
+    volumes:
+      - ./otel-collector-config.yaml:/etc/otel-collector-config.yaml
+    command: ["--config=/etc/otel-collector-config.yaml"]
+    depends_on:
+      greptimedb:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8888/"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
   model-image:
     image: df-random-svc:latest
     build:
@@ -25,6 +85,9 @@ services:
       BASE_URL: ${BASE_URL:-http://localhost}
       MODEL_IMAGE: ${MODEL_IMAGE:-df-random-svc:latest}
       POLL_INTERVAL_SEC: ${POLL_INTERVAL_SEC:-2}
+      OTEL_ENABLED: ${OTEL_ENABLED:-true}
+      OTEL_ENDPOINT: ${OTEL_ENDPOINT:-http://otel-collector:4317}
+      OTEL_SERVICE_NAME: ${OTEL_SERVICE_NAME:-satellite-agent}
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     user: "0:0"
@@ -33,5 +96,8 @@ services:
     ports:
       - "80:8000"
     depends_on:
-      - model-image
+      model-image:
+        condition: service_completed_successfully
+      otel-collector:
+        condition: service_healthy
     restart: unless-stopped

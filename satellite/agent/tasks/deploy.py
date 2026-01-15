@@ -88,6 +88,12 @@ class DeployTask(Task):
             "DEPLOYMENT_ID": str(deployment.id),
             "MODEL_NAME": deployment.model_artifact_name,
         }
+
+        # Add OpenTelemetry configuration
+        if config.OTEL_ENABLED:
+            env["OTEL_ENABLED"] = str(config.OTEL_ENABLED).lower()
+            env["OTEL_ENDPOINT"] = config.OTEL_ENDPOINT
+
         for key, value in secrets_env.items():
             env[key] = value
 
