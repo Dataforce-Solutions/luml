@@ -434,7 +434,7 @@ class ModelArtifactHandler(PaginationMixin):
         )
         model_artifact = await self.__repository.get_model_artifact(model_artifact_id)
         if not model_artifact or model_artifact.collection_id != collection_id:
-            raise NotFoundError("Model Artifact model not found")
+            raise NotFoundError("Model Artifact not found")
         return model_artifact
 
     async def get_satellite_model_artifact(

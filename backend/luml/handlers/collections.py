@@ -90,7 +90,8 @@ class CollectionHandler(PaginationMixin):
                 orbit_id, limit, cursor_id, cursor_value, sort_by, order, search
             )
         return CollectionsList(
-            items=items[:limit], cursor=self.get_cursor(items, limit, sort_by)
+            items=items[:limit],
+            cursor=self.get_cursor(items, limit, str(sort_by.value)),
         )
 
     async def get_collection_details(

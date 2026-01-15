@@ -9,7 +9,7 @@ from luml.schemas.general import CursorType
 
 class PaginationMixin:
     METRICS_SORT_KEY = "metrics"
-    CREATED_AT_SORT_KEY = "metrics"
+    CREATED_AT_SORT_KEY = "created_at"
 
     @staticmethod
     def encode_cursor(cursor_id: UUID, cursor_value: CursorType, sort_by: str) -> str:
