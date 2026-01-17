@@ -1,10 +1,13 @@
 import type { AxiosInstance } from 'axios'
 import type {
   CreateModelResponse,
+  GetModelsListParams,
+  GetModelsListResponse,
   MlModel,
   MlModelCreator,
   UpdateMlModelPayload,
 } from './interfaces'
+import { MlModelStatusEnum } from './interfaces'
 
 export class MlModelsApi {
   private api: AxiosInstance
@@ -26,9 +29,15 @@ export class MlModelsApi {
     return responseData
   }
 
-  async getModelsList(organizationId: string, orbitId: string, collectionId: string) {
-    const { data: responseData } = await this.api.get<MlModel[]>(
+  async getModelsList(
+    organizationId: string,
+    orbitId: string,
+    collectionId: string,
+    params: GetModelsListParams,
+  ) {
+    const { data: responseData } = await this.api.get<GetModelsListResponse>(
       `/organizations/${organizationId}/orbits/${orbitId}/collections/${collectionId}/model_artifacts`,
+      { params },
     )
     return responseData
   }
@@ -92,5 +101,17 @@ export class MlModelsApi {
     return this.api.delete(
       `/organizations/${organizationId}/orbits/${orbitId}/collections/${collectionId}/model_artifacts/${modelId}/force`,
     )
+  }
+
+  async getModelById(
+    organizationId: string,
+    orbitId: string,
+    collectionId: string,
+    modelId: string,
+  ): Promise<MlModel> {
+    const { data: responseData } = await this.api.get<MlModel>(
+      `/organizations/${organizationId}/orbits/${orbitId}/collections/${collectionId}/model_artifacts/${modelId}`,
+    )
+    return responseData
   }
 }
