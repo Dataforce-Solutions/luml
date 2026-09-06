@@ -1,3 +1,4 @@
+import { LINEAGE_FLOW_ID } from '@/components/lineage/lineage.data'
 import type {
   HistorySnapshot,
   LineageCanvasNode,
@@ -5,6 +6,7 @@ import type {
 } from '@/components/lineage/lineage.interface'
 import type { Artifact } from '@/lib/api/artifacts/interfaces'
 import { api } from '@/lib/api'
+import { LINEAGE_MAX_DEPTH } from '@/lib/api/lineage'
 import { useArtifactsStore } from '@/stores/artifacts'
 import {
   useVueFlow,
@@ -33,8 +35,11 @@ function cloneState(state: HistorySnapshot): HistorySnapshot {
 }
 
 export const useLineageStore = defineStore('lineage', () => {
+  // The id ties the store to the canvas: without it Vue Flow would hand every
+  // new mount of the canvas its own instance and the store's edits would never
+  // reach it (see LINEAGE_FLOW_ID).
   const { nodes, edges, addEdges, onConnect, onNodesChange, onEdgesChange, setNodes, setEdges } =
-    useVueFlow()
+    useVueFlow(LINEAGE_FLOW_ID)
   const route = useRoute()
   const artifactsStore = useArtifactsStore()
 
@@ -46,7 +51,6 @@ export const useLineageStore = defineStore('lineage', () => {
   const loadedState = shallowRef<HistorySnapshot>({ nodes: [], edges: [] })
   const replaceableArtifactId = ref<string | null>(null)
   const history = shallowRef<HistorySnapshot[]>([])
-  const depth = ref(2)
   const truncated = ref(false)
   const isLoading = ref(false)
 
@@ -136,31 +140,25 @@ export const useLineageStore = defineStore('lineage', () => {
     }
   }
 
+  // The tab always shows everything the API can return around the artifact.
   async function load(): Promise<void> {
-    if (!Number.isInteger(depth.value) || depth.value < 1 || depth.value > 5) {
-      throw new RangeError('Lineage depth must be between 1 and 5')
-    }
-
     const loadId = ++latestLoad
     const { organizationId, orbitId, artifactId } = requestInfo()
     const focalArtifact = currentFocalArtifact()
     isLoading.value = true
     try {
-      const graph = await api.lineage.getGraph(organizationId, orbitId, artifactId, depth.value)
+      const graph = await api.lineage.getGraph(
+        organizationId,
+        orbitId,
+        artifactId,
+        LINEAGE_MAX_DEPTH,
+      )
       if (loadId !== latestLoad) return
       replaceCanvasWithoutHistory(mapGraphToCanvas(graph, focalArtifact))
       truncated.value = graph.truncated
-      depth.value = graph.depth
     } finally {
       if (loadId === latestLoad) isLoading.value = false
     }
-  }
-
-  function setDepth(value: number): void {
-    if (!Number.isInteger(value) || value < 1 || value > 5) {
-      throw new RangeError('Lineage depth must be between 1 and 5')
-    }
-    depth.value = value
   }
 
   function goBack(): void {
@@ -332,8 +330,6 @@ export const useLineageStore = defineStore('lineage', () => {
     hasNodes,
     hasEdges,
     unconnectedArtifactsCount,
-    depth,
-    setDepth,
     truncated,
     isLoading,
     currentArtifactId,

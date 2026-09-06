@@ -1,6 +1,6 @@
 <template>
   <div ref="viewRef" class="view">
-    <LineageWrapper v-model:is-maximized="isMaximized" @depth-change="onDepthChange" />
+    <LineageWrapper v-model:is-maximized="isMaximized" />
   </div>
 
   <Teleport to="body">
@@ -144,15 +144,6 @@ async function confirmDiscardChanges(): Promise<boolean> {
       ),
     )
   })
-}
-
-async function onDepthChange(depth: number): Promise<void> {
-  if (depth === lineageStore.depth) return
-  const previousDepth = lineageStore.depth
-  if (!(await confirmDiscardChanges())) return
-
-  lineageStore.setDepth(depth)
-  if (!(await loadLineage())) lineageStore.setDepth(previousDepth)
 }
 
 watch(

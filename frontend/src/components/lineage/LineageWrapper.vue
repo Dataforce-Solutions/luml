@@ -3,11 +3,7 @@
     <LineageHeading v-if="isMaximized" title="Lineage" class="heading"></LineageHeading>
     <LineageToolbar class="toolbar"></LineageToolbar>
     <LineageStateControls class="state-controls"></LineageStateControls>
-    <LineageActions
-      v-model:is-maximized="isMaximized"
-      class="actions"
-      @depth-change="emit('depthChange', $event)"
-    ></LineageActions>
+    <LineageActions v-model:is-maximized="isMaximized" class="actions"></LineageActions>
     <div v-if="lineageStore.isLoading" class="notice notice--loading">
       <ProgressSpinner class="spinner" />
     </div>
@@ -15,7 +11,7 @@
       No lineage recorded yet — link an artifact to get started
     </div>
     <div v-if="!lineageStore.isLoading && lineageStore.truncated" class="limit-notice">
-      Graph is limited to 200 artifacts — reduce depth to see complete levels
+      Graph is limited to 200 artifacts — the most distant connections are hidden
     </div>
     <LineageArea></LineageArea>
   </div>
@@ -31,7 +27,6 @@ import { useLineageStore } from '@/stores/lineage'
 import { ProgressSpinner } from 'primevue'
 
 const isMaximized = defineModel('isMaximized', { default: false })
-const emit = defineEmits<{ depthChange: [depth: number] }>()
 const lineageStore = useLineageStore()
 </script>
 

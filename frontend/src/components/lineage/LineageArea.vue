@@ -1,5 +1,6 @@
 <template>
   <VueFlow
+    :id="LINEAGE_FLOW_ID"
     :nodes="lineageStore.initialNodes"
     :edges="lineageStore.initialEdges"
     class="area"
@@ -37,6 +38,7 @@ import { useLineageStore } from '@/stores/lineage'
 import { unlinkArtifactConfirmOptions } from '@/lib/primevue/data/confirm'
 import { useConfirm } from 'primevue'
 import { nextTick, watch } from 'vue'
+import { LINEAGE_FLOW_ID } from './lineage.data'
 import type { LineageNodeData } from './lineage.interface'
 import LineageNode from './LineageNode.vue'
 import CustomArrowEdge from '../ui/vue-flow/CustomArrowEdge.vue'
@@ -44,7 +46,26 @@ import CustomArrowEdge from '../ui/vue-flow/CustomArrowEdge.vue'
 const confirm = useConfirm()
 
 const lineageStore = useLineageStore()
-const { fitView } = useVueFlow()
+const { fitView, nodes, onNodesInitialized } = useVueFlow(LINEAGE_FLOW_ID)
+
+let recenterPending = false
+
+function allNodesMeasured(): boolean {
+  return (
+    nodes.value.length > 0 &&
+    nodes.value.every((node) => node.dimensions.width > 0 && node.dimensions.height > 0)
+  )
+}
+
+async function recenter(): Promise<void> {
+  recenterPending = !(await fitView({ padding: 0.2 }))
+}
+
+// Vue Flow fits only the nodes it has measured, and a freshly rendered graph
+// has no dimensions yet: the fit is deferred until the nodes are initialized.
+onNodesInitialized(() => {
+  if (recenterPending) void recenter()
+})
 
 function replaceNode(id: string) {
   lineageStore.setReplaceableArtifactId(id)
@@ -65,10 +86,11 @@ function onNodeClick({ node }: NodeMouseEvent): void {
 
 watch(
   () => lineageStore.initialNodes,
-  async (nodes) => {
-    if (nodes.length === 0) return
+  async (initialNodes) => {
+    if (initialNodes.length === 0) return
+    recenterPending = true
     await nextTick()
-    await fitView({ padding: 0.2 })
+    if (allNodesMeasured()) await recenter()
   },
   { immediate: true, flush: 'post' },
 )

@@ -7,6 +7,9 @@ import type {
   LineageGraph,
 } from './interfaces'
 
+/** Deepest traversal the lineage API accepts; the UI always asks for it. */
+export const LINEAGE_MAX_DEPTH = 5
+
 export class LineageApi {
   private api: AxiosInstance
 
