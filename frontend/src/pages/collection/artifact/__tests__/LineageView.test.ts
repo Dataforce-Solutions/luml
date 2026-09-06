@@ -151,4 +151,24 @@ describe('LineageView', () => {
       expect.objectContaining({ severity: 'error', detail: 'Forbidden' }),
     )
   })
+
+  it('asks the browser to confirm a reload only while there are unsaved edits', async () => {
+    wrapper = mountView()
+    await flushPromises()
+
+    const clean = new Event('beforeunload', { cancelable: true })
+    window.dispatchEvent(clean)
+    expect(clean.defaultPrevented).toBe(false)
+
+    harness.lineage.hasEdits = true
+    const dirty = new Event('beforeunload', { cancelable: true })
+    window.dispatchEvent(dirty)
+    expect(dirty.defaultPrevented).toBe(true)
+
+    wrapper.unmount()
+    wrapper = null
+    const afterUnmount = new Event('beforeunload', { cancelable: true })
+    window.dispatchEvent(afterUnmount)
+    expect(afterUnmount.defaultPrevented).toBe(false)
+  })
 })

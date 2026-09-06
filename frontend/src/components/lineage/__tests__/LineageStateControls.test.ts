@@ -1,6 +1,6 @@
-import { flushPromises, shallowMount } from '@vue/test-utils'
+import { flushPromises, shallowMount, type VueWrapper } from '@vue/test-utils'
 import { defineComponent } from 'vue'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import LineageStateControls from '../LineageStateControls.vue'
 
 const store = vi.hoisted(() => ({
@@ -34,13 +34,23 @@ describe('LineageStateControls', () => {
     store.history = [{}]
   })
 
+  const mounted: VueWrapper[] = []
+
+  afterEach(() => {
+    // Every mount registers window shortcuts; leftovers would fire in later tests.
+    mounted.forEach((wrapper) => wrapper.unmount())
+    mounted.length = 0
+  })
+
   function mountControls() {
-    return shallowMount(LineageStateControls, {
+    const wrapper = shallowMount(LineageStateControls, {
       global: {
         stubs: { Button: ButtonStub },
         directives: { tooltip: () => undefined },
       },
     })
+    mounted.push(wrapper)
+    return wrapper
   }
 
   it('disables saving and explains when artifacts are unconnected', () => {
@@ -56,6 +66,28 @@ describe('LineageStateControls', () => {
     store.history = []
 
     expect(mountControls().find('button').attributes()).toHaveProperty('disabled')
+  })
+
+  it('ignores the shortcuts while the user types in a field', () => {
+    store.unconnectedArtifactsCount = 0
+    mountControls()
+    const input = document.createElement('input')
+    document.body.appendChild(input)
+
+    input.dispatchEvent(
+      new KeyboardEvent('keydown', { key: 'z', ctrlKey: true, metaKey: true, bubbles: true }),
+    )
+    input.dispatchEvent(
+      new KeyboardEvent('keydown', { key: 's', ctrlKey: true, metaKey: true, bubbles: true }),
+    )
+    expect(store.goBack).not.toHaveBeenCalled()
+    expect(store.save).not.toHaveBeenCalled()
+
+    document.body.dispatchEvent(
+      new KeyboardEvent('keydown', { key: 'z', ctrlKey: true, metaKey: true, bubbles: true }),
+    )
+    expect(store.goBack).toHaveBeenCalledTimes(1)
+    input.remove()
   })
 
   it.each([

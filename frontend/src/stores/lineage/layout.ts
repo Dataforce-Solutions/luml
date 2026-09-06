@@ -87,6 +87,22 @@ function layoutFromSavedPositions(
   return positions
 }
 
+/**
+ * First free slot in the column to the right of `anchor`: where a freshly
+ * linked artifact appears so it lands next to the focal node, not at the origin.
+ */
+export function freePositionNear(anchor: XYPosition, taken: readonly XYPosition[]): XYPosition {
+  const position = { x: anchor.x + LEVEL_WIDTH, y: anchor.y }
+  const isTaken = (candidate: XYPosition): boolean =>
+    taken.some(
+      (existing) =>
+        Math.abs(existing.x - candidate.x) < LEVEL_WIDTH * 0.75 &&
+        Math.abs(existing.y - candidate.y) < ROW_HEIGHT * 0.75,
+    )
+  while (isTaken(position)) position.y += ROW_HEIGHT
+  return position
+}
+
 function placeDisconnectedNodes(
   nodes: LineageCanvasNode[],
   positions: Map<string, XYPosition>,

@@ -2,7 +2,7 @@ from collections.abc import AsyncIterator, Sequence
 from contextlib import asynccontextmanager
 from uuid import UUID
 
-from sqlalchemy import delete, exists, or_, select, tuple_, update
+from sqlalchemy import delete, exists, or_, select, text, tuple_, update
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -247,7 +247,12 @@ class LineageRepository(RepositoryBase):
         self,
         orbit_id: UUID,
         session: AsyncSession | None = None,
+        node_ids: Sequence[UUID] | None = None,
     ) -> None:
+        """Remove nodes without edges; ``node_ids`` narrows the check to candidates."""
+        if node_ids is not None and not node_ids:
+            return
+
         async with self._session_scope(session) as (db_session, owns_session):
             has_edge = exists(
                 select(LineageEdgeOrm.id).where(
@@ -257,11 +262,51 @@ class LineageRepository(RepositoryBase):
                     )
                 )
             )
+            statement = delete(LineageNodeOrm).where(
+                LineageNodeOrm.orbit_id == orbit_id,
+                ~has_edge,
+            )
+            if node_ids is not None:
+                statement = statement.where(LineageNodeOrm.id.in_(node_ids))
+            await db_session.execute(statement)
+            await self._finish_write(db_session, owns_session)
+
+    async def delete_unreachable_deleted_nodes(
+        self,
+        orbit_id: UUID,
+        session: AsyncSession | None = None,
+    ) -> None:
+        """Remove deleted-artifact nodes that no live artifact can reach.
+
+        A component made only of deleted artifacts cannot be opened from any
+        Lineage tab; its nodes and edges would otherwise stay forever.
+        """
+        async with self._session_scope(session) as (db_session, owns_session):
             await db_session.execute(
-                delete(LineageNodeOrm).where(
-                    LineageNodeOrm.orbit_id == orbit_id,
-                    ~has_edge,
-                )
+                text(
+                    """
+                    WITH RECURSIVE reachable AS (
+                        SELECT id FROM lineage_nodes
+                        WHERE orbit_id = :orbit_id AND artifact_id IS NOT NULL
+                        UNION
+                        SELECT CASE
+                            WHEN edges.source_node_id = reachable.id
+                            THEN edges.target_node_id
+                            ELSE edges.source_node_id
+                        END
+                        FROM lineage_edges AS edges
+                        JOIN reachable ON reachable.id IN (
+                            edges.source_node_id, edges.target_node_id
+                        )
+                        WHERE edges.orbit_id = :orbit_id
+                    )
+                    DELETE FROM lineage_nodes
+                    WHERE orbit_id = :orbit_id
+                        AND artifact_id IS NULL
+                        AND id NOT IN (SELECT id FROM reachable)
+                    """
+                ),
+                {"orbit_id": orbit_id},
             )
             await self._finish_write(db_session, owns_session)
 
@@ -304,10 +349,15 @@ class LineageRepository(RepositoryBase):
         self,
         orbit_id: UUID,
         focal_node_id: UUID,
-        depth: int,
+        depth: int | None,
         session: AsyncSession | None = None,
     ) -> tuple[list[LineageNodeOrm], list[LineageEdgeOrm], bool]:
-        if depth < 1:
+        """Breadth-first traversal ignoring direction.
+
+        ``depth`` limits the number of levels; ``None`` walks the whole
+        component. The node cap (``LINEAGE_MAX_NODES``) is the only other stop.
+        """
+        if depth is not None and depth < 1:
             raise ValueError("Lineage depth must be positive")
 
         async with self._session_scope(session) as (db_session, _):
@@ -326,7 +376,8 @@ class LineageRepository(RepositoryBase):
             frontier = [focal_node.id]
             truncated = False
 
-            for level in range(depth):
+            level = 0
+            while depth is None or level < depth:
                 result = await db_session.scalars(
                     select(LineageEdgeOrm)
                     .where(
@@ -364,6 +415,7 @@ class LineageRepository(RepositoryBase):
                     break
                 if not frontier:
                     break
+                level += 1
 
             nodes_result = await db_session.scalars(
                 select(LineageNodeOrm).where(

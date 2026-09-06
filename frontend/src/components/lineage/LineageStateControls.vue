@@ -62,7 +62,14 @@ function onBack() {
   lineageStore.goBack()
 }
 
+function isTypingTarget(target: EventTarget | null): boolean {
+  if (!(target instanceof HTMLElement)) return false
+  return target.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName)
+}
+
 function onKeydown(e: KeyboardEvent) {
+  // Typing in a dialog field must not undo or save the canvas.
+  if (isTypingTarget(e.target)) return
   const hotkey = isMac ? e.metaKey : e.ctrlKey
   if (hotkey && e.key.toLowerCase() === 's') {
     e.preventDefault()

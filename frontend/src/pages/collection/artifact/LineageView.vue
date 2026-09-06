@@ -107,6 +107,14 @@ function onKeydown(e: KeyboardEvent) {
   }
 }
 
+// Route changes ask through the router guards; a reload or a closed tab
+// would otherwise drop unsaved edits silently.
+function onBeforeUnload(event: BeforeUnloadEvent) {
+  if (!lineageStore.hasEdits) return
+  event.preventDefault()
+  event.returnValue = ''
+}
+
 function onDetailsVisibilityChange(visible: boolean): void {
   if (!visible) lineageStore.setDetailedArtifact(null)
 }
@@ -159,8 +167,14 @@ watch(
 onBeforeRouteLeave(confirmDiscardChanges)
 onBeforeRouteUpdate(confirmDiscardChanges)
 
-onMounted(() => window.addEventListener('keydown', onKeydown))
-onUnmounted(() => window.removeEventListener('keydown', onKeydown))
+onMounted(() => {
+  window.addEventListener('keydown', onKeydown)
+  window.addEventListener('beforeunload', onBeforeUnload)
+})
+onUnmounted(() => {
+  window.removeEventListener('keydown', onKeydown)
+  window.removeEventListener('beforeunload', onBeforeUnload)
+})
 </script>
 
 <style scoped>

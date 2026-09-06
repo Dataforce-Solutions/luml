@@ -1,6 +1,7 @@
 from typing import Any
 
 from fastapi import FastAPI, Request
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.utils import get_openapi
 from fastapi.responses import JSONResponse
@@ -12,6 +13,7 @@ from luml.api.organization.organization import organization_router
 from luml.api.organization_routes import organization_all_routers
 from luml.api.satellites import satellite_worker_router
 from luml.api.user_routes import users_routers
+from luml.infra.error_handlers import request_validation_error_handler
 from luml.infra.exceptions import ApplicationError
 from luml.infra.middleware import SecurityHeadersMiddleware
 from luml.infra.security import JWTAuthenticationBackend
@@ -60,6 +62,13 @@ class AppService(FastAPI):
                 status_code=exc.status_code,
                 content={"detail": exc.message},
             )
+
+        @self.exception_handler(RequestValidationError)
+        async def validation_error_handler(
+            request: Request,
+            exc: RequestValidationError,
+        ) -> JSONResponse:
+            return await request_validation_error_handler(request, exc)
 
     def custom_openapi(self) -> dict[str, Any]:
         if self.openapi_schema:

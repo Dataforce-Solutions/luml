@@ -57,13 +57,19 @@ class ArtifactResourceBase(ABC):
 
     @abstractmethod
     def get_lineage(
-        self, artifact_id: str, depth: int = 2
+        self, artifact_id: str, depth: int | None = None
     ) -> LineageGraph | Coroutine[Any, Any, LineageGraph]:
         raise NotImplementedError()
 
     @abstractmethod
     def log_lineage(
         self, source_artifact_id: str, target_artifact_ids: builtins.list[str]
+    ) -> builtins.list[LineageEdge] | Coroutine[Any, Any, builtins.list[LineageEdge]]:
+        raise NotImplementedError()
+
+    @abstractmethod
+    def log_lineage_inputs(
+        self, artifact_id: str, input_artifact_ids: builtins.list[str]
     ) -> builtins.list[LineageEdge] | Coroutine[Any, Any, builtins.list[LineageEdge]]:
         raise NotImplementedError()
 
@@ -505,19 +511,21 @@ class ArtifactResource(ArtifactResourceBase, ListedResource):
         return ArtifactsList.model_validate(response)
 
     @validate_orbit
-    def get_lineage(self, artifact_id: str, depth: int = 2) -> LineageGraph:
+    def get_lineage(self, artifact_id: str, depth: int | None = None) -> LineageGraph:
         """Get the lineage graph around an artifact.
 
         Args:
             artifact_id: ID of the focal artifact.
-            depth: Number of graph levels to load, from 1 through 5.
+            depth: Number of graph levels to load. ``None`` loads the whole
+                connected graph; the platform caps it at 200 artifacts and
+                sets ``truncated`` when the cap was hit.
 
         Returns:
             The lineage graph around the artifact.
         """
         response = self._client.get(
             f"/v1/organizations/{self._client.organization}/orbits/{self._client.orbit}/artifacts/{artifact_id}/lineage",
-            params={"depth": depth},
+            params={} if depth is None else {"depth": depth},
         )
         return LineageGraph.model_validate(response)
 
@@ -557,6 +565,36 @@ class ArtifactResource(ArtifactResourceBase, ListedResource):
             f"/v1/organizations/{self._client.organization}/orbits/{self._client.orbit}/artifacts/{artifact_id}/lineage/{edge_id}"
         )
         return LineageEdge.model_validate(response)
+
+    @validate_orbit
+    def log_lineage_inputs(
+        self, artifact_id: str, input_artifact_ids: builtins.list[str]
+    ) -> builtins.list[LineageEdge]:
+        """Record that an artifact was produced from other artifacts.
+
+        Every ``input -> artifact`` connection is created in one transaction:
+        either all inputs get linked or none of them.
+
+        Args:
+            artifact_id: ID of the produced artifact.
+            input_artifact_ids: IDs of the artifacts it was produced from.
+
+        Returns:
+            The created lineage connections.
+        """
+        response = self._client.post(
+            f"/v1/organizations/{self._client.organization}/orbits/{self._client.orbit}/lineage/batch",
+            json={
+                "create": [
+                    {
+                        "source": {"artifact_id": input_artifact_id},
+                        "target": {"artifact_id": artifact_id},
+                    }
+                    for input_artifact_id in input_artifact_ids
+                ]
+            },
+        )
+        return [LineageEdge.model_validate(edge) for edge in response["created"]]
 
     @validate_collection
     def download_url(
@@ -1568,19 +1606,23 @@ class AsyncArtifactResource(ArtifactResourceBase, ListedResource):
         return ArtifactsList.model_validate(response)
 
     @validate_orbit
-    async def get_lineage(self, artifact_id: str, depth: int = 2) -> LineageGraph:
+    async def get_lineage(
+        self, artifact_id: str, depth: int | None = None
+    ) -> LineageGraph:
         """Get the lineage graph around an artifact.
 
         Args:
             artifact_id: ID of the focal artifact.
-            depth: Number of graph levels to load, from 1 through 5.
+            depth: Number of graph levels to load. ``None`` loads the whole
+                connected graph; the platform caps it at 200 artifacts and
+                sets ``truncated`` when the cap was hit.
 
         Returns:
             The lineage graph around the artifact.
         """
         response = await self._client.get(
             f"/v1/organizations/{self._client.organization}/orbits/{self._client.orbit}/artifacts/{artifact_id}/lineage",
-            params={"depth": depth},
+            params={} if depth is None else {"depth": depth},
         )
         return LineageGraph.model_validate(response)
 
@@ -1620,6 +1662,36 @@ class AsyncArtifactResource(ArtifactResourceBase, ListedResource):
             f"/v1/organizations/{self._client.organization}/orbits/{self._client.orbit}/artifacts/{artifact_id}/lineage/{edge_id}"
         )
         return LineageEdge.model_validate(response)
+
+    @validate_orbit
+    async def log_lineage_inputs(
+        self, artifact_id: str, input_artifact_ids: builtins.list[str]
+    ) -> builtins.list[LineageEdge]:
+        """Record that an artifact was produced from other artifacts.
+
+        Every ``input -> artifact`` connection is created in one transaction:
+        either all inputs get linked or none of them.
+
+        Args:
+            artifact_id: ID of the produced artifact.
+            input_artifact_ids: IDs of the artifacts it was produced from.
+
+        Returns:
+            The created lineage connections.
+        """
+        response = await self._client.post(
+            f"/v1/organizations/{self._client.organization}/orbits/{self._client.orbit}/lineage/batch",
+            json={
+                "create": [
+                    {
+                        "source": {"artifact_id": input_artifact_id},
+                        "target": {"artifact_id": artifact_id},
+                    }
+                    for input_artifact_id in input_artifact_ids
+                ]
+            },
+        )
+        return [LineageEdge.model_validate(edge) for edge in response["created"]]
 
     @validate_collection
     async def download_url(

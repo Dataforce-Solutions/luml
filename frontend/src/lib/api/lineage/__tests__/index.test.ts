@@ -39,6 +39,16 @@ describe('LineageApi', () => {
     )
   })
 
+  it('loads the whole graph when no depth is given', async () => {
+    const { api, get } = setupApi()
+
+    await expect(api.getGraph('org', 'orbit', 'artifact-a')).resolves.toEqual(graph)
+    expect(get).toHaveBeenCalledWith(
+      '/v1/organizations/org/orbits/orbit/artifacts/artifact-a/lineage',
+      { params: {} },
+    )
+  })
+
   it('creates and deletes links through orbit-scoped endpoints', async () => {
     const { api, post, del } = setupApi()
 

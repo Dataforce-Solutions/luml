@@ -8,6 +8,7 @@ from sqlalchemy import (
     Index,
     String,
     UniqueConstraint,
+    func,
     text,
 )
 from sqlalchemy.orm import Mapped, mapped_column
@@ -96,3 +97,13 @@ class LineageEdgeOrm(TimestampMixin, Base):
             created_via=LineageVia(self.created_via),
             created_at=self.created_at,
         )
+
+
+# A pair may exist in one direction only; the plain unique constraint above
+# cannot see the reverse edge, this index makes the database reject it too.
+Index(
+    "uq_lineage_edges_undirected_pair",
+    func.least(LineageEdgeOrm.source_node_id, LineageEdgeOrm.target_node_id),
+    func.greatest(LineageEdgeOrm.source_node_id, LineageEdgeOrm.target_node_id),
+    unique=True,
+)

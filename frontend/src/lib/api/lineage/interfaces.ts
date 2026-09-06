@@ -27,7 +27,7 @@ export interface LineageGraph {
   nodes: LineageNode[]
   edges: LineageEdge[]
   focal_artifact_id: string
-  depth: number
+  depth: number | null
   truncated: boolean
 }
 

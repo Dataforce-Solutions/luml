@@ -6,6 +6,7 @@ from pathlib import Path
 from luml.artifacts.experiment import save_experiment
 from luml.artifacts.model import ModelReference
 from luml.experiments.backends.data_types import Model as DbModel
+from luml_api import LumlClient
 from luml_api._exceptions import NotFoundError
 from luml_api.utils.progress import BaseProgressHandler
 
@@ -83,14 +84,13 @@ class ArtifactHandler(BaseLumlHandler):
                     if experiment_artifact_id is not None
                     else None
                 )
-            except NotFoundError as error:
-                stale_lineage_input = (
-                    remembered_experiment
-                    and error.request.method == "POST"
-                    and isinstance(error.body, dict)
-                    and error.body.get("detail") == "Artifact not found"
-                )
-                if not stale_lineage_input:
+            except NotFoundError:
+                # A remembered experiment may have been deleted on the platform
+                # since it was uploaded; ask the platform instead of guessing
+                # from the error text.
+                if not remembered_experiment or not self._artifact_is_gone(
+                    luml, experiment_artifact_id
+                ):
                     raise
                 self.tracker.delete_remote_artifact(
                     "experiment",
@@ -106,6 +106,16 @@ class ArtifactHandler(BaseLumlHandler):
         finally:
             if temp_path:
                 Path(temp_path).unlink(missing_ok=True)
+
+    @staticmethod
+    def _artifact_is_gone(luml: LumlClient, artifact_id: str | None) -> bool:
+        if artifact_id is None:
+            return False
+        try:
+            luml.artifacts.get_lineage(artifact_id, depth=1)
+        except NotFoundError:
+            return True
+        return False
 
     def _resolve_experiment_artifact_id(
         self,
@@ -228,9 +238,7 @@ class ArtifactHandler(BaseLumlHandler):
 
         try:
             models = self.tracker.get_models(data.experiment_id)
-            model = next(
-                (m for m in models if m.id == data.model_id), None
-            )
+            model = next((m for m in models if m.id == data.model_id), None)
             if model is None:
                 raise NotFound(f"Model not found: {data.model_id}")
             on_progress = self.progress_store.make_handler(job_id, 0, 1)

@@ -4,11 +4,13 @@ from uuid import UUID
 
 import pytest
 from fastapi import FastAPI, Request
+from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from fastapi.routing import APIRoute
 from fastapi.testclient import TestClient
 from luml.api.orbits.orbit_lineage import lineage_router
 from luml.api.organization_routes import organization_all_routers
+from luml.infra.error_handlers import request_validation_error_handler
 from luml.infra.exceptions import ApplicationError
 from luml.models import AuthUser
 from luml.schemas.lineage import (
@@ -56,6 +58,7 @@ def _client(scope: str = "jwt") -> TestClient:
     app = FastAPI()
     app.include_router(lineage_router, prefix="/v1/organizations")
     app.add_middleware(AuthenticationMiddleware, backend=StubAuthBackend(scope))
+    app.add_exception_handler(RequestValidationError, request_validation_error_handler)
 
     @app.exception_handler(ApplicationError)
     async def application_error_handler(
@@ -80,7 +83,7 @@ def _edge(via: LineageVia = LineageVia.API) -> LineageEdge:
     )
 
 
-def _graph(depth: int) -> LineageGraph:
+def _graph(depth: int | None) -> LineageGraph:
     return LineageGraph(
         nodes=[
             LineageNode(
@@ -102,7 +105,9 @@ def _graph(depth: int) -> LineageGraph:
     )
 
 
-@pytest.mark.parametrize(("query", "depth"), [("", 2), ("?depth=3", 3)])
+@pytest.mark.parametrize(
+    ("query", "depth"), [("", None), ("?depth=3", 3), ("?depth=6", 6)]
+)
 @patch(
     "luml.handlers.lineage.LineageHandler.get_graph",
     new_callable=AsyncMock,
@@ -110,7 +115,7 @@ def _graph(depth: int) -> LineageGraph:
 def test_get_lineage_uses_default_or_requested_depth(
     mock_get_graph: AsyncMock,
     query: str,
-    depth: int,
+    depth: int | None,
 ) -> None:
     mock_get_graph.return_value = _graph(depth)
 
@@ -128,7 +133,7 @@ def test_get_lineage_uses_default_or_requested_depth(
     )
 
 
-@pytest.mark.parametrize("depth", [0, 6])
+@pytest.mark.parametrize("depth", [0, -1])
 @patch(
     "luml.handlers.lineage.LineageHandler.get_graph",
     new_callable=AsyncMock,
@@ -194,6 +199,7 @@ def test_delete_lineage_forwards_artifact_and_edge_ids(
         ORBIT_ID,
         ARTIFACT_A_ID,
         EDGE_ID,
+        LineageVia.UI,
     )
 
 
@@ -313,3 +319,65 @@ def test_lineage_router_is_registered_for_organizations() -> None:
         "/artifacts/{artifact_id}/lineage"
     ) in paths
     assert ("/organizations/{organization_id}/orbits/{orbit_id}/lineage/batch") in paths
+
+
+@pytest.mark.parametrize("value", ["NaN", "Infinity", "-Infinity"])
+@patch(
+    "luml.handlers.lineage.LineageHandler.apply_changes",
+    new_callable=AsyncMock,
+)
+def test_batch_rejects_non_finite_positions(
+    mock_apply_changes: AsyncMock,
+    value: str,
+) -> None:
+    body = (
+        '{"positions": [{"ref": {"node_id": "'
+        + str(NODE_A_ID)
+        + '"}, "x": '
+        + value
+        + ', "y": 0}]}'
+    )
+
+    response = _client().post(
+        BATCH_PATH, content=body, headers={"Content-Type": "application/json"}
+    )
+
+    assert response.status_code == 422
+    assert response.json()["detail"][0]["msg"] == "Input should be a finite number"
+    mock_apply_changes.assert_not_awaited()
+
+
+@pytest.mark.parametrize(
+    ("path", "body"),
+    [
+        (BATCH_PATH, {"delete": [str(EDGE_ID)] * 1001}),
+        (
+            BATCH_PATH,
+            {
+                "positions": [{"ref": {"node_id": str(NODE_A_ID)}, "x": 0, "y": 0}]
+                * 1001
+            },
+        ),
+        (ARTIFACT_PATH, {"target_artifact_ids": [str(ARTIFACT_B_ID)] * 1001}),
+    ],
+    ids=["delete", "positions", "targets"],
+)
+@patch(
+    "luml.handlers.lineage.LineageHandler.create_links",
+    new_callable=AsyncMock,
+)
+@patch(
+    "luml.handlers.lineage.LineageHandler.apply_changes",
+    new_callable=AsyncMock,
+)
+def test_oversized_payloads_are_rejected(
+    mock_apply_changes: AsyncMock,
+    mock_create_links: AsyncMock,
+    path: str,
+    body: dict[str, object],
+) -> None:
+    response = _client().post(path, json=body)
+
+    assert response.status_code == 422
+    mock_apply_changes.assert_not_awaited()
+    mock_create_links.assert_not_awaited()

@@ -31,6 +31,7 @@ from luml.schemas.lineage import (
     LineageVia,
 )
 from luml.schemas.permissions import Action, Resource
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 USER_ID = UUID("0199c337-09f1-7d8f-b0c4-b68349bbe24b")
@@ -602,7 +603,9 @@ async def test_apply_changes_replaces_a_node_and_keeps_its_position(
         {NODE_C_ID: (300.0, 100.0)},
         mocks.session,
     )
-    mocks.delete_edgeless_nodes.assert_awaited_once_with(ORBIT_ID, mocks.session)
+    mocks.delete_edgeless_nodes.assert_awaited_once_with(
+        ORBIT_ID, mocks.session, [NODE_A_ID, NODE_B_ID]
+    )
 
 
 @pytest.mark.asyncio
@@ -671,7 +674,9 @@ async def test_apply_changes_replaces_a_deleted_node_with_all_of_its_connections
         {NODE_C_ID: (300.0, 100.0)},
         mocks.session,
     )
-    mocks.delete_edgeless_nodes.assert_awaited_once_with(ORBIT_ID, mocks.session)
+    mocks.delete_edgeless_nodes.assert_awaited_once_with(
+        ORBIT_ID, mocks.session, [MISSING_ID, NODE_B_ID, NODE_A_ID]
+    )
 
 
 @pytest.mark.asyncio
@@ -945,7 +950,7 @@ async def test_apply_changes_empty_batch_returns_empty_result(
     assert result.deleted == []
     mocks.get_user.assert_not_awaited()
     mocks.get_artifacts.assert_not_awaited()
-    mocks.delete_edgeless_nodes.assert_awaited_once_with(ORBIT_ID, mocks.session)
+    mocks.delete_edgeless_nodes.assert_not_awaited()
 
 
 @pytest.mark.parametrize(
@@ -1202,3 +1207,88 @@ async def test_read_permission_failure_prevents_repository_access(
 
     mocks.get_orbit.assert_not_awaited()
     mocks.get_artifacts.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_apply_changes_maps_a_lost_creation_race_to_conflict(
+    lineage_mocks: HandlerMocks,
+) -> None:
+    """Two requests can pass the existence check; the database catches the second."""
+    mocks = lineage_mocks
+    _configure_artifact_pair(mocks)
+    mocks.create_edges.side_effect = IntegrityError(
+        "INSERT INTO lineage_edges", {}, Exception("duplicate key")
+    )
+
+    with pytest.raises(ApplicationError) as error:
+        await handler.apply_changes(
+            USER_ID, ORGANIZATION_ID, ORBIT_ID, _creation_changes(), LineageVia.UI
+        )
+
+    assert error.value.status_code == 409
+    assert error.value.message == "Lineage connection already exists"
+    assert mocks.transaction_errors == [error.value]
+    mocks.update_positions.assert_not_awaited()
+    mocks.delete_edgeless_nodes.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_link_inputs_records_every_input_in_one_transaction(
+    lineage_mocks: HandlerMocks,
+) -> None:
+    mocks = lineage_mocks
+    artifacts = {
+        ARTIFACT_A_ID: _artifact(ARTIFACT_A_ID, "dataset"),
+        ARTIFACT_B_ID: _artifact(ARTIFACT_B_ID, "experiment"),
+        ARTIFACT_C_ID: _artifact(ARTIFACT_C_ID, "model"),
+    }
+    nodes = {
+        ARTIFACT_A_ID: _node(NODE_A_ID, ARTIFACT_A_ID, "dataset"),
+        ARTIFACT_B_ID: _node(NODE_B_ID, ARTIFACT_B_ID, "experiment"),
+        ARTIFACT_C_ID: _node(NODE_C_ID, ARTIFACT_C_ID, "model"),
+    }
+    mocks.get_artifacts.return_value = list(artifacts.values())
+    mocks.get_or_create_node.side_effect = (
+        lambda orbit_id, artifact, session: nodes[artifact.id]
+    )
+    created = [
+        _edge(NEW_EDGE_A_ID, NODE_A_ID, NODE_C_ID),
+        _edge(NEW_EDGE_B_ID, NODE_B_ID, NODE_C_ID),
+    ]
+    mocks.create_edges.return_value = created
+
+    result = await handler.link_inputs(
+        USER_ID,
+        ORGANIZATION_ID,
+        ORBIT_ID,
+        ARTIFACT_C_ID,
+        [ARTIFACT_A_ID, ARTIFACT_B_ID, ARTIFACT_A_ID],
+        LineageVia.API,
+        check_access=False,
+    )
+
+    assert result == [edge.to_edge() for edge in created]
+    mocks.check_permissions.assert_not_awaited()
+    mocks.create_edges.assert_awaited_once_with(
+        ORBIT_ID,
+        [(NODE_A_ID, NODE_C_ID), (NODE_B_ID, NODE_C_ID)],
+        "Lineage User",
+        LineageVia.API,
+        mocks.session,
+    )
+    mocks.delete_edgeless_nodes.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_link_inputs_without_inputs_touches_nothing(
+    lineage_mocks: HandlerMocks,
+) -> None:
+    mocks = lineage_mocks
+
+    result = await handler.link_inputs(
+        USER_ID, ORGANIZATION_ID, ORBIT_ID, ARTIFACT_C_ID, [], LineageVia.API
+    )
+
+    assert result == []
+    mocks.check_permissions.assert_not_awaited()
+    mocks.create_edges.assert_not_awaited()

@@ -12,7 +12,7 @@ from pydantic import (
     field_validator,
 )
 
-from luml.constants import MAX_FILE_SIZE_BYTES
+from luml.constants import LINEAGE_MAX_BATCH_ITEMS, MAX_FILE_SIZE_BYTES
 from luml.schemas.base import BaseOrmConfig
 from luml.schemas.collections import Collection
 from luml.schemas.deployment import Deployment, DeploymentBase
@@ -158,7 +158,9 @@ class ArtifactIn(BaseModel):
 
 
 class ArtifactCreateIn(ArtifactIn):
-    lineage_inputs: list[UUID] | None = None
+    lineage_inputs: list[UUID] | None = Field(
+        default=None, max_length=LINEAGE_MAX_BATCH_ITEMS
+    )
 
 
 class ArtifactCreate(ArtifactIn):
