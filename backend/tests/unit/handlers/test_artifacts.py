@@ -726,7 +726,7 @@ async def test_get_collection_artifacts_encodes_returned_cursor(
     new_callable=AsyncMock,
 )
 @patch(
-    "luml.handlers.artifacts.LineageHandler.create_links",
+    "luml.handlers.artifacts.LineageHandler.link_inputs",
     new_callable=AsyncMock,
 )
 @patch(
@@ -766,7 +766,7 @@ async def test_create_artifact(
     mock_check_permissions: AsyncMock,
     mock_get_public_user_by_id: AsyncMock,
     mock_check_organization_artifacts_limit: AsyncMock,
-    mock_create_links: AsyncMock,
+    mock_link_inputs: AsyncMock,
     mock_get_lineage_inputs: AsyncMock,
     manifest_example: Manifest,
 ) -> None:
@@ -844,7 +844,7 @@ async def test_create_artifact(
     assert isinstance(create_model, ArtifactCreate)
     assert "lineage_inputs" not in create_model.model_dump()
     mock_get_lineage_inputs.assert_not_awaited()
-    mock_create_links.assert_not_awaited()
+    mock_link_inputs.assert_not_awaited()
     mock_get_storage_client.assert_awaited_once()
     mock_storage_client.create_upload.assert_awaited_once()
     mock_check_organization_artifacts_limit.assert_awaited_once_with(organization_id)
@@ -915,7 +915,7 @@ def _pending_artifact(
     new_callable=AsyncMock,
 )
 @patch(
-    "luml.handlers.artifacts.LineageHandler.create_links",
+    "luml.handlers.artifacts.LineageHandler.link_inputs",
     new_callable=AsyncMock,
 )
 @patch(
@@ -930,7 +930,7 @@ def _pending_artifact(
 async def test_create_artifact_with_lineage_inputs(
     mock_define_artifact_type: Mock,
     mock_get_storage_client: AsyncMock,
-    mock_create_links: AsyncMock,
+    mock_link_inputs: AsyncMock,
     mock_create_artifact: AsyncMock,
     mock_get_lineage_inputs: AsyncMock,
     mock_check_access: AsyncMock,
@@ -995,26 +995,15 @@ async def test_create_artifact_with_lineage_inputs(
     create_model = mock_create_artifact.await_args.args[0]
     assert isinstance(create_model, ArtifactCreate)
     assert "lineage_inputs" not in create_model.model_dump()
-    assert mock_create_links.await_args_list == [
-        call(
-            user_id,
-            organization_id,
-            orbit_id,
-            experiment_id,
-            [artifact_id],
-            LineageVia.UI,
-            check_access=False,
-        ),
-        call(
-            user_id,
-            organization_id,
-            orbit_id,
-            dataset_id,
-            [artifact_id],
-            LineageVia.UI,
-            check_access=False,
-        ),
-    ]
+    mock_link_inputs.assert_awaited_once_with(
+        user_id,
+        organization_id,
+        orbit_id,
+        artifact_id,
+        [experiment_id, dataset_id],
+        LineageVia.UI,
+        check_access=False,
+    )
 
 
 @pytest.mark.parametrize(
@@ -1050,7 +1039,7 @@ async def test_create_artifact_with_lineage_inputs(
     new_callable=AsyncMock,
 )
 @patch(
-    "luml.handlers.artifacts.LineageHandler.create_links",
+    "luml.handlers.artifacts.LineageHandler.link_inputs",
     new_callable=AsyncMock,
 )
 @patch(
@@ -1065,7 +1054,7 @@ async def test_create_artifact_with_lineage_inputs(
 async def test_create_artifact_rejects_lineage_input_outside_orbit(
     mock_define_artifact_type: Mock,
     mock_get_storage_client: AsyncMock,
-    mock_create_links: AsyncMock,
+    mock_link_inputs: AsyncMock,
     mock_create_artifact: AsyncMock,
     mock_get_lineage_inputs: AsyncMock,
     mock_check_access: AsyncMock,
@@ -1097,7 +1086,7 @@ async def test_create_artifact_rejects_lineage_input_outside_orbit(
     assert error.value.message == "Artifact not found"
     mock_get_lineage_inputs.assert_awaited_once_with(orbit_id, [lineage_input])
     mock_create_artifact.assert_not_awaited()
-    mock_create_links.assert_not_awaited()
+    mock_link_inputs.assert_not_awaited()
     mock_get_storage_client.assert_not_awaited()
 
 
@@ -1130,7 +1119,7 @@ async def test_create_artifact_rejects_lineage_input_outside_orbit(
     new_callable=AsyncMock,
 )
 @patch(
-    "luml.handlers.artifacts.LineageHandler.create_links",
+    "luml.handlers.artifacts.LineageHandler.link_inputs",
     new_callable=AsyncMock,
 )
 @patch(
@@ -1145,7 +1134,7 @@ async def test_create_artifact_rejects_lineage_input_outside_orbit(
 async def test_create_artifact_deletes_row_when_lineage_linking_fails(
     mock_define_artifact_type: Mock,
     mock_get_storage_client: AsyncMock,
-    mock_create_links: AsyncMock,
+    mock_link_inputs: AsyncMock,
     mock_delete_artifact: AsyncMock,
     mock_create_artifact: AsyncMock,
     mock_get_lineage_inputs: AsyncMock,
@@ -1170,7 +1159,7 @@ async def test_create_artifact_deletes_row_when_lineage_linking_fails(
     mock_get_lineage_inputs.return_value = [Mock(id=lineage_input)]
     mock_create_artifact.return_value = created_artifact
     linking_error = ApplicationError("Lineage failed", 409)
-    mock_create_links.side_effect = linking_error
+    mock_link_inputs.side_effect = linking_error
 
     with pytest.raises(ApplicationError) as error:
         await handler.create_artifact(
@@ -1603,7 +1592,7 @@ async def test_request_delete_url_with_deployments(
     new_callable=AsyncMock,
 )
 @patch(
-    "luml.handlers.artifacts.LineageRepository.delete_edgeless_nodes",
+    "luml.handlers.artifacts.LineageRepository.delete_unreachable_deleted_nodes",
     new_callable=AsyncMock,
 )
 @patch(
@@ -1639,7 +1628,7 @@ async def test_confirm_deletion_pending(
     mock_get_orbit_simple: AsyncMock,
     mock_get_collection: AsyncMock,
     mock_check_permissions: AsyncMock,
-    mock_delete_edgeless_nodes: AsyncMock,
+    mock_delete_unreachable_nodes: AsyncMock,
     mock_refresh_node_copy: AsyncMock,
     manifest_example: Manifest,
 ) -> None:
@@ -1683,7 +1672,7 @@ async def test_confirm_deletion_pending(
     mock_get_artifact.assert_awaited_once_with(artifact_id)
     mock_refresh_node_copy.assert_awaited_once_with(artifact_id)
     mock_delete_artifact.assert_awaited_once_with(artifact_id)
-    mock_delete_edgeless_nodes.assert_awaited_once_with(orbit_id)
+    mock_delete_unreachable_nodes.assert_awaited_once_with(orbit_id)
 
 
 @patch(
@@ -1768,7 +1757,7 @@ async def test_confirm_deletion_not_pending(
 
 
 @patch(
-    "luml.handlers.artifacts.LineageRepository.delete_edgeless_nodes",
+    "luml.handlers.artifacts.LineageRepository.delete_unreachable_deleted_nodes",
     new_callable=AsyncMock,
 )
 @patch(
@@ -1783,12 +1772,12 @@ async def test_confirm_deletion_not_pending(
 async def test_physical_artifact_deletion_updates_lineage_in_order(
     mock_refresh_node_copy: AsyncMock,
     mock_delete_artifact: AsyncMock,
-    mock_delete_edgeless_nodes: AsyncMock,
+    mock_delete_unreachable_nodes: AsyncMock,
 ) -> None:
     calls = Mock()
     calls.attach_mock(mock_refresh_node_copy, "refresh")
     calls.attach_mock(mock_delete_artifact, "delete")
-    calls.attach_mock(mock_delete_edgeless_nodes, "cleanup")
+    calls.attach_mock(mock_delete_unreachable_nodes, "cleanup")
     orbit_id = uuid7()
     artifact_id = uuid7()
 
@@ -1802,7 +1791,7 @@ async def test_physical_artifact_deletion_updates_lineage_in_order(
 
 
 @patch(
-    "luml.handlers.artifacts.LineageRepository.delete_edgeless_nodes",
+    "luml.handlers.artifacts.LineageRepository.delete_unreachable_deleted_nodes",
     new_callable=AsyncMock,
 )
 @patch(
@@ -1818,7 +1807,7 @@ async def test_physical_artifact_deletion_updates_lineage_in_order(
 async def test_failed_artifact_deletion_does_not_cleanup_lineage_node(
     mock_refresh_node_copy: AsyncMock,
     mock_delete_artifact: AsyncMock,
-    mock_delete_edgeless_nodes: AsyncMock,
+    mock_delete_unreachable_nodes: AsyncMock,
 ) -> None:
     artifact_id = uuid7()
 
@@ -1827,7 +1816,7 @@ async def test_failed_artifact_deletion_does_not_cleanup_lineage_node(
 
     mock_refresh_node_copy.assert_awaited_once_with(artifact_id)
     mock_delete_artifact.assert_awaited_once_with(artifact_id)
-    mock_delete_edgeless_nodes.assert_not_awaited()
+    mock_delete_unreachable_nodes.assert_not_awaited()
 
 
 @patch(
@@ -2521,7 +2510,7 @@ async def test_request_satellite_download_url_orbit_not_found(
     new_callable=AsyncMock,
 )
 @patch(
-    "luml.handlers.artifacts.LineageRepository.delete_edgeless_nodes",
+    "luml.handlers.artifacts.LineageRepository.delete_unreachable_deleted_nodes",
     new_callable=AsyncMock,
 )
 @patch(
@@ -2557,7 +2546,7 @@ async def test_force_delete_artifact_without_deployments(
     mock_get_collection: AsyncMock,
     mock_get_orbit_simple: AsyncMock,
     mock_check_permissions: AsyncMock,
-    mock_delete_edgeless_nodes: AsyncMock,
+    mock_delete_unreachable_nodes: AsyncMock,
     mock_refresh_node_copy: AsyncMock,
 ) -> None:
     user_id = UUID("0199c337-09f1-7d8f-b0c4-b68349bbe24b")
@@ -2579,7 +2568,7 @@ async def test_force_delete_artifact_without_deployments(
     )
     mock_refresh_node_copy.assert_awaited_once_with(artifact_id)
     mock_delete_artifact.assert_awaited_once_with(artifact_id)
-    mock_delete_edgeless_nodes.assert_awaited_once_with(orbit_id)
+    mock_delete_unreachable_nodes.assert_awaited_once_with(orbit_id)
     mock_check_permissions.assert_awaited_once_with(
         organization_id, user_id, Resource.ARTIFACT, Action.DELETE, orbit_id
     )
@@ -2590,7 +2579,7 @@ async def test_force_delete_artifact_without_deployments(
     new_callable=AsyncMock,
 )
 @patch(
-    "luml.handlers.artifacts.LineageRepository.delete_edgeless_nodes",
+    "luml.handlers.artifacts.LineageRepository.delete_unreachable_deleted_nodes",
     new_callable=AsyncMock,
 )
 @patch(
@@ -2631,7 +2620,7 @@ async def test_force_delete_artifact_with_deployments(
     mock_get_collection: AsyncMock,
     mock_get_orbit_simple: AsyncMock,
     mock_check_permissions: AsyncMock,
-    mock_delete_edgeless_nodes: AsyncMock,
+    mock_delete_unreachable_nodes: AsyncMock,
     mock_refresh_node_copy: AsyncMock,
 ) -> None:
     user_id = UUID("0199c337-09f1-7d8f-b0c4-b68349bbe24b")
@@ -2661,7 +2650,7 @@ async def test_force_delete_artifact_with_deployments(
     mock_delete_deployments_by_artifact_id.assert_awaited_once_with(artifact_id)
     mock_refresh_node_copy.assert_awaited_once_with(artifact_id)
     mock_delete_artifact.assert_awaited_once_with(artifact_id)
-    mock_delete_edgeless_nodes.assert_awaited_once_with(orbit_id)
+    mock_delete_unreachable_nodes.assert_awaited_once_with(orbit_id)
 
 
 @patch(

@@ -276,20 +276,22 @@ class ArtifactHandler:
             )
         )
 
-        try:
-            for lineage_input in lineage_inputs:
-                await self.__lineage_handler.create_links(
+        if lineage_inputs:
+            try:
+                # One transaction for every input: either all edges exist or
+                # the artifact row goes away again.
+                await self.__lineage_handler.link_inputs(
                     user_id,
                     organization_id,
                     orbit_id,
-                    lineage_input,
-                    [created_artifact.id],
+                    created_artifact.id,
+                    lineage_inputs,
                     via,
                     check_access=False,
                 )
-        except Exception:
-            await self.__repository.delete_artifact(created_artifact.id)
-            raise
+            except Exception:
+                await self.__repository.delete_artifact(created_artifact.id)
+                raise
 
         storage_service = await self._get_storage_client(orbit.bucket_secret_id)
 
@@ -463,7 +465,9 @@ class ArtifactHandler:
     async def _delete_artifact(self, orbit_id: UUID, artifact_id: UUID) -> None:
         await self.__lineage_repository.refresh_node_copy(artifact_id)
         await self.__repository.delete_artifact(artifact_id)
-        await self.__lineage_repository.delete_edgeless_nodes(orbit_id)
+        # The node keeps its edges as a "deleted" node; a component left with
+        # no live artifact at all can never be opened again, drop it.
+        await self.__lineage_repository.delete_unreachable_deleted_nodes(orbit_id)
 
     async def force_delete_artifact(
         self,

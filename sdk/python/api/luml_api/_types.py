@@ -335,7 +335,7 @@ class LineageGraph(BaseModel):
     nodes: list[LineageNode]
     edges: list[LineageEdge]
     focal_artifact_id: str
-    depth: int
+    depth: int | None
     truncated: bool
 
 

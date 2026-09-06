@@ -2,7 +2,7 @@ import type { Edge } from '@vue-flow/core'
 import { describe, expect, it } from 'vitest'
 import { ArtifactTypeEnum } from '@/lib/api/artifacts/interfaces'
 import type { LineageCanvasNode, LineageNodeData } from '@/components/lineage/lineage.interface'
-import { LEVEL_WIDTH, ROW_HEIGHT, layoutLineageNodes } from '../layout'
+import { LEVEL_WIDTH, ROW_HEIGHT, freePositionNear, layoutLineageNodes } from '../layout'
 
 function node(id: string, x = 0, y = 0): LineageCanvasNode {
   const data: LineageNodeData = {
@@ -72,5 +72,21 @@ describe('layoutLineageNodes', () => {
       B: { x: LEVEL_WIDTH, y: 0 },
       C: { x: -LEVEL_WIDTH, y: 0 },
     })
+  })
+})
+
+describe('freePositionNear', () => {
+  it('takes the column right of the anchor and skips occupied rows', () => {
+    const anchor = { x: 100, y: 50 }
+
+    expect(freePositionNear(anchor, [anchor])).toEqual({ x: 100 + LEVEL_WIDTH, y: 50 })
+    expect(freePositionNear(anchor, [anchor, { x: 100 + LEVEL_WIDTH, y: 50 }])).toEqual({
+      x: 100 + LEVEL_WIDTH,
+      y: 50 + ROW_HEIGHT,
+    })
+    // A node half a row away still blocks the slot.
+    expect(
+      freePositionNear(anchor, [anchor, { x: 100 + LEVEL_WIDTH, y: 50 + ROW_HEIGHT / 2 }]),
+    ).toEqual({ x: 100 + LEVEL_WIDTH, y: 50 + 2 * ROW_HEIGHT })
   })
 })

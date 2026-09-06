@@ -46,7 +46,13 @@ import CustomArrowEdge from '../ui/vue-flow/CustomArrowEdge.vue'
 const confirm = useConfirm()
 
 const lineageStore = useLineageStore()
-const { fitView, nodes, onNodesInitialized } = useVueFlow(LINEAGE_FLOW_ID)
+const { fitView, nodes, onNodesInitialized, viewport, setViewport } = useVueFlow(LINEAGE_FLOW_ID)
+
+// A single node would otherwise be scaled up to the max zoom of the canvas.
+const FIT_VIEW_OPTIONS = { padding: 0.2, maxZoom: 1 }
+// The zoom toolbar floats over the bottom of the canvas; the fitted graph is
+// shifted up so its lowest node is not hidden behind it.
+const TOOLBAR_CLEARANCE = 80
 
 let recenterPending = false
 
@@ -58,7 +64,11 @@ function allNodesMeasured(): boolean {
 }
 
 async function recenter(): Promise<void> {
-  recenterPending = !(await fitView({ padding: 0.2 }))
+  const fitted = await fitView(FIT_VIEW_OPTIONS)
+  recenterPending = !fitted
+  if (!fitted) return
+  const { x, y, zoom } = viewport.value
+  await setViewport({ x, y: y - TOOLBAR_CLEARANCE / 2, zoom })
 }
 
 // Vue Flow fits only the nodes it has measured, and a freshly rendered graph
@@ -79,9 +89,7 @@ function unlinkNode(id: string) {
 }
 
 function onNodeClick({ node }: NodeMouseEvent): void {
-  const data = node.data as LineageNodeData
-  if (data.isDeleted) return
-  lineageStore.setDetailedArtifact(data)
+  lineageStore.setDetailedArtifact(node.data as LineageNodeData)
 }
 
 watch(

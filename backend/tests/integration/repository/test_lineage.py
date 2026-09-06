@@ -137,6 +137,15 @@ async def test_node_and_edge_lifecycle_and_constraints(
             "Test User",
             LineageVia.UI,
         )
+    # The reverse direction is rejected by the database as well, so a lost
+    # race between two requests cannot leave a two-node cycle behind.
+    with pytest.raises(IntegrityError):
+        await lineage_repo.create_edges(
+            data.orbit.id,
+            [(second_node.id, first_node.id)],
+            "Test User",
+            LineageVia.UI,
+        )
 
     reverse_lookup = await lineage_repo.get_edges_by_pairs(
         data.orbit.id, [(second_node.id, first_node.id)]
@@ -160,6 +169,14 @@ async def test_node_and_edge_lifecycle_and_constraints(
     }
 
     await lineage_repo.delete_edges(data.orbit.id, [edge.id])
+    await lineage_repo.delete_edgeless_nodes(data.orbit.id, node_ids=[first_node.id])
+    assert [
+        node.id
+        for node in await lineage_repo.get_nodes_by_ids(
+            data.orbit.id, [first_node.id, second_node.id]
+        )
+    ] == [second_node.id]
+    await lineage_repo.delete_edgeless_nodes(data.orbit.id, node_ids=[])
     await lineage_repo.delete_edgeless_nodes(data.orbit.id)
     assert (
         await lineage_repo.get_nodes_by_ids(
@@ -417,6 +434,13 @@ async def test_traversal_depth_and_cycle(
     assert {edge.id for edge in depth_two_edges} == {edge.id for edge in edges}
     assert truncated is False
 
+    whole_nodes, whole_edges, truncated = await lineage_repo.traverse(
+        data.orbit.id, nodes[0].id, None
+    )
+    assert {node.id for node in whole_nodes} == {node.id for node in nodes}
+    assert {edge.id for edge in whole_edges} == {edge.id for edge in edges}
+    assert truncated is False
+
     cycle_edge = (
         await lineage_repo.create_edges(
             data.orbit.id,
@@ -506,3 +530,60 @@ async def test_traversal_node_limit_keeps_levels_whole_and_always_keeps_level_on
     assert len(wide_nodes) == 6
     assert len(wide_edges) == 5
     assert truncated is True
+
+    unbounded_nodes, _, truncated = await lineage_repo.traverse(
+        data.orbit.id, nodes[0].id, None
+    )
+    assert [node.id for node in unbounded_nodes] == [node.id for node in nodes[:4]]
+    assert truncated is True
+
+
+@pytest.mark.asyncio
+async def test_unreachable_deleted_components_are_removed(
+    create_collection: CollectionFixtureData,
+    test_artifact: ArtifactCreate,
+) -> None:
+    data = create_collection
+    artifact_repo = ArtifactRepository(data.engine)
+    lineage_repo = LineageRepository(data.engine)
+    artifacts = [
+        await _create_artifact(data.engine, test_artifact, data.collection.id, name)
+        for name in ["live", "gone-1", "gone-2", "island-1", "island-2"]
+    ]
+    listed = await _get_listed_artifacts(
+        data.engine, data.orbit.id, [artifact.id for artifact in artifacts]
+    )
+    nodes = [
+        await lineage_repo.get_or_create_node(data.orbit.id, listed[artifact.id])
+        for artifact in artifacts
+    ]
+    await lineage_repo.create_edges(
+        data.orbit.id,
+        [
+            (nodes[0].id, nodes[1].id),
+            (nodes[1].id, nodes[2].id),
+            (nodes[3].id, nodes[4].id),
+        ],
+        "Test User",
+        LineageVia.API,
+    )
+    for artifact in artifacts[1:]:
+        await artifact_repo.delete_artifact(artifact.id)
+
+    await lineage_repo.delete_unreachable_deleted_nodes(data.orbit.id)
+
+    remaining = await lineage_repo.get_nodes_by_ids(
+        data.orbit.id, [node.id for node in nodes]
+    )
+    # The chain hanging off the live artifact stays, the island is gone.
+    assert {node.id for node in remaining} == {node.id for node in nodes[:3]}
+    assert all(node.artifact_id is None for node in remaining[1:])
+
+    await artifact_repo.delete_artifact(artifacts[0].id)
+    await lineage_repo.delete_unreachable_deleted_nodes(data.orbit.id)
+    assert (
+        await lineage_repo.get_nodes_by_ids(
+            data.orbit.id, [node.id for node in nodes]
+        )
+        == []
+    )

@@ -1,6 +1,7 @@
 from uuid import UUID
 
 from fastapi import status
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from luml.handlers.permissions import PermissionsHandler
@@ -108,8 +109,10 @@ class LineageHandler:
         if set(nodes_by_id) != set(node_ids):
             raise NotFoundError("Lineage node not found")
 
+        # Nodes are created in a fixed order: two requests inserting the same
+        # nodes in opposite orders would otherwise deadlock on the unique index.
         nodes_by_artifact_id: dict[UUID, LineageNodeOrm] = {}
-        for artifact_id in artifact_ids:
+        for artifact_id in sorted(artifact_ids):
             nodes_by_artifact_id[
                 artifact_id
             ] = await self.__repository.get_or_create_node(
@@ -201,6 +204,7 @@ class LineageHandler:
         async with self.__repository.transaction() as session:
             delete_ids = list(dict.fromkeys(changes.delete))
             deleted: list[LineageEdge] = []
+            touched_node_ids: list[UUID] = []
             if delete_ids:
                 deleted_models = await self.__repository.get_edges_by_ids(
                     orbit_id, delete_ids, session
@@ -208,6 +212,13 @@ class LineageHandler:
                 if {edge.id for edge in deleted_models} != set(delete_ids):
                     raise NotFoundError("Lineage connection not found")
                 deleted = [edge.to_edge() for edge in deleted_models]
+                touched_node_ids = list(
+                    dict.fromkeys(
+                        node_id
+                        for edge in deleted_models
+                        for node_id in (edge.source_node_id, edge.target_node_id)
+                    )
+                )
                 await self.__repository.delete_edges(orbit_id, delete_ids, session)
 
             created: list[LineageEdge] = []
@@ -234,19 +245,31 @@ class LineageHandler:
                             status.HTTP_409_CONFLICT,
                         )
 
-                created_models = await self.__repository.create_edges(
-                    orbit_id,
-                    pairs,
-                    created_by_user,
-                    via,
-                    session,
-                )
+                try:
+                    created_models = await self.__repository.create_edges(
+                        orbit_id,
+                        pairs,
+                        created_by_user,
+                        via,
+                        session,
+                    )
+                except IntegrityError as error:
+                    # A concurrent request created the pair, or its reverse,
+                    # between the check above and this insert.
+                    raise ApplicationError(
+                        "Lineage connection already exists",
+                        status.HTTP_409_CONFLICT,
+                    ) from error
                 created = [edge.to_edge() for edge in created_models]
 
             if changes.positions:
                 positions = await self._resolve_positions(orbit_id, changes, session)
                 await self.__repository.update_positions(orbit_id, positions, session)
-            await self.__repository.delete_edgeless_nodes(orbit_id, session)
+            # Only the ends of removed edges can have lost their last edge.
+            if touched_node_ids:
+                await self.__repository.delete_edgeless_nodes(
+                    orbit_id, session, touched_node_ids
+                )
 
             return LineageBatchResult(created=created, deleted=deleted)
 
@@ -289,6 +312,34 @@ class LineageHandler:
             result = await self._apply_changes(user_id, orbit_id, changes, via)
         return result.created
 
+    async def link_inputs(
+        self,
+        user_id: UUID,
+        organization_id: UUID,
+        orbit_id: UUID,
+        artifact_id: UUID,
+        input_artifact_ids: list[UUID],
+        via: LineageVia,
+        *,
+        check_access: bool = True,
+    ) -> list[LineageEdge]:
+        """Record ``input -> artifact`` for every input in one transaction."""
+        changes = LineageBatchIn(
+            create=[
+                LineagePair(
+                    source=LineageNodeRef(artifact_id=input_artifact_id),
+                    target=LineageNodeRef(artifact_id=artifact_id),
+                )
+                for input_artifact_id in dict.fromkeys(input_artifact_ids)
+            ]
+        )
+        if not changes.create:
+            return []
+        if check_access:
+            await self._check_access(user_id, organization_id, orbit_id, Action.UPDATE)
+        result = await self._apply_changes(user_id, orbit_id, changes, via)
+        return result.created
+
     async def delete_link(
         self,
         user_id: UUID,
@@ -296,6 +347,7 @@ class LineageHandler:
         orbit_id: UUID,
         artifact_id: UUID,
         edge_id: UUID,
+        via: LineageVia = LineageVia.UI,
     ) -> LineageEdge:
         await self._check_access(user_id, organization_id, orbit_id, Action.UPDATE)
         artifacts = await self.__artifact_repository.get_artifacts_by_ids_in_orbit(
@@ -317,7 +369,7 @@ class LineageHandler:
             user_id,
             orbit_id,
             LineageBatchIn(delete=[edge_id]),
-            LineageVia.UI,
+            via,
         )
         return result.deleted[0]
 
@@ -327,7 +379,7 @@ class LineageHandler:
         organization_id: UUID,
         orbit_id: UUID,
         artifact_id: UUID,
-        depth: int,
+        depth: int | None,
     ) -> LineageGraph:
         await self._check_access(user_id, organization_id, orbit_id, Action.READ)
         focal_artifacts = (

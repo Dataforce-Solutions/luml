@@ -7,9 +7,6 @@ import type {
   LineageGraph,
 } from './interfaces'
 
-/** Deepest traversal the lineage API accepts; the UI always asks for it. */
-export const LINEAGE_MAX_DEPTH = 5
-
 export class LineageApi {
   private api: AxiosInstance
 
@@ -17,15 +14,19 @@ export class LineageApi {
     this.api = api
   }
 
+  /**
+   * Loads the graph around an artifact. Without `depth` the platform returns
+   * the whole connected component; its only limit is the 200-artifact cap.
+   */
   async getGraph(
     organizationId: string,
     orbitId: string,
     artifactId: string,
-    depth = 2,
+    depth?: number,
   ): Promise<LineageGraph> {
     const { data } = await this.api.get<LineageGraph>(
       `/v1/organizations/${organizationId}/orbits/${orbitId}/artifacts/${artifactId}/lineage`,
-      { params: { depth } },
+      { params: depth === undefined ? {} : { depth } },
     )
     return data
   }

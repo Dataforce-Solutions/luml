@@ -40,7 +40,7 @@ async def get_lineage(
     organization_id: UUID,
     orbit_id: UUID,
     artifact_id: UUID,
-    depth: Annotated[int, Query(ge=1, le=5)] = 2,
+    depth: Annotated[int | None, Query(ge=1)] = None,
 ) -> LineageGraph:
     return await lineage_handler.get_graph(
         request.user.id,
@@ -91,6 +91,7 @@ async def delete_lineage(
         orbit_id,
         artifact_id,
         edge_id,
+        _creation_via(request),
     )
 
 

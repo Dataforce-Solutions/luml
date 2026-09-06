@@ -292,6 +292,7 @@ class TestRememberedExperiment:
             _not_found_error(),
             _uploaded_artifact("model-artifact"),
         ]
+        client.artifacts.get_lineage.side_effect = _not_found_error(method="GET")
         _start_job(handler, "job-stale")
 
         with patch.object(handler, "_get_luml_client", return_value=client):
@@ -368,6 +369,8 @@ class TestLinkingFailures:
         )
         client = MagicMock()
         client.artifacts.upload.side_effect = error
+        # The remembered experiment still exists on the platform.
+        client.artifacts.get_lineage.return_value = MagicMock()
         job_id = f"job-{test_id}"
         _start_job(handler, job_id)
 

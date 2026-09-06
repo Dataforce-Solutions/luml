@@ -5,6 +5,7 @@ from uuid import UUID
 
 from pydantic import BaseModel, Field, model_validator
 
+from luml.constants import LINEAGE_MAX_BATCH_ITEMS
 from luml.schemas.artifacts import ArtifactListed
 from luml.schemas.base import BaseOrmConfig
 
@@ -27,8 +28,10 @@ class LineageNodeRef(BaseModel):
 
 class LineagePosition(BaseModel):
     ref: LineageNodeRef
-    x: float
-    y: float
+    # NaN and Infinity survive JSON parsing and would make every later graph
+    # response unencodable.
+    x: float = Field(allow_inf_nan=False)
+    y: float = Field(allow_inf_nan=False)
 
 
 class LineagePair(BaseModel):
@@ -37,13 +40,17 @@ class LineagePair(BaseModel):
 
 
 class LineageCreateIn(BaseModel):
-    target_artifact_ids: list[UUID]
+    target_artifact_ids: list[UUID] = Field(max_length=LINEAGE_MAX_BATCH_ITEMS)
 
 
 class LineageBatchIn(BaseModel):
-    create: list[LineagePair] = Field(default_factory=list)
-    delete: list[UUID] = Field(default_factory=list)
-    positions: list[LineagePosition] = Field(default_factory=list)
+    create: list[LineagePair] = Field(
+        default_factory=list, max_length=LINEAGE_MAX_BATCH_ITEMS
+    )
+    delete: list[UUID] = Field(default_factory=list, max_length=LINEAGE_MAX_BATCH_ITEMS)
+    positions: list[LineagePosition] = Field(
+        default_factory=list, max_length=LINEAGE_MAX_BATCH_ITEMS
+    )
 
 
 class LineageEdge(BaseModel, BaseOrmConfig):
@@ -71,7 +78,7 @@ class LineageGraph(BaseModel):
     nodes: list[LineageNode]
     edges: list[LineageEdge]
     focal_artifact_id: UUID
-    depth: int
+    depth: int | None
     truncated: bool
 
 

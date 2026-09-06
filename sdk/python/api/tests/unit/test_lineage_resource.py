@@ -126,6 +126,7 @@ def test_lineage_methods(
         f"{base_path}/{ARTIFACT_ID}/lineage/{EDGE_ID}"
     ).mock(return_value=httpx.Response(200, json=_edge_json()))
 
+    whole_graph = client_with_mocks.artifacts.get_lineage(ARTIFACT_ID)
     graph = client_with_mocks.artifacts.get_lineage(ARTIFACT_ID, depth=3)
     created = client_with_mocks.artifacts.log_lineage(
         ARTIFACT_ID, [TARGET_ID, SECOND_TARGET_ID]
@@ -133,10 +134,12 @@ def test_lineage_methods(
     removed = client_with_mocks.artifacts.remove_lineage(ARTIFACT_ID, EDGE_ID)
 
     assert isinstance(graph, LineageGraph)
+    assert isinstance(whole_graph, LineageGraph)
     assert graph.nodes[0].data is None
     assert graph.nodes[1].data is not None
     assert graph.nodes[1].data.collection_name == "models"
     assert graph.nodes[1].data.deployments[0].name == "production"
+    assert "depth" not in get_route.calls[0].request.url.params
     assert get_route.calls.last.request.url.params["depth"] == "3"
     assert all(isinstance(edge, LineageEdge) for edge in created)
     assert create_route.calls.last.request.read() == (
@@ -352,3 +355,54 @@ async def test_async_rejected_lineage_input_does_not_start_storage_upload(
             )
 
         upload_service.assert_not_called()
+
+
+@pytest.mark.respx(base_url=TEST_BASE_URL)
+def test_log_lineage_inputs_uses_one_batch(
+    client_with_mocks: LumlClient,
+    respx_mock: MockRouter,
+) -> None:
+    batch_route = respx_mock.post(
+        f"/v1/organizations/{client_with_mocks.organization}"
+        f"/orbits/{client_with_mocks.orbit}/lineage/batch"
+    ).mock(
+        return_value=httpx.Response(
+            200, json={"created": [_edge_json(), _edge_json()], "deleted": []}
+        )
+    )
+
+    created = client_with_mocks.artifacts.log_lineage_inputs(
+        ARTIFACT_ID, [TARGET_ID, SECOND_TARGET_ID]
+    )
+
+    assert len(created) == 2
+    assert all(isinstance(edge, LineageEdge) for edge in created)
+    assert batch_route.calls.last.request.read() == (
+        b'{"create":[{"source":{"artifact_id":"' + TARGET_ID.encode() + b'"},'
+        b'"target":{"artifact_id":"' + ARTIFACT_ID.encode() + b'"}},'
+        b'{"source":{"artifact_id":"' + SECOND_TARGET_ID.encode() + b'"},'
+        b'"target":{"artifact_id":"' + ARTIFACT_ID.encode() + b'"}}]}'
+    )
+
+
+@pytest.mark.asyncio
+@pytest.mark.respx(base_url=TEST_BASE_URL)
+async def test_async_log_lineage_inputs_uses_one_batch(
+    async_client_with_mocks: AsyncLumlClient,
+    respx_mock: MockRouter,
+) -> None:
+    batch_route = respx_mock.post(
+        f"/v1/organizations/{async_client_with_mocks.organization}"
+        f"/orbits/{async_client_with_mocks.orbit}/lineage/batch"
+    ).mock(
+        return_value=httpx.Response(
+            200, json={"created": [_edge_json()], "deleted": []}
+        )
+    )
+
+    created = await async_client_with_mocks.artifacts.log_lineage_inputs(
+        ARTIFACT_ID, [TARGET_ID]
+    )
+
+    assert [edge.id for edge in created] == [EDGE_ID]
+    assert batch_route.called

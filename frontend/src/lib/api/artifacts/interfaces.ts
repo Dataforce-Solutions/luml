@@ -51,6 +51,8 @@ export interface Artifact {
   updated_at: string
   deployments: Pick<Deployment, 'id' | 'name' | 'orbit_id' | 'status'>[]
   tracks?: ArtifactTrack[]
+  /** Present on the artifact details response instead of `collection_name`. */
+  collection?: { id: string; name: string }
 }
 
 export interface ArtifactTrack {

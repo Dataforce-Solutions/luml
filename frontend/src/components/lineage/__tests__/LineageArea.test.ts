@@ -21,6 +21,8 @@ type MeasuredNode = { dimensions: { width: number; height: number } }
 const flow = vi.hoisted(() => ({
   useVueFlow: vi.fn(),
   fitView: vi.fn().mockResolvedValue(true),
+  setViewport: vi.fn().mockResolvedValue(undefined),
+  viewport: { value: { x: 0, y: 0, zoom: 1 } },
   nodes: { value: [] as { dimensions: { width: number; height: number } }[] },
   nodesInitializedHandlers: [] as (() => void)[],
 }))
@@ -44,6 +46,8 @@ vi.mock('@vue-flow/core', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@vue-flow/core')>()
   flow.useVueFlow.mockImplementation(() => ({
     fitView: flow.fitView,
+    setViewport: flow.setViewport,
+    viewport: flow.viewport,
     nodes: flow.nodes,
     onNodesInitialized: (handler: () => void) => {
       flow.nodesInitializedHandlers.push(handler)
@@ -113,6 +117,8 @@ describe('LineageArea', () => {
     harness.store.initialEdges = []
     flow.nodes.value = []
     flow.nodesInitializedHandlers = []
+    flow.viewport.value = { x: 0, y: 0, zoom: 1 }
+    flow.fitView.mockResolvedValue(true)
   })
 
   afterEach(() => {
@@ -134,7 +140,7 @@ describe('LineageArea', () => {
     expect(canvas.props('nodesDeletable')).toBe(false)
   })
 
-  it('opens details for live nodes and ignores deleted nodes', async () => {
+  it('opens details for live and deleted nodes', async () => {
     const canvas = mountArea().findComponent(VueFlowStub)
     const live = nodeData()
     if (!harness.store) throw new Error('Store harness was not initialized')
@@ -144,12 +150,10 @@ describe('LineageArea', () => {
     expect(harness.store.setDetailedArtifact).toHaveBeenCalledWith(live)
 
     harness.store.setDetailedArtifact.mockClear()
-    canvas.vm.$emit('nodeClick', {
-      node: { data: nodeData(true) },
-      event: new MouseEvent('click'),
-    })
+    const deleted = nodeData(true)
+    canvas.vm.$emit('nodeClick', { node: { data: deleted }, event: new MouseEvent('click') })
     await canvas.vm.$nextTick()
-    expect(harness.store.setDetailedArtifact).not.toHaveBeenCalled()
+    expect(harness.store.setDetailedArtifact).toHaveBeenCalledWith(deleted)
   })
 
   it('recenters right away when the loaded nodes are already measured', async () => {
@@ -161,7 +165,7 @@ describe('LineageArea', () => {
     await flushPromises()
 
     expect(flow.fitView).toHaveBeenCalledTimes(1)
-    expect(flow.fitView).toHaveBeenCalledWith({ padding: 0.2 })
+    expect(flow.fitView).toHaveBeenCalledWith({ padding: 0.2, maxZoom: 1 })
   })
 
   it('waits for freshly rendered nodes to be measured before recentering', async () => {
@@ -176,12 +180,24 @@ describe('LineageArea', () => {
     nodesInitialized()
     await flushPromises()
     expect(flow.fitView).toHaveBeenCalledTimes(1)
-    expect(flow.fitView).toHaveBeenCalledWith({ padding: 0.2 })
+    expect(flow.fitView).toHaveBeenCalledWith({ padding: 0.2, maxZoom: 1 })
 
     // Nodes added while editing initialize too; that must not move the canvas.
     nodesInitialized()
     await flushPromises()
     expect(flow.fitView).toHaveBeenCalledTimes(1)
+  })
+
+  it('lifts the fitted graph above the floating toolbar', async () => {
+    mountArea()
+    if (!harness.store) throw new Error('Store harness was not initialized')
+    flow.viewport.value = { x: 12, y: 30, zoom: 0.5 }
+
+    flow.nodes.value = [measured()]
+    harness.store.initialNodes = [{ id: 'focal' }]
+    await flushPromises()
+
+    expect(flow.setViewport).toHaveBeenCalledWith({ x: 12, y: -10, zoom: 0.5 })
   })
 
   it('retries the fit on initialization when the canvas could not fit yet', async () => {

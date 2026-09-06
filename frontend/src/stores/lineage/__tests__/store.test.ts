@@ -1,4 +1,5 @@
 import { createPinia, setActivePinia } from 'pinia'
+import { nextTick } from 'vue'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { ArtifactStatusEnum, ArtifactTypeEnum, type Artifact } from '@/lib/api/artifacts/interfaces'
 import type { LineageGraph } from '@/lib/api/lineage/interfaces'
@@ -76,7 +77,7 @@ vi.mock('@vue-flow/core', async () => {
 
 import { useVueFlow } from '@vue-flow/core'
 import { LINEAGE_FLOW_ID } from '@/components/lineage/lineage.data'
-import { LINEAGE_MAX_DEPTH } from '@/lib/api/lineage'
+import { LEVEL_WIDTH, ROW_HEIGHT } from '../layout'
 import { useLineageStore } from '..'
 
 function artifact(id: string, collectionId = 'models', collectionName = 'Models'): Artifact {
@@ -92,7 +93,7 @@ function artifact(id: string, collectionId = 'models', collectionName = 'Models'
   } as unknown as Artifact
 }
 
-function emptyGraph(truncated = false, depth = 2): LineageGraph {
+function emptyGraph(truncated = false, depth: number | null = null): LineageGraph {
   return {
     nodes: [],
     edges: [],
@@ -165,8 +166,8 @@ describe('lineage store', () => {
     flow().edgeChangeHandlers.length = 0
   })
 
-  it('always loads the whole graph at the API maximum depth and clears edit history', async () => {
-    apiMocks.getGraph.mockResolvedValue(emptyGraph(true, LINEAGE_MAX_DEPTH))
+  it('always loads the whole graph without a depth and clears edit history', async () => {
+    apiMocks.getGraph.mockResolvedValue(emptyGraph(true))
     const store = useLineageStore()
 
     await store.load()
@@ -175,7 +176,7 @@ describe('lineage store', () => {
 
     await store.load()
 
-    expect(apiMocks.getGraph).toHaveBeenCalledWith('org', 'orbit', 'model', LINEAGE_MAX_DEPTH)
+    expect(apiMocks.getGraph).toHaveBeenCalledWith('org', 'orbit', 'model')
     expect(apiMocks.getGraph).toHaveBeenCalledTimes(2)
     expect(store.initialNodes.map((node) => node.id)).toEqual(['artifact:model'])
     expect(store.truncated).toBe(true)
@@ -225,6 +226,60 @@ describe('lineage store', () => {
     )
     expect(apiMocks.getGraph).toHaveBeenCalledTimes(2)
     expect(store.history).toEqual([])
+  })
+
+  it('forgets the edits before reloading so a failed reload cannot resend the batch', async () => {
+    apiMocks.getGraph
+      .mockResolvedValueOnce(emptyGraph())
+      .mockRejectedValueOnce(new Error('network'))
+      .mockResolvedValue(emptyGraph())
+    apiMocks.applyChanges.mockResolvedValue({ created: [], deleted: [] })
+    const store = useLineageStore()
+    await store.load()
+
+    store.addArtifact(artifact('dataset', 'datasets', 'Datasets'), { x: -260, y: 0 })
+    flow().connectHandlers[0]({ source: 'artifact:dataset', target: 'artifact:model' })
+
+    await expect(store.save()).rejects.toThrow('could not be reloaded')
+    expect(store.hasEdits).toBe(false)
+    expect(flow().edges.value).toHaveLength(1)
+
+    await store.save()
+    expect(apiMocks.applyChanges).toHaveBeenCalledTimes(1)
+  })
+
+  it('places a linked artifact in the first free slot next to the focal node', async () => {
+    apiMocks.getGraph.mockResolvedValue(emptyGraph())
+    const store = useLineageStore()
+    await store.load()
+
+    store.addArtifact(artifact('first', 'datasets', 'Datasets'))
+    store.addArtifact(artifact('second', 'datasets', 'Datasets'))
+
+    const placed = (flow().nodes.value as { id: string; position: { x: number; y: number } }[])
+      .filter((node) => node.id !== 'artifact:model')
+      .map((node) => node.position)
+    expect(placed).toEqual([
+      { x: LEVEL_WIDTH, y: 0 },
+      { x: LEVEL_WIDTH, y: ROW_HEIGHT },
+    ])
+  })
+
+  it('drops a deleted node once its last connection is removed', async () => {
+    const graph = connectedGraph()
+    graph.nodes[1] = { ...graph.nodes[1], artifact_id: null, is_deleted: true, data: null }
+    apiMocks.getGraph.mockResolvedValue(graph)
+    const store = useLineageStore()
+    await store.load()
+    expect(flow().nodes.value).toHaveLength(2)
+
+    flow().edges.value = []
+    flow().edgeChangeHandlers[0]([{ type: 'remove' }])
+    await nextTick()
+
+    expect((flow().nodes.value as { id: string }[]).map((node) => node.id)).toEqual(['node-model'])
+    expect(store.unconnectedArtifactsCount).toBe(0)
+    expect(store.hasEdits).toBe(true)
   })
 
   it('records a keyboard-removed edge and sends it after the orphaned node is removed', async () => {

@@ -105,9 +105,19 @@ def upgrade() -> None:
         ["target_node_id"],
         unique=False,
     )
+    op.create_index(
+        "uq_lineage_edges_undirected_pair",
+        "lineage_edges",
+        [
+            sa.text("LEAST(source_node_id, target_node_id)"),
+            sa.text("GREATEST(source_node_id, target_node_id)"),
+        ],
+        unique=True,
+    )
 
 
 def downgrade() -> None:
+    op.drop_index("uq_lineage_edges_undirected_pair", table_name="lineage_edges")
     op.drop_index(op.f("ix_lineage_edges_target_node_id"), table_name="lineage_edges")
     op.drop_index(op.f("ix_lineage_edges_source_node_id"), table_name="lineage_edges")
     op.drop_index(op.f("ix_lineage_edges_orbit_id"), table_name="lineage_edges")

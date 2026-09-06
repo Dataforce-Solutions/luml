@@ -6,12 +6,12 @@ import type {
 } from '@/components/lineage/lineage.interface'
 import type { Artifact } from '@/lib/api/artifacts/interfaces'
 import { api } from '@/lib/api'
-import { LINEAGE_MAX_DEPTH } from '@/lib/api/lineage'
 import { useArtifactsStore } from '@/stores/artifacts'
 import {
   useVueFlow,
   type Edge,
   type EdgeChange,
+  type Node,
   type NodeChange,
   type XYPosition,
 } from '@vue-flow/core'
@@ -19,7 +19,7 @@ import { defineStore } from 'pinia'
 import { computed, nextTick, onScopeDispose, ref, shallowRef } from 'vue'
 import { useRoute } from 'vue-router'
 import { buildLineageBatch } from './diff'
-import { layoutLineageNodes } from './layout'
+import { freePositionNear, layoutLineageNodes } from './layout'
 import {
   artifactCanvasNodeId,
   artifactNodeData,
@@ -140,19 +140,15 @@ export const useLineageStore = defineStore('lineage', () => {
     }
   }
 
-  // The tab always shows everything the API can return around the artifact.
+  // The tab always shows the whole graph around the artifact; the platform
+  // only cuts it at its node cap.
   async function load(): Promise<void> {
     const loadId = ++latestLoad
     const { organizationId, orbitId, artifactId } = requestInfo()
     const focalArtifact = currentFocalArtifact()
     isLoading.value = true
     try {
-      const graph = await api.lineage.getGraph(
-        organizationId,
-        orbitId,
-        artifactId,
-        LINEAGE_MAX_DEPTH,
-      )
+      const graph = await api.lineage.getGraph(organizationId, orbitId, artifactId)
       if (loadId !== latestLoad) return
       replaceCanvasWithoutHistory(mapGraphToCanvas(graph, focalArtifact))
       truncated.value = graph.truncated
@@ -200,13 +196,19 @@ export const useLineageStore = defineStore('lineage', () => {
     detailedArtifact.value = artifact
   }
 
-  function addArtifact(artifact: Artifact, position: XYPosition = { x: 20, y: 20 }): void {
+  function addArtifact(artifact: Artifact, position?: XYPosition): void {
     if (usedArtifactsIds.value.includes(artifact.id)) return
     const state = snapshot()
+    const anchor = state.nodes.find((node) => node.data.variant === 'main') ?? state.nodes[0]
     state.nodes.push({
       id: artifactCanvasNodeId(artifact.id),
       type: 'lineage',
-      position,
+      position:
+        position ??
+        freePositionNear(
+          anchor?.position ?? { x: 0, y: 0 },
+          state.nodes.map((node) => node.position),
+        ),
       data: artifactNodeData(artifact, {
         id: artifact.collection_id,
         name: artifact.collection_name,
@@ -280,7 +282,26 @@ export const useLineageStore = defineStore('lineage', () => {
     const { organizationId, orbitId } = requestInfo()
     const changes = buildLineageBatch(loadedState.value, snapshot())
     await api.lineage.applyChanges(organizationId, orbitId, changes)
-    await load()
+    // The server now holds what the canvas shows: forget the edits before the
+    // reload so a failed reload cannot lead to the same batch being sent twice.
+    replaceCanvasWithoutHistory(snapshot())
+    try {
+      await load()
+    } catch {
+      throw new Error('Changes were saved, but the graph could not be reloaded. Refresh the page.')
+    }
+  }
+
+  // A deleted artifact's node exists only for its connections: once the last
+  // one is removed it would only block saving, and the server drops it anyway.
+  function pruneEdgelessDeletedNodes(): void {
+    if (isRestoring) return
+    const current = nodes.value as unknown as LineageCanvasNode[]
+    const connected = new Set(edges.value.flatMap((edge) => [edge.source, edge.target]))
+    const kept = current.filter((node) => !node.data.isDeleted || connected.has(node.id))
+    if (kept.length === current.length) return
+    setNodes(kept as unknown as Node[])
+    recordFlowChange()
   }
 
   onConnect((connection) => {
@@ -305,6 +326,9 @@ export const useLineageStore = defineStore('lineage', () => {
   onEdgesChange((changes: EdgeChange[]) => {
     if (changes.some((change) => change.type === 'add' || change.type === 'remove')) {
       recordFlowChange()
+    }
+    if (changes.some((change) => change.type === 'remove')) {
+      void nextTick(pruneEdgelessDeletedNodes)
     }
   })
 
