@@ -48,7 +48,7 @@ vi.mock('@vue-flow/core', async () => {
   }
 
   return {
-    useVueFlow: () => ({
+    useVueFlow: vi.fn(() => ({
       nodes,
       edges,
       setNodes: (value: unknown[]) => {
@@ -70,10 +70,13 @@ vi.mock('@vue-flow/core', async () => {
       onEdgesChange: (handler: (changes: { type: string }[]) => void) => {
         edgeChangeHandlers.push(handler)
       },
-    }),
+    })),
   }
 })
 
+import { useVueFlow } from '@vue-flow/core'
+import { LINEAGE_FLOW_ID } from '@/components/lineage/lineage.data'
+import { LINEAGE_MAX_DEPTH } from '@/lib/api/lineage'
 import { useLineageStore } from '..'
 
 function artifact(id: string, collectionId = 'models', collectionName = 'Models'): Artifact {
@@ -162,10 +165,9 @@ describe('lineage store', () => {
     flow().edgeChangeHandlers.length = 0
   })
 
-  it('loads the graph at the selected depth and clears edit history', async () => {
-    apiMocks.getGraph.mockResolvedValue(emptyGraph(true, 3))
+  it('always loads the whole graph at the API maximum depth and clears edit history', async () => {
+    apiMocks.getGraph.mockResolvedValue(emptyGraph(true, LINEAGE_MAX_DEPTH))
     const store = useLineageStore()
-    store.setDepth(3)
 
     await store.load()
     store.addArtifact(artifact('dataset', 'datasets', 'Datasets'))
@@ -173,18 +175,11 @@ describe('lineage store', () => {
 
     await store.load()
 
-    expect(apiMocks.getGraph).toHaveBeenCalledWith('org', 'orbit', 'model', 3)
+    expect(apiMocks.getGraph).toHaveBeenCalledWith('org', 'orbit', 'model', LINEAGE_MAX_DEPTH)
     expect(apiMocks.getGraph).toHaveBeenCalledTimes(2)
     expect(store.initialNodes.map((node) => node.id)).toEqual(['artifact:model'])
     expect(store.truncated).toBe(true)
     expect(store.history).toEqual([])
-  })
-
-  it('rejects depths outside the API range', () => {
-    const store = useLineageStore()
-
-    expect(() => store.setDepth(0)).toThrow(RangeError)
-    expect(() => store.setDepth(6)).toThrow(RangeError)
   })
 
   it('keeps edits and canvas state when a batch save fails', async () => {
@@ -355,5 +350,11 @@ describe('lineage store', () => {
     expect(store.hasEdits).toBe(false)
     expect(flow().nodes.value).toHaveLength(2)
     expect(flow().edges.value).toHaveLength(1)
+  })
+
+  it('shares one flow instance with the canvas through the lineage flow id', () => {
+    useLineageStore()
+
+    expect(vi.mocked(useVueFlow)).toHaveBeenCalledWith(LINEAGE_FLOW_ID)
   })
 })

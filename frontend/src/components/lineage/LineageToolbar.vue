@@ -53,6 +53,7 @@ import { useVueFlow } from '@vue-flow/core'
 import UiZoom from '../ui/UiZoom.vue'
 import UiPointerSelect from '../ui/UiPointerSelect.vue'
 import { useLineageStore } from '@/stores/lineage'
+import { LINEAGE_FLOW_ID } from './lineage.data'
 
 const lineageStore = useLineageStore()
 const {
@@ -61,7 +62,7 @@ const {
   zoomTo,
   viewport,
   panOnDrag,
-} = useVueFlow()
+} = useVueFlow(LINEAGE_FLOW_ID)
 
 const zoom = ref((viewport.value.zoom * 100).toFixed())
 const cursorMode = ref<'pointer' | 'hand'>('pointer')

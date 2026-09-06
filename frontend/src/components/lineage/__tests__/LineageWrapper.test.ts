@@ -43,7 +43,7 @@ describe('LineageWrapper', () => {
     store.truncated = true
 
     expect(mountWrapper().text()).toContain(
-      'Graph is limited to 200 artifacts — reduce depth to see complete levels',
+      'Graph is limited to 200 artifacts — the most distant connections are hidden',
     )
   })
 })

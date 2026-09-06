@@ -8,11 +8,9 @@ const harness = vi.hoisted(() => {
   const lineage = {
     detailedArtifact: null,
     hasEdits: false,
-    depth: 2,
     load: vi.fn().mockResolvedValue(undefined),
     discardChanges: vi.fn(),
     setDetailedArtifact: vi.fn(),
-    setDepth: vi.fn(),
   }
   return {
     lineage,
@@ -57,7 +55,6 @@ vi.mock('primevue', async (importOriginal) => {
 
 const LineageWrapperStub = defineComponent({
   name: 'LineageWrapper',
-  emits: ['depthChange'],
   template: '<div />',
 })
 
@@ -90,15 +87,11 @@ describe('LineageView', () => {
     harness.artifacts.currentArtifact = { id: 'artifact' }
     harness.lineage.detailedArtifact = null
     harness.lineage.hasEdits = false
-    harness.lineage.depth = 2
     harness.lineage.load.mockReset().mockResolvedValue(undefined)
     harness.lineage.discardChanges.mockReset().mockImplementation(() => {
       harness.lineage.hasEdits = false
     })
     harness.lineage.setDetailedArtifact.mockReset()
-    harness.lineage.setDepth.mockReset().mockImplementation((depth: number) => {
-      harness.lineage.depth = depth
-    })
     harness.confirmRequire.mockReset()
     harness.toastAdd.mockReset()
     harness.leaveGuard = null
@@ -147,39 +140,6 @@ describe('LineageView', () => {
     latestConfirmation().accept?.()
     await expect(acceptedNavigation).resolves.toBe(true)
     expect(harness.lineage.discardChanges).toHaveBeenCalledOnce()
-  })
-
-  it('confirms a depth change, discards edits, and reloads at the new depth', async () => {
-    wrapper = mountView()
-    await flushPromises()
-    harness.lineage.load.mockClear()
-    harness.lineage.hasEdits = true
-
-    wrapper.findComponent(LineageWrapperStub).vm.$emit('depthChange', 3)
-    await wrapper.vm.$nextTick()
-    latestConfirmation().accept?.()
-    await flushPromises()
-
-    expect(harness.lineage.discardChanges).toHaveBeenCalledOnce()
-    expect(harness.lineage.setDepth).toHaveBeenCalledWith(3)
-    expect(harness.lineage.load).toHaveBeenCalledOnce()
-  })
-
-  it('keeps the current depth and edits when a depth change is declined', async () => {
-    wrapper = mountView()
-    await flushPromises()
-    harness.lineage.load.mockClear()
-    harness.lineage.hasEdits = true
-
-    wrapper.findComponent(LineageWrapperStub).vm.$emit('depthChange', 3)
-    await wrapper.vm.$nextTick()
-    latestConfirmation().reject?.()
-    await flushPromises()
-
-    expect(harness.lineage.discardChanges).not.toHaveBeenCalled()
-    expect(harness.lineage.setDepth).not.toHaveBeenCalled()
-    expect(harness.lineage.load).not.toHaveBeenCalled()
-    expect(harness.lineage.hasEdits).toBe(true)
   })
 
   it('shows the server detail when loading fails', async () => {

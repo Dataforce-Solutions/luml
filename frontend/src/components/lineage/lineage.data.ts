@@ -2,6 +2,14 @@ import { ArtifactTypeEnum } from '@/lib/api/artifacts/interfaces'
 import { CircuitBoard, FlaskConical, FileChartColumn } from 'lucide-vue-next'
 import type { DialogPassThroughOptions } from 'primevue'
 
+/**
+ * Identifier of the Vue Flow instance shared by the lineage store, the canvas
+ * and the toolbar. Vue Flow shares an instance across components only through
+ * an explicit id; without it every mount of the canvas would create its own
+ * instance and the store's edits would never reach it.
+ */
+export const LINEAGE_FLOW_ID = 'lineage'
+
 export const LINEAGE_NODE_ICONS = {
   [ArtifactTypeEnum.model]: {
     icon: CircuitBoard,
