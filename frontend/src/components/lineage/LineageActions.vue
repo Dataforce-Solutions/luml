@@ -3,7 +3,7 @@
     <Button
       severity="secondary"
       class="light-button"
-      :disabled="lineageStore.history.length === 0"
+      :disabled="!lineageStore.hasNodes || lineageStore.isLoading"
       @click="resetPositions"
     >
       Reset positions <RotateCcw :size="14" />
