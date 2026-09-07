@@ -1,7 +1,7 @@
 """Artifact lineage.
 
-Revision ID: 034
-Revises: 033
+Revision ID: 038
+Revises: 037
 Create Date: 2026-09-03
 
 """
@@ -12,8 +12,8 @@ import sqlalchemy as sa
 from alembic import op
 
 # revision identifiers, used by Alembic.
-revision: str = "034"
-down_revision: str | None = "033"
+revision: str = "038"
+down_revision: str | None = "037"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 
