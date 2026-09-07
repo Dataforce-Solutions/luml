@@ -1248,9 +1248,9 @@ async def test_link_inputs_records_every_input_in_one_transaction(
         ARTIFACT_C_ID: _node(NODE_C_ID, ARTIFACT_C_ID, "model"),
     }
     mocks.get_artifacts.return_value = list(artifacts.values())
-    mocks.get_or_create_node.side_effect = (
-        lambda orbit_id, artifact, session: nodes[artifact.id]
-    )
+    mocks.get_or_create_node.side_effect = lambda orbit_id, artifact, session: nodes[
+        artifact.id
+    ]
     created = [
         _edge(NEW_EDGE_A_ID, NODE_A_ID, NODE_C_ID),
         _edge(NEW_EDGE_B_ID, NODE_B_ID, NODE_C_ID),

@@ -582,8 +582,6 @@ async def test_unreachable_deleted_components_are_removed(
     await artifact_repo.delete_artifact(artifacts[0].id)
     await lineage_repo.delete_unreachable_deleted_nodes(data.orbit.id)
     assert (
-        await lineage_repo.get_nodes_by_ids(
-            data.orbit.id, [node.id for node in nodes]
-        )
+        await lineage_repo.get_nodes_by_ids(data.orbit.id, [node.id for node in nodes])
         == []
     )
