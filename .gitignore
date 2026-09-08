@@ -25,3 +25,6 @@ node_modules
 luml-agent/uv.lock
 /.mcp.json
 /codie.bash
+
+# CatBoost writes training logs into cwd
+catboost_info/
