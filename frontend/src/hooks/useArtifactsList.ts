@@ -46,9 +46,11 @@ export const useArtifactsList = (
 
   const list = ref<Artifact[]>([])
 
-  const filteredList = computed(() => {
-    return list.value.filter((artifact) => !excludedArtifactIds?.value?.includes(artifact.id))
-  })
+  function isVisible(artifact: Artifact): boolean {
+    return !excludedArtifactIds?.value?.includes(artifact.id)
+  }
+
+  const filteredList = computed(() => list.value.filter(isVisible))
 
   const pageIndex = computed(() => {
     return savedCursors.value.length
@@ -60,21 +62,38 @@ export const useArtifactsList = (
 
   async function getInitialPage() {
     isLoading.value = true
-    const cursor = null
-    const response = await getData(cursor)
-    addItemsToList(response.items, true)
-    savedCursors.value = [response.cursor]
-    isLoading.value = false
+    try {
+      const response = await getData(null)
+      addItemsToList(response.items, true)
+      savedCursors.value = [response.cursor]
+      if (!response.items.some(isVisible)) await loadUntilVisible()
+    } finally {
+      isLoading.value = false
+    }
   }
 
   async function getNextPage() {
-    const cursor = getNextPageCursor()
-    if (!cursor) return
+    if (!getNextPageCursor()) return
     isLoading.value = true
-    const response = await getData(cursor)
-    addItemsToList(response.items)
-    savedCursors.value.push(response.cursor)
-    isLoading.value = false
+    try {
+      await loadUntilVisible()
+    } finally {
+      isLoading.value = false
+    }
+  }
+
+  // Excluded artifacts are filtered on the client. A page made only of them
+  // adds nothing visible, and the list cannot ask for more until it shows
+  // something: keep loading until a page has a visible item or the list ends.
+  async function loadUntilVisible() {
+    let cursor = getNextPageCursor()
+    while (cursor) {
+      const response = await getData(cursor)
+      addItemsToList(response.items)
+      savedCursors.value.push(response.cursor)
+      if (response.items.some(isVisible)) return
+      cursor = response.cursor
+    }
   }
 
   async function getData(cursor: string | null) {

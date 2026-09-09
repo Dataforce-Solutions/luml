@@ -18,7 +18,7 @@ import {
 import { defineStore } from 'pinia'
 import { computed, nextTick, onScopeDispose, ref, shallowRef } from 'vue'
 import { useRoute } from 'vue-router'
-import { buildLineageBatch } from './diff'
+import { buildLineageBatch, isEmptyLineageBatch } from './diff'
 import { freePositionNear, layoutLineageNodes } from './layout'
 import {
   artifactCanvasNodeId,
@@ -53,6 +53,10 @@ export const useLineageStore = defineStore('lineage', () => {
   const history = shallowRef<HistorySnapshot[]>([])
   const truncated = ref(false)
   const isLoading = ref(false)
+  const isSaving = ref(false)
+  const loadFailed = ref(false)
+  // The artifact whose graph the canvas shows; null until a load succeeds.
+  const loadedArtifactId = ref<string | null>(null)
 
   let stableState: HistorySnapshot = { nodes: [], edges: [] }
   let historyWindowOpen = false
@@ -146,18 +150,45 @@ export const useLineageStore = defineStore('lineage', () => {
     const loadId = ++latestLoad
     const { organizationId, orbitId, artifactId } = requestInfo()
     const focalArtifact = currentFocalArtifact()
+    if (loadedArtifactId.value !== artifactId) {
+      // Another artifact's graph must not stay on the canvas under this
+      // route: saving it would edit that artifact's lineage.
+      loadedArtifactId.value = null
+      replaceCanvasWithoutHistory({ nodes: [], edges: [] })
+      truncated.value = false
+    }
+    loadFailed.value = false
     isLoading.value = true
     try {
       const graph = await api.lineage.getGraph(organizationId, orbitId, artifactId)
       if (loadId !== latestLoad) return
       replaceCanvasWithoutHistory(mapGraphToCanvas(graph, focalArtifact))
       truncated.value = graph.truncated
+      loadedArtifactId.value = artifactId
+    } catch (error) {
+      if (loadId === latestLoad) {
+        // Whatever is on the canvas is not a graph that can be saved.
+        loadedArtifactId.value = null
+        loadFailed.value = true
+      }
+      throw error
     } finally {
       if (loadId === latestLoad) isLoading.value = false
     }
   }
 
+  // Edits are possible only on the graph of the artifact this route shows,
+  // and never while a request is replacing it.
+  const isEditable = computed(
+    () =>
+      !isLoading.value &&
+      !isSaving.value &&
+      loadedArtifactId.value !== null &&
+      loadedArtifactId.value === currentArtifactId.value,
+  )
+
   function goBack(): void {
+    if (!isEditable.value) return
     closeHistoryWindow()
     const state = history.value[history.value.length - 1]
     if (!state) return
@@ -184,7 +215,22 @@ export const useLineageStore = defineStore('lineage', () => {
     countUnconnectedArtifacts(nodes.value as unknown as LineageCanvasNode[], edges.value),
   )
 
-  const hasEdits = computed(() => history.value.length > 0)
+  // Undoable steps that would reach the server: moving the focal node of an
+  // empty graph is undoable but has nothing to save.
+  const hasEdits = computed(() => {
+    if (history.value.length === 0) return false
+    try {
+      return !isEmptyLineageBatch(
+        buildLineageBatch(loadedState.value, {
+          nodes: nodes.value as unknown as LineageCanvasNode[],
+          edges: edges.value,
+        }),
+      )
+    } catch {
+      // A canvas mid-update can hold an edge whose node is not there yet.
+      return true
+    }
+  })
   const hasNodes = computed(() => nodes.value.length > 0)
   const hasEdges = computed(() => edges.value.length > 0)
 
@@ -197,7 +243,7 @@ export const useLineageStore = defineStore('lineage', () => {
   }
 
   function addArtifact(artifact: Artifact, position?: XYPosition): void {
-    if (usedArtifactsIds.value.includes(artifact.id)) return
+    if (!isEditable.value || usedArtifactsIds.value.includes(artifact.id)) return
     const state = snapshot()
     const anchor = state.nodes.find((node) => node.data.variant === 'main') ?? state.nodes[0]
     state.nodes.push({
@@ -219,7 +265,7 @@ export const useLineageStore = defineStore('lineage', () => {
 
   function replaceArtifact(artifact: Artifact): void {
     const oldId = replaceableArtifactId.value
-    if (!oldId || usedArtifactsIds.value.includes(artifact.id)) return
+    if (!isEditable.value || !oldId || usedArtifactsIds.value.includes(artifact.id)) return
     const state = snapshot()
     const nodeToReplace = state.nodes.find((node) => node.id === oldId)
     if (!nodeToReplace || nodeToReplace.data.variant === 'main') return
@@ -247,6 +293,7 @@ export const useLineageStore = defineStore('lineage', () => {
   }
 
   function unlinkArtifact(artifactId: string): void {
+    if (!isEditable.value) return
     const state = snapshot()
     const node = state.nodes.find((candidate) => candidate.id === artifactId)
     if (!node || node.data.variant === 'main') return
@@ -261,6 +308,7 @@ export const useLineageStore = defineStore('lineage', () => {
   }
 
   function resetPositions(): void {
+    if (!isEditable.value) return
     const state = snapshot()
     if (state.nodes.length === 0) return
     const focalNode = state.nodes.find((node) => node.data.variant === 'main') ?? state.nodes[0]
@@ -271,20 +319,34 @@ export const useLineageStore = defineStore('lineage', () => {
   }
 
   function discardChanges(): void {
+    if (isSaving.value) return
     replaceCanvasWithoutHistory(loadedState.value)
     detailedArtifact.value = null
   }
 
   async function save(): Promise<void> {
+    // A second save while one is in flight would resend the same batch.
+    if (isSaving.value) return
     closeHistoryWindow()
-    if (history.value.length === 0 || unconnectedArtifactsCount.value > 0) return
+    if (!hasEdits.value || unconnectedArtifactsCount.value > 0) return
 
-    const { organizationId, orbitId } = requestInfo()
-    const changes = buildLineageBatch(loadedState.value, snapshot())
-    await api.lineage.applyChanges(organizationId, orbitId, changes)
-    // The server now holds what the canvas shows: forget the edits before the
-    // reload so a failed reload cannot lead to the same batch being sent twice.
-    replaceCanvasWithoutHistory(snapshot())
+    const { organizationId, orbitId, artifactId } = requestInfo()
+    if (!isEditable.value || loadedArtifactId.value !== artifactId) {
+      throw new Error('The lineage on the canvas belongs to another artifact. Refresh the page.')
+    }
+    // The canvas is locked (isEditable) until the request settles, so the
+    // batch cannot miss an edit made in the meantime.
+    isSaving.value = true
+    try {
+      const changes = buildLineageBatch(loadedState.value, snapshot())
+      await api.lineage.applyChanges(organizationId, orbitId, changes)
+      // The server now holds what the canvas shows: forget the edits before
+      // the reload so a failed reload cannot lead to the same batch being
+      // sent twice.
+      replaceCanvasWithoutHistory(snapshot())
+    } finally {
+      isSaving.value = false
+    }
     try {
       await load()
     } catch {
@@ -306,6 +368,7 @@ export const useLineageStore = defineStore('lineage', () => {
 
   onConnect((connection) => {
     if (
+      !isEditable.value ||
       !isValidLineageConnection(
         connection,
         nodes.value as unknown as LineageCanvasNode[],
@@ -356,6 +419,10 @@ export const useLineageStore = defineStore('lineage', () => {
     unconnectedArtifactsCount,
     truncated,
     isLoading,
+    isSaving,
+    isEditable,
+    loadFailed,
+    loadedArtifactId,
     currentArtifactId,
     load,
     goBack,

@@ -10,6 +10,7 @@ const harness = vi.hoisted(() => ({
   store: null as null | {
     initialNodes: unknown[]
     initialEdges: unknown[]
+    isEditable: boolean
     setDetailedArtifact: ReturnType<typeof vi.fn>
     setReplaceableArtifactId: ReturnType<typeof vi.fn>
     unlinkArtifact: ReturnType<typeof vi.fn>
@@ -32,6 +33,7 @@ vi.mock('@/stores/lineage', async () => {
   harness.store = reactive({
     initialNodes: [] as unknown[],
     initialEdges: [] as unknown[],
+    isEditable: true,
     setDetailedArtifact: vi.fn(),
     setReplaceableArtifactId: vi.fn(),
     unlinkArtifact: vi.fn(),
@@ -60,8 +62,10 @@ const VueFlowStub = defineComponent({
   name: 'VueFlow',
   props: {
     id: { type: String, default: '' },
-    deleteKeyCode: { type: Array, default: () => [] },
+    deleteKeyCode: { type: null, default: () => [] },
     nodesDeletable: { type: Boolean, default: true },
+    nodesDraggable: { type: Boolean, default: true },
+    nodesConnectable: { type: Boolean, default: true },
   },
   emits: ['nodeClick'],
   template: '<div />',
@@ -115,6 +119,7 @@ describe('LineageArea', () => {
     if (!harness.store) throw new Error('Store harness was not initialized')
     harness.store.initialNodes = []
     harness.store.initialEdges = []
+    harness.store.isEditable = true
     flow.nodes.value = []
     flow.nodesInitializedHandlers = []
     flow.viewport.value = { x: 0, y: 0, zoom: 1 }
@@ -138,6 +143,20 @@ describe('LineageArea', () => {
 
     expect(canvas.props('deleteKeyCode')).toEqual(['Backspace', 'Delete'])
     expect(canvas.props('nodesDeletable')).toBe(false)
+  })
+
+  it('locks moving, connecting, and keyboard deletion while the store is not editable', async () => {
+    const canvas = mountArea().findComponent(VueFlowStub)
+    if (!harness.store) throw new Error('Store harness was not initialized')
+    expect(canvas.props('nodesDraggable')).toBe(true)
+    expect(canvas.props('nodesConnectable')).toBe(true)
+
+    harness.store.isEditable = false
+    await canvas.vm.$nextTick()
+
+    expect(canvas.props('nodesDraggable')).toBe(false)
+    expect(canvas.props('nodesConnectable')).toBe(false)
+    expect(canvas.props('deleteKeyCode')).toBeNull()
   })
 
   it('opens details for live and deleted nodes', async () => {

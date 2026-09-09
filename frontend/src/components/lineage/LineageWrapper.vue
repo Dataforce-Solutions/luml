@@ -7,6 +7,9 @@
     <div v-if="lineageStore.isLoading" class="notice notice--loading">
       <ProgressSpinner class="spinner" />
     </div>
+    <div v-else-if="lineageStore.loadFailed" class="notice">
+      Lineage could not be loaded — refresh the page to try again
+    </div>
     <div v-else-if="!lineageStore.hasEdges" class="notice">
       No lineage recorded yet — link an artifact to get started
     </div>

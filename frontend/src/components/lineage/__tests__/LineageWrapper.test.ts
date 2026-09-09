@@ -4,6 +4,7 @@ import LineageWrapper from '../LineageWrapper.vue'
 
 const store = vi.hoisted(() => ({
   isLoading: false,
+  loadFailed: false,
   hasEdges: false,
   truncated: false,
 }))
@@ -28,8 +29,17 @@ function mountWrapper() {
 describe('LineageWrapper', () => {
   beforeEach(() => {
     store.isLoading = false
+    store.loadFailed = false
     store.hasEdges = false
     store.truncated = false
+  })
+
+  it('explains a failed load instead of claiming there is no lineage', () => {
+    store.loadFailed = true
+
+    const text = mountWrapper().text()
+    expect(text).toContain('Lineage could not be loaded — refresh the page to try again')
+    expect(text).not.toContain('No lineage recorded yet')
   })
 
   it('shows the empty graph guidance', () => {

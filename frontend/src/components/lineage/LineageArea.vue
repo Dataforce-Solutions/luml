@@ -7,8 +7,10 @@
     :default-viewport="{ zoom: 1 }"
     :min-zoom="0.2"
     :max-zoom="4"
-    :delete-key-code="['Backspace', 'Delete']"
+    :delete-key-code="lineageStore.isEditable ? ['Backspace', 'Delete'] : null"
     :nodes-deletable="false"
+    :nodes-draggable="lineageStore.isEditable"
+    :nodes-connectable="lineageStore.isEditable"
     @node-click="onNodeClick"
   >
     <template #node-lineage="props">

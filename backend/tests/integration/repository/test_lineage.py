@@ -1,6 +1,7 @@
 import uuid
 
 import pytest
+from luml.constants import LINEAGE_MAX_NODES
 from luml.repositories.artifacts import ArtifactRepository
 from luml.repositories.collections import CollectionRepository
 from luml.repositories.lineage import LineageRepository
@@ -461,7 +462,7 @@ async def test_traversal_depth_and_cycle(
 
 
 @pytest.mark.asyncio
-async def test_traversal_node_limit_keeps_levels_whole_and_always_keeps_level_one(
+async def test_traversal_node_limit_applies_to_every_level(
     create_collection: CollectionFixtureData,
     test_artifact: ArtifactCreate,
     monkeypatch: pytest.MonkeyPatch,
@@ -502,15 +503,19 @@ async def test_traversal_node_limit_keeps_levels_whole_and_always_keeps_level_on
             (nodes[0].id, nodes[3].id),
             (nodes[1].id, nodes[4].id),
             (nodes[2].id, nodes[5].id),
-            (nodes[6].id, nodes[7].id),
-            (nodes[6].id, nodes[8].id),
-            (nodes[6].id, nodes[9].id),
-            (nodes[6].id, nodes[10].id),
-            (nodes[6].id, nodes[11].id),
         ],
         "Test User",
         LineageVia.API,
     )
+    # The wide node gets its neighbours one edge at a time, so their order of
+    # discovery is fixed by the edge timestamps rather than by chance.
+    for wide_neighbour in nodes[7:]:
+        await lineage_repo.create_edges(
+            data.orbit.id,
+            [(nodes[6].id, wide_neighbour.id)],
+            "Test User",
+            LineageVia.API,
+        )
 
     limited_nodes, limited_edges, truncated = await lineage_repo.traverse(
         data.orbit.id, nodes[0].id, 3
@@ -524,17 +529,62 @@ async def test_traversal_node_limit_keeps_levels_whole_and_always_keeps_level_on
     assert len(limited_edges) == 3
     assert truncated is True
 
+    # A focal node with more direct neighbours than the cap allows is cut at
+    # the cap like any other level: the earliest connections are kept.
     wide_nodes, wide_edges, truncated = await lineage_repo.traverse(
         data.orbit.id, nodes[6].id, 2
     )
-    assert len(wide_nodes) == 6
-    assert len(wide_edges) == 5
+    assert [node.id for node in wide_nodes] == [
+        nodes[6].id,
+        nodes[7].id,
+        nodes[8].id,
+        nodes[9].id,
+    ]
+    assert len(wide_edges) == 3
     assert truncated is True
 
     unbounded_nodes, _, truncated = await lineage_repo.traverse(
         data.orbit.id, nodes[0].id, None
     )
     assert [node.id for node in unbounded_nodes] == [node.id for node in nodes[:4]]
+    assert truncated is True
+
+
+@pytest.mark.asyncio
+async def test_traversal_returns_at_most_the_node_cap_for_a_high_degree_focal_node(
+    create_collection: CollectionFixtureData,
+    test_artifact: ArtifactCreate,
+) -> None:
+    data = create_collection
+    lineage_repo = LineageRepository(data.engine)
+    artifacts = [
+        await _create_artifact(
+            data.engine, test_artifact, data.collection.id, f"artifact-{index}"
+        )
+        for index in range(LINEAGE_MAX_NODES + 1)
+    ]
+    listed = await _get_listed_artifacts(
+        data.engine, data.orbit.id, [artifact.id for artifact in artifacts]
+    )
+    nodes = [
+        await lineage_repo.get_or_create_node(data.orbit.id, listed[artifact.id])
+        for artifact in artifacts
+    ]
+    focal = nodes[0]
+    await lineage_repo.create_edges(
+        data.orbit.id,
+        [(focal.id, neighbour.id) for neighbour in nodes[1:]],
+        "Test User",
+        LineageVia.API,
+    )
+
+    result_nodes, result_edges, truncated = await lineage_repo.traverse(
+        data.orbit.id, focal.id, None
+    )
+
+    assert len(result_nodes) == LINEAGE_MAX_NODES
+    assert result_nodes[0].id == focal.id
+    assert len(result_edges) == LINEAGE_MAX_NODES - 1
     assert truncated is True
 
 

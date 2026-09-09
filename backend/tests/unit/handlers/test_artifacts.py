@@ -1,4 +1,7 @@
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
 from datetime import datetime
+from typing import cast
 from unittest.mock import AsyncMock, Mock, call, patch
 from uuid import UUID, uuid7
 
@@ -16,6 +19,7 @@ from luml.infra.exceptions import (
     OrbitNotFoundError,
     OrganizationLimitReachedError,
 )
+from luml.repositories.lineage import LineageRepository
 from luml.schemas.artifacts import (
     Artifact,
     ArtifactCreate,
@@ -38,8 +42,25 @@ from luml.schemas.lineage import LineageVia
 from luml.schemas.permissions import Action, Resource
 from luml.schemas.storage import S3UploadDetails
 from luml.utils.pagination import build_scope_id, encode_cursor
+from sqlalchemy.ext.asyncio import AsyncSession
 
 handler = ArtifactHandler()
+
+# Physical deletion runs in one lineage transaction; the stub hands every
+# repository call the same session and records an error that reaches it.
+DELETION_SESSION = cast(AsyncSession, Mock(spec=AsyncSession))
+DELETION_TRANSACTION_ERRORS: list[BaseException] = []
+
+
+@asynccontextmanager
+async def _deletion_transaction(
+    repository: LineageRepository,
+) -> AsyncIterator[AsyncSession]:
+    try:
+        yield DELETION_SESSION
+    except BaseException as error:
+        DELETION_TRANSACTION_ERRORS.append(error)
+        raise
 
 
 @patch(
@@ -1620,6 +1641,10 @@ async def test_request_delete_url_with_deployments(
     new_callable=AsyncMock,
     return_value=False,
 )
+@patch(
+    "luml.handlers.artifacts.LineageRepository.transaction",
+    new=_deletion_transaction,
+)
 @pytest.mark.asyncio
 async def test_confirm_deletion_pending(
     mock_has_track_entries: AsyncMock,
@@ -1670,9 +1695,9 @@ async def test_confirm_deletion_pending(
         organization_id, user_id, Resource.ARTIFACT, Action.DELETE, orbit_id
     )
     mock_get_artifact.assert_awaited_once_with(artifact_id)
-    mock_refresh_node_copy.assert_awaited_once_with(artifact_id)
-    mock_delete_artifact.assert_awaited_once_with(artifact_id)
-    mock_delete_unreachable_nodes.assert_awaited_once_with(orbit_id)
+    mock_refresh_node_copy.assert_awaited_once_with(artifact_id, DELETION_SESSION)
+    mock_delete_artifact.assert_awaited_once_with(artifact_id, DELETION_SESSION)
+    mock_delete_unreachable_nodes.assert_awaited_once_with(orbit_id, DELETION_SESSION)
 
 
 @patch(
@@ -1768,6 +1793,10 @@ async def test_confirm_deletion_not_pending(
     "luml.handlers.artifacts.LineageRepository.refresh_node_copy",
     new_callable=AsyncMock,
 )
+@patch(
+    "luml.handlers.artifacts.LineageRepository.transaction",
+    new=_deletion_transaction,
+)
 @pytest.mark.asyncio
 async def test_physical_artifact_deletion_updates_lineage_in_order(
     mock_refresh_node_copy: AsyncMock,
@@ -1784,9 +1813,9 @@ async def test_physical_artifact_deletion_updates_lineage_in_order(
     await handler._delete_artifact(orbit_id, artifact_id)
 
     assert calls.mock_calls == [
-        call.refresh(artifact_id),
-        call.delete(artifact_id),
-        call.cleanup(orbit_id),
+        call.refresh(artifact_id, DELETION_SESSION),
+        call.delete(artifact_id, DELETION_SESSION),
+        call.cleanup(orbit_id, DELETION_SESSION),
     ]
 
 
@@ -1803,6 +1832,10 @@ async def test_physical_artifact_deletion_updates_lineage_in_order(
     "luml.handlers.artifacts.LineageRepository.refresh_node_copy",
     new_callable=AsyncMock,
 )
+@patch(
+    "luml.handlers.artifacts.LineageRepository.transaction",
+    new=_deletion_transaction,
+)
 @pytest.mark.asyncio
 async def test_failed_artifact_deletion_does_not_cleanup_lineage_node(
     mock_refresh_node_copy: AsyncMock,
@@ -1814,9 +1847,47 @@ async def test_failed_artifact_deletion_does_not_cleanup_lineage_node(
     with pytest.raises(RuntimeError, match="delete failed"):
         await handler._delete_artifact(uuid7(), artifact_id)
 
-    mock_refresh_node_copy.assert_awaited_once_with(artifact_id)
-    mock_delete_artifact.assert_awaited_once_with(artifact_id)
+    mock_refresh_node_copy.assert_awaited_once_with(artifact_id, DELETION_SESSION)
+    mock_delete_artifact.assert_awaited_once_with(artifact_id, DELETION_SESSION)
     mock_delete_unreachable_nodes.assert_not_awaited()
+
+
+@patch(
+    "luml.handlers.artifacts.LineageRepository.delete_unreachable_deleted_nodes",
+    new_callable=AsyncMock,
+    side_effect=RuntimeError("cleanup failed"),
+)
+@patch(
+    "luml.handlers.artifacts.ArtifactRepository.delete_artifact",
+    new_callable=AsyncMock,
+)
+@patch(
+    "luml.handlers.artifacts.LineageRepository.refresh_node_copy",
+    new_callable=AsyncMock,
+)
+@patch(
+    "luml.handlers.artifacts.LineageRepository.transaction",
+    new=_deletion_transaction,
+)
+@pytest.mark.asyncio
+async def test_failed_lineage_cleanup_rolls_back_the_artifact_deletion(
+    mock_refresh_node_copy: AsyncMock,
+    mock_delete_artifact: AsyncMock,
+    mock_delete_unreachable_nodes: AsyncMock,
+) -> None:
+    DELETION_TRANSACTION_ERRORS.clear()
+    orbit_id = uuid7()
+    artifact_id = uuid7()
+
+    with pytest.raises(RuntimeError, match="cleanup failed"):
+        await handler._delete_artifact(orbit_id, artifact_id)
+
+    # The delete was flushed into the same transaction the cleanup broke, so
+    # the error rolls the artifact row back instead of reporting a failure
+    # for a deletion that already happened.
+    mock_delete_artifact.assert_awaited_once_with(artifact_id, DELETION_SESSION)
+    mock_delete_unreachable_nodes.assert_awaited_once_with(orbit_id, DELETION_SESSION)
+    assert [type(error) for error in DELETION_TRANSACTION_ERRORS] == [RuntimeError]
 
 
 @patch(
@@ -2538,6 +2609,10 @@ async def test_request_satellite_download_url_orbit_not_found(
     new_callable=AsyncMock,
     return_value=False,
 )
+@patch(
+    "luml.handlers.artifacts.LineageRepository.transaction",
+    new=_deletion_transaction,
+)
 @pytest.mark.asyncio
 async def test_force_delete_artifact_without_deployments(
     mock_has_track_entries: AsyncMock,
@@ -2566,9 +2641,9 @@ async def test_force_delete_artifact_without_deployments(
     await handler.force_delete_artifact(
         user_id, organization_id, orbit_id, collection_id, artifact_id
     )
-    mock_refresh_node_copy.assert_awaited_once_with(artifact_id)
-    mock_delete_artifact.assert_awaited_once_with(artifact_id)
-    mock_delete_unreachable_nodes.assert_awaited_once_with(orbit_id)
+    mock_refresh_node_copy.assert_awaited_once_with(artifact_id, DELETION_SESSION)
+    mock_delete_artifact.assert_awaited_once_with(artifact_id, DELETION_SESSION)
+    mock_delete_unreachable_nodes.assert_awaited_once_with(orbit_id, DELETION_SESSION)
     mock_check_permissions.assert_awaited_once_with(
         organization_id, user_id, Resource.ARTIFACT, Action.DELETE, orbit_id
     )
@@ -2611,6 +2686,10 @@ async def test_force_delete_artifact_without_deployments(
     new_callable=AsyncMock,
     return_value=False,
 )
+@patch(
+    "luml.handlers.artifacts.LineageRepository.transaction",
+    new=_deletion_transaction,
+)
 @pytest.mark.asyncio
 async def test_force_delete_artifact_with_deployments(
     mock_has_track_entries: AsyncMock,
@@ -2648,9 +2727,9 @@ async def test_force_delete_artifact_with_deployments(
         organization_id, user_id, Resource.ARTIFACT, Action.DELETE, orbit_id
     )
     mock_delete_deployments_by_artifact_id.assert_awaited_once_with(artifact_id)
-    mock_refresh_node_copy.assert_awaited_once_with(artifact_id)
-    mock_delete_artifact.assert_awaited_once_with(artifact_id)
-    mock_delete_unreachable_nodes.assert_awaited_once_with(orbit_id)
+    mock_refresh_node_copy.assert_awaited_once_with(artifact_id, DELETION_SESSION)
+    mock_delete_artifact.assert_awaited_once_with(artifact_id, DELETION_SESSION)
+    mock_delete_unreachable_nodes.assert_awaited_once_with(orbit_id, DELETION_SESSION)
 
 
 @patch(

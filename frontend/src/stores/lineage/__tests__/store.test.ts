@@ -19,6 +19,9 @@ const route = vi.hoisted(() => ({
 }))
 
 const artifacts = vi.hoisted(() => ({ currentArtifact: null as Artifact | null }))
+const routeHarness = vi.hoisted(() => ({
+  current: null as null | { params: { artifactId: string } },
+}))
 
 const flowHarness = vi.hoisted(() => ({
   current: null as null | {
@@ -31,7 +34,13 @@ const flowHarness = vi.hoisted(() => ({
 }))
 
 vi.mock('@/lib/api', () => ({ api: { lineage: apiMocks } }))
-vi.mock('vue-router', () => ({ useRoute: () => route }))
+vi.mock('vue-router', async () => {
+  const { reactive } = await import('vue')
+  // The store derives the current artifact from the route: it has to react
+  // to a change of the route parameters.
+  routeHarness.current = reactive(route)
+  return { useRoute: () => routeHarness.current }
+})
 vi.mock('@/stores/artifacts', () => ({ useArtifactsStore: () => artifacts }))
 vi.mock('@vue-flow/core', async () => {
   const { ref } = await import('vue')
@@ -150,15 +159,21 @@ function flow() {
   return flowHarness.current
 }
 
+function openArtifact(id: string): void {
+  if (!routeHarness.current) throw new Error('Route harness was not initialized')
+  routeHarness.current.params.artifactId = id
+  artifacts.currentArtifact = {
+    ...artifact(id),
+    collection: { id: 'models', name: 'Models' },
+  } as Artifact
+}
+
 describe('lineage store', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
     apiMocks.getGraph.mockReset()
     apiMocks.applyChanges.mockReset()
-    artifacts.currentArtifact = {
-      ...artifact('model'),
-      collection: { id: 'models', name: 'Models' },
-    } as Artifact
+    openArtifact('model')
     flow().nodes.value = []
     flow().edges.value = []
     flow().connectHandlers.length = 0
@@ -246,6 +261,100 @@ describe('lineage store', () => {
 
     await store.save()
     expect(apiMocks.applyChanges).toHaveBeenCalledTimes(1)
+  })
+
+  it('locks the canvas while a save is in flight and ignores repeated saves', async () => {
+    apiMocks.getGraph.mockResolvedValue(emptyGraph())
+    let finishSave: (result: { created: never[]; deleted: never[] }) => void = () => undefined
+    apiMocks.applyChanges.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          finishSave = resolve
+        }),
+    )
+    const store = useLineageStore()
+    await store.load()
+    store.addArtifact(artifact('dataset', 'datasets', 'Datasets'), { x: -260, y: 0 })
+    flow().connectHandlers[0]({ source: 'artifact:dataset', target: 'artifact:model' })
+
+    const saving = store.save()
+    expect(store.isSaving).toBe(true)
+    expect(store.isEditable).toBe(false)
+
+    // Edits made meanwhile would be missing from the submitted batch and
+    // overwritten by the reload: the canvas refuses them instead.
+    store.addArtifact(artifact('late', 'datasets', 'Datasets'))
+    flow().connectHandlers[0]({ source: 'artifact:model', target: 'artifact:late' })
+    store.goBack()
+    expect(flow().nodes.value).toHaveLength(2)
+    expect(flow().edges.value).toHaveLength(1)
+    expect(store.history).toHaveLength(2)
+
+    await store.save()
+    expect(apiMocks.applyChanges).toHaveBeenCalledTimes(1)
+
+    finishSave({ created: [], deleted: [] })
+    await saving
+    expect(store.isSaving).toBe(false)
+    expect(store.isEditable).toBe(true)
+    expect(store.hasEdits).toBe(false)
+    expect(apiMocks.getGraph).toHaveBeenCalledTimes(2)
+  })
+
+  it('clears and locks the canvas when the graph of the next artifact fails to load', async () => {
+    apiMocks.getGraph
+      .mockResolvedValueOnce(connectedGraph())
+      .mockRejectedValueOnce(new Error('network'))
+      .mockResolvedValue(emptyGraph())
+    const store = useLineageStore()
+    await store.load()
+    expect(flow().nodes.value).toHaveLength(2)
+    expect(store.isEditable).toBe(true)
+
+    // The old graph belongs to another artifact as soon as the route moves on.
+    openArtifact('next')
+    expect(store.isEditable).toBe(false)
+
+    await expect(store.load()).rejects.toThrow('network')
+    expect(store.loadFailed).toBe(true)
+    expect(store.loadedArtifactId).toBeNull()
+    expect(store.isEditable).toBe(false)
+    expect(flow().nodes.value).toEqual([])
+    expect(flow().edges.value).toEqual([])
+    expect(store.hasEdits).toBe(false)
+
+    store.addArtifact(artifact('dataset', 'datasets', 'Datasets'))
+    expect(flow().nodes.value).toEqual([])
+    await store.save()
+    expect(apiMocks.applyChanges).not.toHaveBeenCalled()
+
+    await store.load()
+    expect(store.loadFailed).toBe(false)
+    expect(store.loadedArtifactId).toBe('next')
+    expect(store.isEditable).toBe(true)
+    expect(store.initialNodes.map((node) => node.id)).toEqual(['artifact:next'])
+  })
+
+  it('lets moving the focal node of an empty graph be undone but not saved', async () => {
+    apiMocks.getGraph.mockResolvedValue(emptyGraph())
+    const store = useLineageStore()
+    await store.load()
+
+    const focal = flow().nodes.value[0] as { position: { x: number; y: number } }
+    focal.position = { x: 120, y: 40 }
+    flow().nodeChangeHandlers[0]([{ type: 'position' }])
+
+    expect(store.history).toHaveLength(1)
+    expect(store.hasEdits).toBe(false)
+    await store.save()
+    expect(apiMocks.applyChanges).not.toHaveBeenCalled()
+
+    store.goBack()
+    expect(focal.position).toEqual({ x: 120, y: 40 })
+    expect((flow().nodes.value[0] as { position: { x: number; y: number } }).position).toEqual({
+      x: 0,
+      y: 0,
+    })
   })
 
   it('places a linked artifact in the first free slot next to the focal node', async () => {

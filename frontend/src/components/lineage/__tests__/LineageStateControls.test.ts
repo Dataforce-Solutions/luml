@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import LineageStateControls from '../LineageStateControls.vue'
 
 const store = vi.hoisted(() => ({
+  isEditable: true,
   hasEdits: true,
   unconnectedArtifactsCount: 2,
   history: [{}],
@@ -29,6 +30,7 @@ const ButtonStub = defineComponent({
 describe('LineageStateControls', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    store.isEditable = true
     store.hasEdits = true
     store.unconnectedArtifactsCount = 2
     store.history = [{}]
@@ -58,6 +60,15 @@ describe('LineageStateControls', () => {
 
     expect(wrapper.find('button').attributes()).toHaveProperty('disabled')
     expect(wrapper.text()).toContain('2 artifacts are not connected — connect or remove them')
+  })
+
+  it('disables saving and undo while the canvas is locked', () => {
+    store.unconnectedArtifactsCount = 0
+    store.isEditable = false
+
+    const buttons = mountControls().findAll('button')
+    expect(buttons[0].attributes()).toHaveProperty('disabled')
+    expect(buttons[1].attributes()).toHaveProperty('disabled')
   })
 
   it('keeps saving disabled when the loaded graph has no edits', () => {

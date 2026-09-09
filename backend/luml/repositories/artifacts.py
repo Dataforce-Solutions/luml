@@ -45,10 +45,23 @@ class ArtifactRepository(RepositoryBase, CrudMixin):
             )
             return db_artifact.to_artifact() if db_artifact else None
 
-    async def delete_artifact(self, artifact_id: UUID) -> None:
+    async def delete_artifact(
+        self, artifact_id: UUID, session: AsyncSession | None = None
+    ) -> None:
+        """Delete the artifact row.
+
+        With a caller ``session`` the delete is only flushed: it is committed
+        or rolled back together with the rest of the caller's transaction.
+        """
         try:
-            async with self._get_session() as session:
-                await self.delete_model(session, ArtifactOrm, artifact_id)
+            if session is not None:
+                artifact = await session.get(ArtifactOrm, artifact_id)
+                if artifact is not None:
+                    await session.delete(artifact)
+                    await session.flush()
+                return
+            async with self._get_session() as owned_session:
+                await self.delete_model(owned_session, ArtifactOrm, artifact_id)
         except IntegrityError as error:
             error_mess = "Cannot delete artifact."
             raise DatabaseConstraintError(

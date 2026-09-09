@@ -6,7 +6,7 @@ import type {
   LineageCanvasNode,
   LineageNodeData,
 } from '@/components/lineage/lineage.interface'
-import { buildLineageBatch } from '../diff'
+import { buildLineageBatch, isEmptyLineageBatch } from '../diff'
 
 function node(
   id: string,
@@ -93,6 +93,25 @@ describe('buildLineageBatch', () => {
         { ref: { artifact_id: 'dataset-new' }, x: -320, y: 0 },
       ],
     })
+  })
+
+  it('leaves out the position of an unconnected node the server does not know', () => {
+    // The focal node of an empty graph exists only on the canvas: there is
+    // no lineage node to store its position on.
+    const focal = node('artifact:model', null, 'model', 0, 0, 'main')
+    const loaded = state([focal], [])
+
+    const moved = buildLineageBatch(loaded, state([{ ...focal, position: { x: 40, y: 10 } }], []))
+    expect(moved).toEqual({ create: [], delete: [], positions: [] })
+    expect(isEmptyLineageBatch(moved)).toBe(true)
+
+    const known = node('node-model', 'node-model', 'model', 0, 0, 'main')
+    const kept = buildLineageBatch(
+      state([known], []),
+      state([{ ...known, position: { x: 40, y: 10 } }], []),
+    )
+    expect(kept.positions).toEqual([{ ref: { node_id: 'node-model' }, x: 40, y: 10 }])
+    expect(isEmptyLineageBatch(kept)).toBe(false)
   })
 
   it('sends all positions after a move without recreating existing connections', () => {

@@ -2,7 +2,7 @@ from collections.abc import AsyncIterator, Sequence
 from contextlib import asynccontextmanager
 from uuid import UUID
 
-from sqlalchemy import delete, exists, or_, select, text, tuple_, update
+from sqlalchemy import case, delete, exists, func, or_, select, text, tuple_, update
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -355,7 +355,11 @@ class LineageRepository(RepositoryBase):
         """Breadth-first traversal ignoring direction.
 
         ``depth`` limits the number of levels; ``None`` walks the whole
-        component. The node cap (``LINEAGE_MAX_NODES``) is the only other stop.
+        component. The result never holds more than ``LINEAGE_MAX_NODES``
+        nodes: every level, the first one included, is cut at the remaining
+        budget, and each query is bounded by that budget as well. Nodes are
+        discovered in the order of their earliest connection, so the cut is
+        deterministic.
         """
         if depth is not None and depth < 1:
             raise ValueError("Lineage depth must be positive")
@@ -371,49 +375,22 @@ class LineageRepository(RepositoryBase):
                 return [], [], False
 
             discovered_ids = [focal_node.id]
-            seen_node_ids = {focal_node.id}
-            seen_edges: dict[UUID, LineageEdgeOrm] = {}
             frontier = [focal_node.id]
             truncated = False
 
             level = 0
             while depth is None or level < depth:
-                result = await db_session.scalars(
-                    select(LineageEdgeOrm)
-                    .where(
-                        LineageEdgeOrm.orbit_id == orbit_id,
-                        or_(
-                            LineageEdgeOrm.source_node_id.in_(frontier),
-                            LineageEdgeOrm.target_node_id.in_(frontier),
-                        ),
-                    )
-                    .order_by(LineageEdgeOrm.created_at, LineageEdgeOrm.id)
+                budget = LINEAGE_MAX_NODES - len(discovered_ids)
+                next_frontier = await self._next_level(
+                    db_session, orbit_id, frontier, discovered_ids, budget
                 )
-                level_edges = [
-                    edge for edge in result.all() if edge.id not in seen_edges
-                ]
-                next_frontier: list[UUID] = []
-                next_ids: set[UUID] = set()
-                for edge in level_edges:
-                    for node_id in (edge.source_node_id, edge.target_node_id):
-                        if node_id not in seen_node_ids and node_id not in next_ids:
-                            next_ids.add(node_id)
-                            next_frontier.append(node_id)
-
-                resulting_node_count = len(seen_node_ids) + len(next_frontier)
-                if level > 0 and resulting_node_count > LINEAGE_MAX_NODES:
+                if len(next_frontier) > budget:
                     truncated = True
-                    break
+                    next_frontier = next_frontier[:budget]
 
-                seen_edges.update((edge.id, edge) for edge in level_edges)
                 discovered_ids.extend(next_frontier)
-                seen_node_ids.update(next_frontier)
                 frontier = next_frontier
-
-                if resulting_node_count > LINEAGE_MAX_NODES:
-                    truncated = True
-                    break
-                if not frontier:
+                if truncated or not frontier:
                     break
                 level += 1
 
@@ -429,8 +406,49 @@ class LineageRepository(RepositoryBase):
                 for node_id in discovered_ids
                 if node_id in nodes_by_id
             ]
-            edges = sorted(
-                seen_edges.values(),
-                key=lambda edge: (edge.created_at, edge.id),
+            edges_result = await db_session.scalars(
+                select(LineageEdgeOrm)
+                .where(
+                    LineageEdgeOrm.orbit_id == orbit_id,
+                    LineageEdgeOrm.source_node_id.in_(discovered_ids),
+                    LineageEdgeOrm.target_node_id.in_(discovered_ids),
+                )
+                .order_by(LineageEdgeOrm.created_at, LineageEdgeOrm.id)
             )
-            return nodes, edges, truncated
+            return nodes, list(edges_result.all()), truncated
+
+    @staticmethod
+    async def _next_level(
+        db_session: AsyncSession,
+        orbit_id: UUID,
+        frontier: Sequence[UUID],
+        seen_node_ids: Sequence[UUID],
+        budget: int,
+    ) -> list[UUID]:
+        """Unseen neighbours of ``frontier``, at most ``budget + 1`` of them.
+
+        The extra row tells the caller that the level does not fit.
+        """
+        neighbour = case(
+            (
+                LineageEdgeOrm.source_node_id.in_(frontier),
+                LineageEdgeOrm.target_node_id,
+            ),
+            else_=LineageEdgeOrm.source_node_id,
+        )
+        first_seen = func.min(LineageEdgeOrm.created_at)
+        result = await db_session.execute(
+            select(neighbour)
+            .where(
+                LineageEdgeOrm.orbit_id == orbit_id,
+                or_(
+                    LineageEdgeOrm.source_node_id.in_(frontier),
+                    LineageEdgeOrm.target_node_id.in_(frontier),
+                ),
+                neighbour.not_in(seen_node_ids),
+            )
+            .group_by(neighbour)
+            .order_by(first_seen, neighbour)
+            .limit(budget + 1)
+        )
+        return [row[0] for row in result.all()]

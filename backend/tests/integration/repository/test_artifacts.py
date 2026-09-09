@@ -300,6 +300,35 @@ async def test_delete_artifact(
 
 
 @pytest.mark.asyncio
+async def test_delete_artifact_in_a_caller_transaction_is_rolled_back_with_it(
+    create_collection: CollectionFixtureData, test_artifact: ArtifactCreate
+) -> None:
+    data = create_collection
+    artifact_repo = ArtifactRepository(data.engine)
+    lineage_repo = LineageRepository(data.engine)
+    artifact = await _make_artifact(
+        artifact_repo, test_artifact, data.collection.id, name="kept-on-failure"
+    )
+
+    # The lineage clean-up that follows the delete fails: the delete must not
+    # have been committed on its own.
+    async def delete_then_fail() -> None:
+        async with lineage_repo.transaction() as session:
+            await artifact_repo.delete_artifact(artifact.id, session)
+            raise RuntimeError("cleanup failed")
+
+    with pytest.raises(RuntimeError, match="cleanup failed"):
+        await delete_then_fail()
+
+    assert await artifact_repo.get_artifact(artifact.id) is not None
+
+    async with lineage_repo.transaction() as session:
+        await artifact_repo.delete_artifact(artifact.id, session)
+
+    assert await artifact_repo.get_artifact(artifact.id) is None
+
+
+@pytest.mark.asyncio
 async def test_delete_artifact_preserves_connected_lineage_node_snapshot(
     create_collection: CollectionFixtureData, test_artifact: ArtifactCreate
 ) -> None:

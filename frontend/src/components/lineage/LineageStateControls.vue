@@ -7,14 +7,18 @@
         v-tooltip.top="saveTooltip"
         class="button"
         :loading="saveLoading"
-        :disabled="!lineageStore.hasEdits || lineageStore.unconnectedArtifactsCount > 0"
+        :disabled="
+          !lineageStore.isEditable ||
+          !lineageStore.hasEdits ||
+          lineageStore.unconnectedArtifactsCount > 0
+        "
         @click="onSave"
       />
       <Button
         severity="secondary"
         v-tooltip.top="`${isMac ? '⌘' : 'Ctrl'}+Z`"
         class="button light-button"
-        :disabled="lineageStore.history.length === 0"
+        :disabled="!lineageStore.isEditable || lineageStore.history.length === 0"
         @click="onBack"
       >
         <template #icon>

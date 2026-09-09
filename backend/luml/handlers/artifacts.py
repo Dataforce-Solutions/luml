@@ -463,11 +463,16 @@ class ArtifactHandler:
         await self._delete_artifact(orbit_id, artifact_id)
 
     async def _delete_artifact(self, orbit_id: UUID, artifact_id: UUID) -> None:
-        await self.__lineage_repository.refresh_node_copy(artifact_id)
-        await self.__repository.delete_artifact(artifact_id)
-        # The node keeps its edges as a "deleted" node; a component left with
-        # no live artifact at all can never be opened again, drop it.
-        await self.__lineage_repository.delete_unreachable_deleted_nodes(orbit_id)
+        # One transaction: a failure in any step leaves the artifact in place,
+        # so an error response never hides a deletion that already happened.
+        async with self.__lineage_repository.transaction() as session:
+            await self.__lineage_repository.refresh_node_copy(artifact_id, session)
+            await self.__repository.delete_artifact(artifact_id, session)
+            # The node keeps its edges as a "deleted" node; a component left
+            # with no live artifact at all can never be opened again, drop it.
+            await self.__lineage_repository.delete_unreachable_deleted_nodes(
+                orbit_id, session
+            )
 
     async def force_delete_artifact(
         self,
