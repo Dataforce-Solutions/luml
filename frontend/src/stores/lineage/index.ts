@@ -187,6 +187,11 @@ export const useLineageStore = defineStore('lineage', () => {
       loadedArtifactId.value === currentArtifactId.value,
   )
 
+  // Unlink and replace act on every connection of a node. A truncated graph
+  // hides some of them, so the node, or the replaced artifact, would come
+  // back with its hidden connections after a reload.
+  const canRewire = computed(() => isEditable.value && !truncated.value)
+
   function goBack(): void {
     if (!isEditable.value) return
     closeHistoryWindow()
@@ -265,7 +270,7 @@ export const useLineageStore = defineStore('lineage', () => {
 
   function replaceArtifact(artifact: Artifact): void {
     const oldId = replaceableArtifactId.value
-    if (!isEditable.value || !oldId || usedArtifactsIds.value.includes(artifact.id)) return
+    if (!canRewire.value || !oldId || usedArtifactsIds.value.includes(artifact.id)) return
     const state = snapshot()
     const nodeToReplace = state.nodes.find((node) => node.id === oldId)
     if (!nodeToReplace || nodeToReplace.data.variant === 'main') return
@@ -293,7 +298,7 @@ export const useLineageStore = defineStore('lineage', () => {
   }
 
   function unlinkArtifact(artifactId: string): void {
-    if (!isEditable.value) return
+    if (!canRewire.value) return
     const state = snapshot()
     const node = state.nodes.find((candidate) => candidate.id === artifactId)
     if (!node || node.data.variant === 'main') return
@@ -421,6 +426,7 @@ export const useLineageStore = defineStore('lineage', () => {
     isLoading,
     isSaving,
     isEditable,
+    canRewire,
     loadFailed,
     loadedArtifactId,
     currentArtifactId,

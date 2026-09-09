@@ -14,7 +14,8 @@
       No lineage recorded yet — link an artifact to get started
     </div>
     <div v-if="!lineageStore.isLoading && lineageStore.truncated" class="limit-notice">
-      Graph is limited to 200 artifacts — the most distant connections are hidden
+      Graph is limited to 200 artifacts — the most distant connections are hidden, so artifacts
+      cannot be unlinked or replaced here
     </div>
     <LineageArea></LineageArea>
   </div>

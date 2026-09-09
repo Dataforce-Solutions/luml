@@ -130,6 +130,12 @@ async function loadLineage(): Promise<boolean> {
 }
 
 async function confirmDiscardChanges(): Promise<boolean> {
+  // A save in flight will commit whatever it sent; "discard" could not be
+  // honoured, so the navigation waits for the request instead.
+  if (lineageStore.isSaving) {
+    toast.add(simpleErrorToast('Changes are being saved — wait for it to finish'))
+    return false
+  }
   if (!lineageStore.hasEdits) return true
 
   return new Promise((resolve) => {

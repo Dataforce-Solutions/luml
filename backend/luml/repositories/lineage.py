@@ -271,6 +271,18 @@ class LineageRepository(RepositoryBase):
             await db_session.execute(statement)
             await self._finish_write(db_session, owns_session)
 
+    @staticmethod
+    async def lock_orbit(orbit_id: UUID, session: AsyncSession) -> None:
+        """Serialize lineage-changing deletions within an orbit.
+
+        The transaction-scoped advisory lock is released with the caller's
+        transaction; a waiting deletion then sees the committed result.
+        """
+        await session.execute(
+            text("SELECT pg_advisory_xact_lock(hashtextextended(:orbit_id, 0))"),
+            {"orbit_id": str(orbit_id)},
+        )
+
     async def delete_unreachable_deleted_nodes(
         self,
         orbit_id: UUID,

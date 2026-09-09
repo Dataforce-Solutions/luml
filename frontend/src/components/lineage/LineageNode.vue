@@ -67,6 +67,7 @@ interface Props {
   isDeleted: boolean
   deployments: Deployment[]
   tracks: ArtifactTrack[]
+  actionsDisabled?: boolean
 }
 
 interface Emits {
@@ -80,15 +81,17 @@ const emit = defineEmits<Emits>()
 
 const menu = ref()
 
-const menuItems = ref<MenuItem[]>([
+const menuItems = computed<MenuItem[]>(() => [
   {
     label: 'Replace',
+    disabled: props.actionsDisabled,
     command: () => {
       emit('replace')
     },
   },
   {
     label: 'Unlink',
+    disabled: props.actionsDisabled,
     command: () => {
       emit('unlink')
     },

@@ -22,6 +22,7 @@
         :is-deleted="props.data.isDeleted"
         :deployments="props.data.deployments || []"
         :tracks="props.data.tracks || []"
+        :actions-disabled="!lineageStore.canRewire"
         @replace="replaceNode(props.id)"
         @unlink="unlinkNode(props.id)"
       />

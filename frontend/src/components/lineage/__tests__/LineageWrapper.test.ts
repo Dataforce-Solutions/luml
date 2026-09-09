@@ -53,7 +53,7 @@ describe('LineageWrapper', () => {
     store.truncated = true
 
     expect(mountWrapper().text()).toContain(
-      'Graph is limited to 200 artifacts — the most distant connections are hidden',
+      'Graph is limited to 200 artifacts — the most distant connections are hidden, so artifacts cannot be unlinked or replaced here',
     )
   })
 })

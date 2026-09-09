@@ -256,6 +256,13 @@ class ArtifactHandler:
 
         bucket_location = f"orbit-{orbit_id}/collection-{collection_id}/{object_name}"
 
+        # The upload is prepared first: a storage failure must not leave an
+        # artifact row, or lineage edges, for an upload that never started.
+        storage_service = await self._get_storage_client(orbit.bucket_secret_id)
+        upload_data = await storage_service.create_upload(
+            bucket_location, artifact.size
+        )
+
         created_artifact = await self.__repository.create_artifact(
             ArtifactCreate(
                 collection_id=collection_id,
@@ -292,12 +299,6 @@ class ArtifactHandler:
             except Exception:
                 await self.__repository.delete_artifact(created_artifact.id)
                 raise
-
-        storage_service = await self._get_storage_client(orbit.bucket_secret_id)
-
-        upload_data = await storage_service.create_upload(
-            bucket_location, artifact.size
-        )
 
         return CreateArtifactResponse(
             artifact=created_artifact, upload_details=upload_data
@@ -466,6 +467,9 @@ class ArtifactHandler:
         # One transaction: a failure in any step leaves the artifact in place,
         # so an error response never hides a deletion that already happened.
         async with self.__lineage_repository.transaction() as session:
+            # Two deletions of the last live artifacts of one component would
+            # otherwise each see the other as live and both skip the cleanup.
+            await self.__lineage_repository.lock_orbit(orbit_id, session)
             await self.__lineage_repository.refresh_node_copy(artifact_id, session)
             await self.__repository.delete_artifact(artifact_id, session)
             # The node keeps its edges as a "deleted" node; a component left

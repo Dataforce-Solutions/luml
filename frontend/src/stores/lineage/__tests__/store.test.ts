@@ -357,6 +357,31 @@ describe('lineage store', () => {
     })
   })
 
+  it('refuses unlink and replace on a truncated graph but still allows exact edits', async () => {
+    const graph = connectedGraph()
+    graph.truncated = true
+    apiMocks.getGraph.mockResolvedValue(graph)
+    const store = useLineageStore()
+    await store.load()
+    expect(store.isEditable).toBe(true)
+    expect(store.canRewire).toBe(false)
+
+    // Hidden connections of the node would survive and bring it back.
+    store.unlinkArtifact('node-output')
+    store.setReplaceableArtifactId('node-output')
+    store.replaceArtifact(artifact('replacement'))
+    expect((flow().nodes.value as { id: string }[]).map((node) => node.id)).toEqual([
+      'node-model',
+      'node-output',
+    ])
+    expect(store.hasEdits).toBe(false)
+
+    // Adding a connection touches only what is on the canvas.
+    store.addArtifact(artifact('dataset', 'datasets', 'Datasets'))
+    flow().connectHandlers[0]({ source: 'artifact:dataset', target: 'node-model' })
+    expect(store.hasEdits).toBe(true)
+  })
+
   it('places a linked artifact in the first free slot next to the focal node', async () => {
     apiMocks.getGraph.mockResolvedValue(emptyGraph())
     const store = useLineageStore()

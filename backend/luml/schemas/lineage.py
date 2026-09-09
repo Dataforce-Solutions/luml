@@ -40,7 +40,9 @@ class LineagePair(BaseModel):
 
 
 class LineageCreateIn(BaseModel):
-    target_artifact_ids: list[UUID] = Field(max_length=LINEAGE_MAX_BATCH_ITEMS)
+    target_artifact_ids: list[UUID] = Field(
+        min_length=1, max_length=LINEAGE_MAX_BATCH_ITEMS
+    )
 
 
 class LineageBatchIn(BaseModel):

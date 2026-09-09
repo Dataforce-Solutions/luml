@@ -8,6 +8,7 @@ const harness = vi.hoisted(() => {
   const lineage = {
     detailedArtifact: null,
     hasEdits: false,
+    isSaving: false,
     load: vi.fn().mockResolvedValue(undefined),
     discardChanges: vi.fn(),
     setDetailedArtifact: vi.fn(),
@@ -87,6 +88,7 @@ describe('LineageView', () => {
     harness.artifacts.currentArtifact = { id: 'artifact' }
     harness.lineage.detailedArtifact = null
     harness.lineage.hasEdits = false
+    harness.lineage.isSaving = false
     harness.lineage.load.mockReset().mockResolvedValue(undefined)
     harness.lineage.discardChanges.mockReset().mockImplementation(() => {
       harness.lineage.hasEdits = false
@@ -140,6 +142,25 @@ describe('LineageView', () => {
     latestConfirmation().accept?.()
     await expect(acceptedNavigation).resolves.toBe(true)
     expect(harness.lineage.discardChanges).toHaveBeenCalledOnce()
+  })
+
+  it('blocks navigation while a save is in flight instead of offering to discard it', async () => {
+    wrapper = mountView()
+    await flushPromises()
+    harness.lineage.hasEdits = true
+    harness.lineage.isSaving = true
+
+    await expect(harness.leaveGuard?.()).resolves.toBe(false)
+    await expect(harness.updateGuard?.()).resolves.toBe(false)
+
+    expect(harness.confirmRequire).not.toHaveBeenCalled()
+    expect(harness.lineage.discardChanges).not.toHaveBeenCalled()
+    expect(harness.toastAdd).toHaveBeenCalledWith(
+      expect.objectContaining({
+        severity: 'error',
+        detail: 'Changes are being saved — wait for it to finish',
+      }),
+    )
   })
 
   it('shows the server detail when loading fails', async () => {

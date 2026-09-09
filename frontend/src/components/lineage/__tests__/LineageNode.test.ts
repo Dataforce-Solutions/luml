@@ -21,7 +21,11 @@ const MenuStub = defineComponent({
   template: '<div />',
 })
 
-function mountNode(variant: 'default' | 'main' | 'disabled', isDeleted = false) {
+function mountNode(
+  variant: 'default' | 'main' | 'disabled',
+  isDeleted = false,
+  actionsDisabled = false,
+) {
   return shallowMount(LineageNode, {
     props: {
       artifactType: ArtifactTypeEnum.model,
@@ -31,6 +35,7 @@ function mountNode(variant: 'default' | 'main' | 'disabled', isDeleted = false) 
       isDeleted,
       deployments: [],
       tracks: [],
+      actionsDisabled,
     },
     global: {
       stubs: {
@@ -71,6 +76,20 @@ describe('LineageNode', () => {
 
     expect(wrapper.attributes('data-lineage-state')).toBe('focal')
     expect(wrapper.find('[aria-label="Artifact actions"]').exists()).toBe(false)
+  })
+
+  it('disables replace and unlink while the graph cannot be rewired', () => {
+    const items = (
+      mountNode('default', false, true).findComponent(MenuStub).props('model') as {
+        label: string
+        disabled?: boolean
+      }[]
+    ).map((item) => [item.label, item.disabled])
+
+    expect(items).toEqual([
+      ['Replace', true],
+      ['Unlink', true],
+    ])
   })
 
   it('shows deleted state and menu while disabling both handles', () => {

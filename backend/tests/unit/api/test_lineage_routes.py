@@ -347,6 +347,21 @@ def test_batch_rejects_non_finite_positions(
     mock_apply_changes.assert_not_awaited()
 
 
+@patch(
+    "luml.handlers.lineage.LineageHandler.create_links",
+    new_callable=AsyncMock,
+)
+def test_create_lineage_requires_at_least_one_target(
+    mock_create_links: AsyncMock,
+) -> None:
+    # An empty list would skip resolving the source artifact and answer a
+    # missing or foreign one with an empty success.
+    response = _client().post(ARTIFACT_PATH, json={"target_artifact_ids": []})
+
+    assert response.status_code == 422
+    mock_create_links.assert_not_awaited()
+
+
 @pytest.mark.parametrize(
     ("path", "body"),
     [

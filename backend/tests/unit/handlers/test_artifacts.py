@@ -1152,6 +1152,88 @@ async def test_create_artifact_rejects_lineage_input_outside_orbit(
     return_value=ArtifactType.MODEL,
 )
 @pytest.mark.asyncio
+async def test_create_artifact_records_nothing_when_upload_initialization_fails(
+    mock_define_artifact_type: Mock,
+    mock_get_storage_client: AsyncMock,
+    mock_link_inputs: AsyncMock,
+    mock_delete_artifact: AsyncMock,
+    mock_create_artifact: AsyncMock,
+    mock_get_lineage_inputs: AsyncMock,
+    mock_check_access: AsyncMock,
+    mock_check_permissions: AsyncMock,
+    mock_get_user: AsyncMock,
+    mock_check_limit: AsyncMock,
+    manifest_example: Manifest,
+) -> None:
+    lineage_input = uuid7()
+    mock_check_access.return_value = (
+        Mock(bucket_secret_id=uuid7()),
+        Mock(type=CollectionType.MODEL),
+    )
+    mock_get_user.return_value = Mock(full_name="Artifact User")
+    mock_get_lineage_inputs.return_value = [Mock(id=lineage_input)]
+    mock_get_storage_client.return_value = Mock(
+        create_upload=AsyncMock(side_effect=RuntimeError("storage unavailable"))
+    )
+
+    with pytest.raises(RuntimeError, match="storage unavailable"):
+        await handler.create_artifact(
+            uuid7(),
+            uuid7(),
+            uuid7(),
+            uuid7(),
+            _artifact_create_input(manifest_example, [lineage_input]),
+            LineageVia.API,
+        )
+
+    # The upload is prepared before anything is written: neither an artifact
+    # row nor lineage edges are left behind for an upload that never started.
+    mock_create_artifact.assert_not_awaited()
+    mock_link_inputs.assert_not_awaited()
+    mock_delete_artifact.assert_not_awaited()
+
+
+@patch(
+    "luml.handlers.artifacts.ArtifactHandler._check_organization_artifacts_limit",
+    new_callable=AsyncMock,
+)
+@patch(
+    "luml.handlers.artifacts.UserRepository.get_public_user_by_id",
+    new_callable=AsyncMock,
+)
+@patch(
+    "luml.handlers.artifacts.PermissionsHandler.check_permissions",
+    new_callable=AsyncMock,
+)
+@patch(
+    "luml.handlers.artifacts.ArtifactHandler._check_orbit_and_collection_access",
+    new_callable=AsyncMock,
+)
+@patch(
+    "luml.handlers.artifacts.ArtifactRepository.get_artifacts_by_ids_in_orbit",
+    new_callable=AsyncMock,
+)
+@patch(
+    "luml.handlers.artifacts.ArtifactRepository.create_artifact",
+    new_callable=AsyncMock,
+)
+@patch(
+    "luml.handlers.artifacts.ArtifactRepository.delete_artifact",
+    new_callable=AsyncMock,
+)
+@patch(
+    "luml.handlers.artifacts.LineageHandler.link_inputs",
+    new_callable=AsyncMock,
+)
+@patch(
+    "luml.handlers.artifacts.ArtifactHandler._get_storage_client",
+    new_callable=AsyncMock,
+)
+@patch(
+    "luml.handlers.artifacts.ArtifactHandler._define_artifact_type",
+    return_value=ArtifactType.MODEL,
+)
+@pytest.mark.asyncio
 async def test_create_artifact_deletes_row_when_lineage_linking_fails(
     mock_define_artifact_type: Mock,
     mock_get_storage_client: AsyncMock,
@@ -1179,6 +1261,7 @@ async def test_create_artifact_deletes_row_when_lineage_linking_fails(
     mock_get_user.return_value = Mock(full_name="Artifact User")
     mock_get_lineage_inputs.return_value = [Mock(id=lineage_input)]
     mock_create_artifact.return_value = created_artifact
+    mock_get_storage_client.return_value = Mock(create_upload=AsyncMock())
     linking_error = ApplicationError("Lineage failed", 409)
     mock_link_inputs.side_effect = linking_error
 
@@ -1194,7 +1277,7 @@ async def test_create_artifact_deletes_row_when_lineage_linking_fails(
 
     assert error.value is linking_error
     mock_delete_artifact.assert_awaited_once_with(artifact_id)
-    mock_get_storage_client.assert_not_awaited()
+    mock_get_storage_client.assert_awaited_once()
 
 
 @patch(
@@ -1642,11 +1725,16 @@ async def test_request_delete_url_with_deployments(
     return_value=False,
 )
 @patch(
+    "luml.handlers.artifacts.LineageRepository.lock_orbit",
+    new_callable=AsyncMock,
+)
+@patch(
     "luml.handlers.artifacts.LineageRepository.transaction",
     new=_deletion_transaction,
 )
 @pytest.mark.asyncio
 async def test_confirm_deletion_pending(
+    mock_lock_orbit: AsyncMock,
     mock_has_track_entries: AsyncMock,
     mock_delete_artifact: AsyncMock,
     mock_get_artifact: AsyncMock,
@@ -1794,16 +1882,22 @@ async def test_confirm_deletion_not_pending(
     new_callable=AsyncMock,
 )
 @patch(
+    "luml.handlers.artifacts.LineageRepository.lock_orbit",
+    new_callable=AsyncMock,
+)
+@patch(
     "luml.handlers.artifacts.LineageRepository.transaction",
     new=_deletion_transaction,
 )
 @pytest.mark.asyncio
 async def test_physical_artifact_deletion_updates_lineage_in_order(
+    mock_lock_orbit: AsyncMock,
     mock_refresh_node_copy: AsyncMock,
     mock_delete_artifact: AsyncMock,
     mock_delete_unreachable_nodes: AsyncMock,
 ) -> None:
     calls = Mock()
+    calls.attach_mock(mock_lock_orbit, "lock")
     calls.attach_mock(mock_refresh_node_copy, "refresh")
     calls.attach_mock(mock_delete_artifact, "delete")
     calls.attach_mock(mock_delete_unreachable_nodes, "cleanup")
@@ -1813,6 +1907,7 @@ async def test_physical_artifact_deletion_updates_lineage_in_order(
     await handler._delete_artifact(orbit_id, artifact_id)
 
     assert calls.mock_calls == [
+        call.lock(orbit_id, DELETION_SESSION),
         call.refresh(artifact_id, DELETION_SESSION),
         call.delete(artifact_id, DELETION_SESSION),
         call.cleanup(orbit_id, DELETION_SESSION),
@@ -1833,11 +1928,16 @@ async def test_physical_artifact_deletion_updates_lineage_in_order(
     new_callable=AsyncMock,
 )
 @patch(
+    "luml.handlers.artifacts.LineageRepository.lock_orbit",
+    new_callable=AsyncMock,
+)
+@patch(
     "luml.handlers.artifacts.LineageRepository.transaction",
     new=_deletion_transaction,
 )
 @pytest.mark.asyncio
 async def test_failed_artifact_deletion_does_not_cleanup_lineage_node(
+    mock_lock_orbit: AsyncMock,
     mock_refresh_node_copy: AsyncMock,
     mock_delete_artifact: AsyncMock,
     mock_delete_unreachable_nodes: AsyncMock,
@@ -1866,11 +1966,16 @@ async def test_failed_artifact_deletion_does_not_cleanup_lineage_node(
     new_callable=AsyncMock,
 )
 @patch(
+    "luml.handlers.artifacts.LineageRepository.lock_orbit",
+    new_callable=AsyncMock,
+)
+@patch(
     "luml.handlers.artifacts.LineageRepository.transaction",
     new=_deletion_transaction,
 )
 @pytest.mark.asyncio
 async def test_failed_lineage_cleanup_rolls_back_the_artifact_deletion(
+    mock_lock_orbit: AsyncMock,
     mock_refresh_node_copy: AsyncMock,
     mock_delete_artifact: AsyncMock,
     mock_delete_unreachable_nodes: AsyncMock,
@@ -2610,11 +2715,16 @@ async def test_request_satellite_download_url_orbit_not_found(
     return_value=False,
 )
 @patch(
+    "luml.handlers.artifacts.LineageRepository.lock_orbit",
+    new_callable=AsyncMock,
+)
+@patch(
     "luml.handlers.artifacts.LineageRepository.transaction",
     new=_deletion_transaction,
 )
 @pytest.mark.asyncio
 async def test_force_delete_artifact_without_deployments(
+    mock_lock_orbit: AsyncMock,
     mock_has_track_entries: AsyncMock,
     mock_delete_artifact: AsyncMock,
     mock_get_artifact: AsyncMock,
@@ -2687,11 +2797,16 @@ async def test_force_delete_artifact_without_deployments(
     return_value=False,
 )
 @patch(
+    "luml.handlers.artifacts.LineageRepository.lock_orbit",
+    new_callable=AsyncMock,
+)
+@patch(
     "luml.handlers.artifacts.LineageRepository.transaction",
     new=_deletion_transaction,
 )
 @pytest.mark.asyncio
 async def test_force_delete_artifact_with_deployments(
+    mock_lock_orbit: AsyncMock,
     mock_has_track_entries: AsyncMock,
     mock_delete_artifact: AsyncMock,
     mock_delete_deployments_by_artifact_id: AsyncMock,
