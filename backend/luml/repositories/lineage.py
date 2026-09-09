@@ -12,7 +12,7 @@ from luml.models.collection import CollectionOrm
 from luml.models.lineage import LineageEdgeOrm, LineageNodeOrm
 from luml.repositories.base import RepositoryBase
 from luml.schemas.artifacts import ArtifactListed
-from luml.schemas.lineage import LineageVia
+from luml.schemas.lineage import LineageCoordinates, LineageNodePair, LineageVia
 
 
 class LineageRepository(RepositoryBase):
@@ -132,7 +132,7 @@ class LineageRepository(RepositoryBase):
     async def create_edges(
         self,
         orbit_id: UUID,
-        pairs: Sequence[tuple[UUID, UUID]],
+        pairs: Sequence[LineageNodePair],
         created_by_user: str,
         created_via: LineageVia,
         session: AsyncSession | None = None,
@@ -181,7 +181,7 @@ class LineageRepository(RepositoryBase):
     async def get_edges_by_pairs(
         self,
         orbit_id: UUID,
-        pairs: Sequence[tuple[UUID, UUID]],
+        pairs: Sequence[LineageNodePair],
         session: AsyncSession | None = None,
     ) -> list[LineageEdgeOrm]:
         if not pairs:
@@ -225,7 +225,7 @@ class LineageRepository(RepositoryBase):
     async def update_positions(
         self,
         orbit_id: UUID,
-        positions: dict[UUID, tuple[float, float]],
+        positions: dict[UUID, LineageCoordinates],
         session: AsyncSession | None = None,
     ) -> None:
         if not positions:

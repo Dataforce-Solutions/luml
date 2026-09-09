@@ -16,7 +16,6 @@ from luml.schemas.artifacts import (
     CreateArtifactResponse,
 )
 from luml.schemas.general import SortOrder
-from luml.schemas.lineage import LineageVia
 
 artifacts_router = APIRouter(
     prefix="/{organization_id}/orbits/{orbit_id}",
@@ -25,12 +24,6 @@ artifacts_router = APIRouter(
 )
 
 artifacts_handler = ArtifactHandler()
-
-
-def _creation_via(request: Request) -> LineageVia:
-    if "api_key" in request.auth.scopes:
-        return LineageVia.API
-    return LineageVia.UI
 
 
 @artifacts_router.post(
@@ -51,7 +44,7 @@ async def create_artifact(
         orbit_id,
         collection_id,
         artifact,
-        _creation_via(request),
+        request.auth.scopes,
     )
 
 

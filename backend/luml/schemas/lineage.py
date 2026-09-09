@@ -9,6 +9,9 @@ from luml.constants import LINEAGE_MAX_BATCH_ITEMS
 from luml.schemas.artifacts import ArtifactListed
 from luml.schemas.base import BaseOrmConfig
 
+LineageNodePair = tuple[UUID, UUID]
+LineageCoordinates = tuple[float, float]
+
 
 class LineageVia(StrEnum):
     UI = "ui"
@@ -28,8 +31,6 @@ class LineageNodeRef(BaseModel):
 
 class LineagePosition(BaseModel):
     ref: LineageNodeRef
-    # NaN and Infinity survive JSON parsing and would make every later graph
-    # response unencodable.
     x: float = Field(allow_inf_nan=False)
     y: float = Field(allow_inf_nan=False)
 

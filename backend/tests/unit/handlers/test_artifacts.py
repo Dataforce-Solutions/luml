@@ -38,13 +38,15 @@ from luml.schemas.bucket_secrets import S3BucketSecret
 from luml.schemas.collections import Collection, CollectionType
 from luml.schemas.deployment import Deployment, DeploymentBase, DeploymentStatus
 from luml.schemas.general import Cursor, PaginationParams, SortOrder
-from luml.schemas.lineage import LineageVia
 from luml.schemas.permissions import Action, Resource
 from luml.schemas.storage import S3UploadDetails
 from luml.utils.pagination import build_scope_id, encode_cursor
 from sqlalchemy.ext.asyncio import AsyncSession
 
 handler = ArtifactHandler()
+
+API_KEY_SCOPES = ["authenticated", "api_key"]
+JWT_SCOPES = ["authenticated", "jwt"]
 
 # Physical deletion runs in one lineage transaction; the stub hands every
 # repository call the same session and records an error that reaches it.
@@ -534,7 +536,7 @@ async def test_create_artifact_type_mismatch(
             orbit_id,
             collection_id,
             artifact_in,
-            LineageVia.API,
+            API_KEY_SCOPES,
         )
 
     assert error.value.status_code == 400
@@ -851,7 +853,7 @@ async def test_create_artifact(
         orbit_id,
         collection_id,
         artifact_in,
-        LineageVia.API,
+        API_KEY_SCOPES,
     )
 
     assert result.artifact == artifact
@@ -996,7 +998,7 @@ async def test_create_artifact_with_lineage_inputs(
         orbit_id,
         collection_id,
         artifact_in,
-        LineageVia.UI,
+        JWT_SCOPES,
     )
 
     assert result.artifact == created_artifact
@@ -1022,7 +1024,7 @@ async def test_create_artifact_with_lineage_inputs(
         orbit_id,
         artifact_id,
         [experiment_id, dataset_id],
-        LineageVia.UI,
+        JWT_SCOPES,
         check_access=False,
     )
 
@@ -1100,7 +1102,7 @@ async def test_create_artifact_rejects_lineage_input_outside_orbit(
             orbit_id,
             uuid7(),
             _artifact_create_input(manifest_example, [lineage_input]),
-            LineageVia.API,
+            API_KEY_SCOPES,
         )
 
     assert error.value.status_code == 404
@@ -1183,7 +1185,7 @@ async def test_create_artifact_records_nothing_when_upload_initialization_fails(
             uuid7(),
             uuid7(),
             _artifact_create_input(manifest_example, [lineage_input]),
-            LineageVia.API,
+            API_KEY_SCOPES,
         )
 
     # The upload is prepared before anything is written: neither an artifact
@@ -1272,7 +1274,7 @@ async def test_create_artifact_deletes_row_when_lineage_linking_fails(
             orbit_id,
             collection_id,
             _artifact_create_input(manifest_example, [lineage_input]),
-            LineageVia.API,
+            API_KEY_SCOPES,
         )
 
     assert error.value is linking_error
@@ -3199,7 +3201,7 @@ async def test_create_artifact_type_not_allowed(
             orbit_id,
             collection_id,
             artifact_in,
-            LineageVia.API,
+            API_KEY_SCOPES,
         )
 
     mock_check_permissions.assert_awaited_once_with(
@@ -3270,7 +3272,7 @@ async def test_create_artifact_user_not_found(
             orbit_id,
             collection_id,
             artifact_in,
-            LineageVia.API,
+            API_KEY_SCOPES,
         )
     mock_check_permissions.assert_awaited_once_with(
         organization_id, user_id, Resource.ARTIFACT, Action.CREATE, orbit_id

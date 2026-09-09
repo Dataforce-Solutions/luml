@@ -52,6 +52,8 @@ NEW_EDGE_A_ID = UUID("0199c337-0a06-7123-9ceb-2251e583cb88")
 NEW_EDGE_B_ID = UUID("0199c337-0a07-7fef-962d-435a52af014e")
 SECOND_EDGE_ID = UUID("0199c337-0a08-729d-a574-8909b52627b9")
 CREATED_AT = datetime(2026, 9, 3, tzinfo=UTC)
+API_KEY_SCOPES = ["authenticated", "api_key"]
+JWT_SCOPES = ["authenticated", "jwt"]
 
 handler = LineageHandler()
 
@@ -359,7 +361,7 @@ async def test_create_links_builds_a_chain_across_collections(
         ORBIT_ID,
         ARTIFACT_A_ID,
         [ARTIFACT_B_ID],
-        LineageVia.API,
+        API_KEY_SCOPES,
     )
     second = await handler.create_links(
         USER_ID,
@@ -367,7 +369,7 @@ async def test_create_links_builds_a_chain_across_collections(
         ORBIT_ID,
         ARTIFACT_B_ID,
         [ARTIFACT_C_ID],
-        LineageVia.API,
+        API_KEY_SCOPES,
     )
 
     mocks.get_node_by_artifact_id.return_value = model_node
@@ -428,7 +430,7 @@ async def test_create_links_collapses_duplicate_targets(
         ORBIT_ID,
         ARTIFACT_A_ID,
         [ARTIFACT_B_ID, ARTIFACT_C_ID, ARTIFACT_B_ID],
-        LineageVia.API,
+        API_KEY_SCOPES,
     )
 
     assert result == [edge.to_edge() for edge in created]
@@ -456,7 +458,7 @@ async def test_create_links_can_use_access_checked_by_artifact_creation(
         ORBIT_ID,
         ARTIFACT_A_ID,
         [ARTIFACT_B_ID],
-        LineageVia.API,
+        API_KEY_SCOPES,
         check_access=False,
     )
 
@@ -523,7 +525,7 @@ async def test_apply_changes_orders_operations_and_collapses_duplicate_pairs(
         ORGANIZATION_ID,
         ORBIT_ID,
         changes,
-        LineageVia.API,
+        API_KEY_SCOPES,
     )
 
     assert [edge.id for edge in result.deleted] == [EDGE_ID]
@@ -593,7 +595,7 @@ async def test_apply_changes_replaces_a_node_and_keeps_its_position(
         ORGANIZATION_ID,
         ORBIT_ID,
         changes,
-        LineageVia.UI,
+        JWT_SCOPES,
     )
 
     assert result.deleted == [deleted_edge.to_edge()]
@@ -657,7 +659,7 @@ async def test_apply_changes_replaces_a_deleted_node_with_all_of_its_connections
         ORGANIZATION_ID,
         ORBIT_ID,
         changes,
-        LineageVia.UI,
+        JWT_SCOPES,
     )
 
     assert result.deleted == [edge.to_edge() for edge in deleted_edges]
@@ -706,7 +708,7 @@ async def test_apply_changes_recreates_a_deleted_pair_with_a_new_edge(
         ORGANIZATION_ID,
         ORBIT_ID,
         changes,
-        LineageVia.API,
+        API_KEY_SCOPES,
     )
 
     assert result.deleted == [deleted_edge.to_edge()]
@@ -754,7 +756,7 @@ async def test_apply_changes_rejects_a_loop_and_rolls_back(
             ORGANIZATION_ID,
             ORBIT_ID,
             changes,
-            LineageVia.API,
+            API_KEY_SCOPES,
         )
 
     assert error.value.status_code == 400
@@ -790,7 +792,7 @@ async def test_apply_changes_rejects_existing_pair_in_either_direction(
             ORGANIZATION_ID,
             ORBIT_ID,
             _creation_changes(),
-            LineageVia.UI,
+            JWT_SCOPES,
         )
 
     assert error.value.status_code == 409
@@ -821,7 +823,7 @@ async def test_apply_changes_rejects_reverse_pairs_in_the_same_batch(
             ORGANIZATION_ID,
             ORBIT_ID,
             changes,
-            LineageVia.API,
+            API_KEY_SCOPES,
         )
 
     assert error.value.status_code == 409
@@ -842,7 +844,7 @@ async def test_apply_changes_rejects_artifact_outside_the_orbit(
             ORGANIZATION_ID,
             ORBIT_ID,
             _creation_changes(),
-            LineageVia.API,
+            API_KEY_SCOPES,
         )
 
     mocks.get_or_create_node.assert_not_awaited()
@@ -870,7 +872,7 @@ async def test_apply_changes_rejects_node_outside_the_orbit(
             ORGANIZATION_ID,
             ORBIT_ID,
             changes,
-            LineageVia.API,
+            API_KEY_SCOPES,
         )
 
     mocks.get_nodes_by_ids.assert_awaited_once_with(
@@ -907,7 +909,7 @@ async def test_apply_changes_can_connect_to_a_deleted_artifact_node(
         ORGANIZATION_ID,
         ORBIT_ID,
         changes,
-        LineageVia.API,
+        API_KEY_SCOPES,
     )
 
     assert result.created == [edge.to_edge()]
@@ -925,7 +927,7 @@ async def test_apply_changes_rejects_an_edge_outside_the_orbit(
             ORGANIZATION_ID,
             ORBIT_ID,
             LineageBatchIn(delete=[EDGE_ID]),
-            LineageVia.API,
+            API_KEY_SCOPES,
         )
 
     mocks.delete_edges.assert_not_awaited()
@@ -943,7 +945,7 @@ async def test_apply_changes_empty_batch_returns_empty_result(
         ORGANIZATION_ID,
         ORBIT_ID,
         LineageBatchIn(),
-        LineageVia.UI,
+        JWT_SCOPES,
     )
 
     assert result.created == []
@@ -981,6 +983,7 @@ async def test_delete_link_accepts_either_edge_end(
         ORBIT_ID,
         artifact_id,
         EDGE_ID,
+        JWT_SCOPES,
     )
 
     assert result == edge.to_edge()
@@ -1001,6 +1004,7 @@ async def test_delete_link_rejects_an_artifact_outside_the_orbit(
             ORBIT_ID,
             ARTIFACT_A_ID,
             EDGE_ID,
+            JWT_SCOPES,
         )
 
     mocks.get_node_by_artifact_id.assert_not_awaited()
@@ -1028,6 +1032,7 @@ async def test_delete_link_rejects_a_foreign_or_non_owned_edge(
             ORBIT_ID,
             ARTIFACT_C_ID,
             EDGE_ID,
+            JWT_SCOPES,
         )
 
     mocks.delete_edges.assert_not_awaited()
@@ -1049,7 +1054,7 @@ async def test_write_permission_failure_prevents_repository_access(
             ORGANIZATION_ID,
             ORBIT_ID,
             _creation_changes(),
-            LineageVia.API,
+            API_KEY_SCOPES,
         )
     elif operation == "single-create":
         operation_call = handler.create_links(
@@ -1058,7 +1063,7 @@ async def test_write_permission_failure_prevents_repository_access(
             ORBIT_ID,
             ARTIFACT_A_ID,
             [ARTIFACT_B_ID],
-            LineageVia.API,
+            API_KEY_SCOPES,
         )
     else:
         operation_call = handler.delete_link(
@@ -1067,6 +1072,7 @@ async def test_write_permission_failure_prevents_repository_access(
             ORBIT_ID,
             ARTIFACT_A_ID,
             EDGE_ID,
+            JWT_SCOPES,
         )
 
     with pytest.raises(InsufficientPermissionsError):
@@ -1092,7 +1098,7 @@ async def test_orbit_must_belong_to_the_organization(
             ORGANIZATION_ID,
             ORBIT_ID,
             LineageBatchIn(),
-            LineageVia.API,
+            API_KEY_SCOPES,
         )
 
     mocks.delete_edgeless_nodes.assert_not_awaited()
@@ -1222,7 +1228,7 @@ async def test_apply_changes_maps_a_lost_creation_race_to_conflict(
 
     with pytest.raises(ApplicationError) as error:
         await handler.apply_changes(
-            USER_ID, ORGANIZATION_ID, ORBIT_ID, _creation_changes(), LineageVia.UI
+            USER_ID, ORGANIZATION_ID, ORBIT_ID, _creation_changes(), JWT_SCOPES
         )
 
     assert error.value.status_code == 409
@@ -1263,7 +1269,7 @@ async def test_link_inputs_records_every_input_in_one_transaction(
         ORBIT_ID,
         ARTIFACT_C_ID,
         [ARTIFACT_A_ID, ARTIFACT_B_ID, ARTIFACT_A_ID],
-        LineageVia.API,
+        API_KEY_SCOPES,
         check_access=False,
     )
 
@@ -1286,7 +1292,7 @@ async def test_link_inputs_without_inputs_touches_nothing(
     mocks = lineage_mocks
 
     result = await handler.link_inputs(
-        USER_ID, ORGANIZATION_ID, ORBIT_ID, ARTIFACT_C_ID, [], LineageVia.API
+        USER_ID, ORGANIZATION_ID, ORBIT_ID, ARTIFACT_C_ID, [], API_KEY_SCOPES
     )
 
     assert result == []
@@ -1304,7 +1310,7 @@ async def test_apply_changes_requires_a_known_user_for_creations(
 
     with pytest.raises(NotFoundError, match="User not found"):
         await handler.apply_changes(
-            USER_ID, ORGANIZATION_ID, ORBIT_ID, _creation_changes(), LineageVia.API
+            USER_ID, ORGANIZATION_ID, ORBIT_ID, _creation_changes(), API_KEY_SCOPES
         )
 
     mocks.get_user.assert_awaited_once_with(USER_ID)
@@ -1326,7 +1332,7 @@ async def test_link_inputs_checks_access_by_default(
         ORBIT_ID,
         ARTIFACT_B_ID,
         [ARTIFACT_A_ID],
-        LineageVia.API,
+        API_KEY_SCOPES,
     )
 
     assert result == [edge.to_edge() for edge in created]
@@ -1356,18 +1362,14 @@ async def test_resolve_positions_skips_a_reference_without_identifier(
 ) -> None:
     mocks = lineage_mocks
     mocks.get_nodes_by_ids.return_value = [_node(NODE_A_ID, ARTIFACT_A_ID, "A")]
-    changes = LineageBatchIn.model_construct(
-        create=[],
-        delete=[],
-        positions=[
-            LineagePosition.model_construct(
-                ref=LineageNodeRef.model_construct(), x=1.0, y=2.0
-            ),
-            LineagePosition(ref=LineageNodeRef(node_id=NODE_A_ID), x=3.0, y=4.0),
-        ],
-    )
+    positions = [
+        LineagePosition.model_construct(
+            ref=LineageNodeRef.model_construct(), x=1.0, y=2.0
+        ),
+        LineagePosition(ref=LineageNodeRef(node_id=NODE_A_ID), x=3.0, y=4.0),
+    ]
 
-    resolved = await handler._resolve_positions(ORBIT_ID, changes, mocks.session)
+    resolved = await handler._resolve_positions(ORBIT_ID, positions, mocks.session)
 
     assert resolved == {NODE_A_ID: (3.0, 4.0)}
     mocks.get_nodes_by_artifact_ids.assert_awaited_once_with(

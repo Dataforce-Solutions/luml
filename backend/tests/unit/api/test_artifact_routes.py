@@ -9,7 +9,6 @@ from luml.schemas.artifacts import (
     CreateArtifactResponse,
     LumlArtifactManifest,
 )
-from luml.schemas.lineage import LineageVia
 
 USER_ID = UUID("0199c337-09f1-7d8f-b0c4-b68349bbe24b")
 ORGANIZATION_ID = UUID("0199c337-09f2-7af1-af5e-83fd7a5b51a0")
@@ -18,19 +17,15 @@ COLLECTION_ID = UUID("0199c337-09f4-7a01-9f5f-5f68db62cf70")
 LINEAGE_INPUT_ID = UUID("0199c337-09fa-7ff6-b1e7-fc89a65f8622")
 
 
-@pytest.mark.parametrize(
-    ("scope", "via"),
-    [("jwt", LineageVia.UI), ("api_key", LineageVia.API)],
-)
+@pytest.mark.parametrize("scope", ["jwt", "api_key"])
 @patch(
     "luml.handlers.artifacts.ArtifactHandler.create_artifact",
     new_callable=AsyncMock,
 )
 @pytest.mark.asyncio
-async def test_create_artifact_route_forwards_inputs_and_creation_channel(
+async def test_create_artifact_route_forwards_inputs_and_auth_scopes(
     mock_create_artifact: AsyncMock,
     scope: str,
-    via: LineageVia,
 ) -> None:
     request = Mock(spec=Request)
     request.user = Mock(id=USER_ID)
@@ -70,5 +65,5 @@ async def test_create_artifact_route_forwards_inputs_and_creation_channel(
         ORBIT_ID,
         COLLECTION_ID,
         artifact,
-        via,
+        ["authenticated", scope],
     )

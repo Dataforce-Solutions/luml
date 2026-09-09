@@ -156,7 +156,7 @@ def test_get_lineage_rejects_depth_outside_bounds(
     "luml.handlers.lineage.LineageHandler.create_links",
     new_callable=AsyncMock,
 )
-def test_create_lineage_derives_creation_channel_from_authentication(
+def test_create_lineage_forwards_auth_scopes(
     mock_create_links: AsyncMock,
     scope: str,
     via: LineageVia,
@@ -176,7 +176,7 @@ def test_create_lineage_derives_creation_channel_from_authentication(
         ORBIT_ID,
         ARTIFACT_A_ID,
         [ARTIFACT_B_ID, ARTIFACT_B_ID],
-        via,
+        ["authenticated", scope],
     )
 
 
@@ -199,7 +199,7 @@ def test_delete_lineage_forwards_artifact_and_edge_ids(
         ORBIT_ID,
         ARTIFACT_A_ID,
         EDGE_ID,
-        LineageVia.UI,
+        ["authenticated", "jwt"],
     )
 
 
@@ -211,7 +211,7 @@ def test_delete_lineage_forwards_artifact_and_edge_ids(
     "luml.handlers.lineage.LineageHandler.apply_changes",
     new_callable=AsyncMock,
 )
-def test_batch_parses_changes_and_derives_creation_channel(
+def test_batch_parses_changes_and_forwards_auth_scopes(
     mock_apply_changes: AsyncMock,
     scope: str,
     via: LineageVia,
@@ -244,7 +244,7 @@ def test_batch_parses_changes_and_derives_creation_channel(
         ORGANIZATION_ID,
         ORBIT_ID,
         LineageBatchIn.model_validate(body),
-        via,
+        ["authenticated", scope],
     )
 
 

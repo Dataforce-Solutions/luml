@@ -1,3 +1,4 @@
+from collections.abc import Iterable, Sequence
 from uuid import UUID
 
 from fastapi import status
@@ -12,19 +13,23 @@ from luml.infra.exceptions import (
     NotFoundError,
     OrbitNotFoundError,
 )
-from luml.models.lineage import LineageNodeOrm
+from luml.models.lineage import LineageEdgeOrm, LineageNodeOrm
 from luml.repositories.artifacts import ArtifactRepository
 from luml.repositories.lineage import LineageRepository
 from luml.repositories.orbits import OrbitRepository
 from luml.repositories.users import UserRepository
+from luml.schemas.artifacts import ArtifactListed
 from luml.schemas.lineage import (
     LineageBatchIn,
     LineageBatchResult,
+    LineageCoordinates,
     LineageEdge,
     LineageGraph,
     LineageNode,
+    LineageNodePair,
     LineageNodeRef,
     LineagePair,
+    LineagePosition,
     LineageVia,
 )
 from luml.schemas.permissions import Action, Resource
@@ -36,6 +41,342 @@ class LineageHandler:
     __orbit_repository = OrbitRepository(engine)
     __user_repository = UserRepository(engine)
     __permissions_handler = PermissionsHandler()
+
+    @staticmethod
+    def _creation_via(auth_scopes: Sequence[str]) -> LineageVia:
+        if "api_key" in auth_scopes:
+            return LineageVia.API
+        return LineageVia.UI
+
+    @staticmethod
+    def _artifact_ids(refs: Iterable[LineageNodeRef]) -> list[UUID]:
+        return list(
+            dict.fromkeys(
+                ref.artifact_id for ref in refs if ref.artifact_id is not None
+            )
+        )
+
+    @staticmethod
+    def _node_ids(refs: Iterable[LineageNodeRef]) -> list[UUID]:
+        return list(
+            dict.fromkeys(ref.node_id for ref in refs if ref.node_id is not None)
+        )
+
+    @staticmethod
+    def _resolve_node_reference(
+        ref: LineageNodeRef,
+        nodes_by_id: dict[UUID, LineageNodeOrm],
+        nodes_by_artifact_id: dict[UUID, LineageNodeOrm],
+    ) -> UUID:
+        if ref.node_id is not None:
+            return nodes_by_id[ref.node_id].id
+        if ref.artifact_id is None:
+            raise RuntimeError("Validated lineage reference has no identifier")
+        return nodes_by_artifact_id[ref.artifact_id].id
+
+    @staticmethod
+    def _find_node(
+        ref: LineageNodeRef,
+        nodes_by_id: dict[UUID, LineageNodeOrm],
+        nodes_by_artifact_id: dict[UUID, LineageNodeOrm],
+    ) -> LineageNodeOrm | None:
+        if ref.node_id is not None:
+            return nodes_by_id.get(ref.node_id)
+        if ref.artifact_id is not None:
+            return nodes_by_artifact_id.get(ref.artifact_id)
+        return None
+
+    @staticmethod
+    def _dedupe_pairs(node_pairs: Iterable[LineageNodePair]) -> list[LineageNodePair]:
+        resolved: list[LineageNodePair] = []
+        seen: set[LineageNodePair] = set()
+        for source, target in node_pairs:
+            if source == target:
+                raise ApplicationError(
+                    "Artifact cannot be linked to itself",
+                    status.HTTP_400_BAD_REQUEST,
+                )
+            if (source, target) in seen:
+                continue
+            if (target, source) in seen:
+                raise ApplicationError(
+                    "Reverse lineage connection already exists",
+                    status.HTTP_409_CONFLICT,
+                )
+            seen.add((source, target))
+            resolved.append((source, target))
+        return resolved
+
+    @staticmethod
+    def _check_existing_pairs(
+        node_pairs: Iterable[LineageNodePair],
+        existing_edges: Iterable[LineageEdgeOrm],
+    ) -> None:
+        existing_pairs = {
+            (edge.source_node_id, edge.target_node_id) for edge in existing_edges
+        }
+        for source, target in node_pairs:
+            if (source, target) in existing_pairs:
+                raise ApplicationError(
+                    "Lineage connection already exists",
+                    status.HTTP_409_CONFLICT,
+                )
+            if (target, source) in existing_pairs:
+                raise ApplicationError(
+                    "Reverse lineage connection already exists",
+                    status.HTTP_409_CONFLICT,
+                )
+
+    @staticmethod
+    def _build_lineage_node(
+        node: LineageNodeOrm, data: ArtifactListed | None
+    ) -> LineageNode:
+        return LineageNode(
+            id=node.id,
+            artifact_id=node.artifact_id,
+            type=data.type.value if data else node.type,
+            name=(data.name or node.name) if data else node.name,
+            collection_name=data.collection_name if data else node.collection_name,
+            x=node.x,
+            y=node.y,
+            is_deleted=node.artifact_id is None,
+            data=data,
+        )
+
+    async def _apply_batch(
+        self,
+        user_id: UUID,
+        organization_id: UUID,
+        orbit_id: UUID,
+        changes: LineageBatchIn,
+        auth_scopes: Sequence[str],
+        *,
+        check_access: bool,
+    ) -> LineageBatchResult:
+        if check_access:
+            await self._check_access(user_id, organization_id, orbit_id, Action.UPDATE)
+        return await self._apply_changes(
+            user_id, orbit_id, changes, self._creation_via(auth_scopes)
+        )
+
+    async def _apply_changes(
+        self,
+        user_id: UUID,
+        orbit_id: UUID,
+        changes: LineageBatchIn,
+        via: LineageVia,
+    ) -> LineageBatchResult:
+        created_by_user = (
+            await self._get_created_by_user(user_id) if changes.create else ""
+        )
+
+        async with self.__repository.transaction() as session:
+            deleted, touched_node_ids = await self._delete_edges(
+                orbit_id, changes.delete, session
+            )
+            created = await self._create_edges(
+                orbit_id, changes.create, created_by_user, via, session
+            )
+            await self._update_positions(orbit_id, changes.positions, session)
+            if touched_node_ids:
+                await self.__repository.delete_edgeless_nodes(
+                    orbit_id, session, touched_node_ids
+                )
+
+            return LineageBatchResult(created=created, deleted=deleted)
+
+    async def _delete_edges(
+        self,
+        orbit_id: UUID,
+        edge_ids: list[UUID],
+        session: AsyncSession,
+    ) -> tuple[list[LineageEdge], list[UUID]]:
+        delete_ids = list(dict.fromkeys(edge_ids))
+        if not delete_ids:
+            return [], []
+
+        edges = await self._get_edges(orbit_id, delete_ids, session)
+        deleted = [edge.to_edge() for edge in edges]
+        touched_node_ids = list(
+            dict.fromkeys(
+                node_id
+                for edge in edges
+                for node_id in (edge.source_node_id, edge.target_node_id)
+            )
+        )
+        await self.__repository.delete_edges(orbit_id, delete_ids, session)
+        return deleted, touched_node_ids
+
+    async def _create_edges(
+        self,
+        orbit_id: UUID,
+        pairs: list[LineagePair],
+        created_by_user: str,
+        via: LineageVia,
+        session: AsyncSession,
+    ) -> list[LineageEdge]:
+        if not pairs:
+            return []
+
+        node_pairs = await self._resolve_creation_pairs(orbit_id, pairs, session)
+
+        existing_edges = await self.__repository.get_edges_by_pairs(
+            orbit_id, node_pairs, session
+        )
+        self._check_existing_pairs(node_pairs, existing_edges)
+
+        try:
+            edges = await self.__repository.create_edges(
+                orbit_id, node_pairs, created_by_user, via, session
+            )
+        except IntegrityError as error:
+            raise ApplicationError(
+                "Lineage connection already exists",
+                status.HTTP_409_CONFLICT,
+            ) from error
+        return [edge.to_edge() for edge in edges]
+
+    async def _update_positions(
+        self,
+        orbit_id: UUID,
+        positions: list[LineagePosition],
+        session: AsyncSession,
+    ) -> None:
+        if not positions:
+            return
+
+        resolved = await self._resolve_positions(orbit_id, positions, session)
+
+        await self.__repository.update_positions(orbit_id, resolved, session)
+
+    async def _resolve_creation_pairs(
+        self,
+        orbit_id: UUID,
+        pairs: list[LineagePair],
+        session: AsyncSession,
+    ) -> list[LineageNodePair]:
+        refs = [ref for pair in pairs for ref in (pair.source, pair.target)]
+
+        artifacts_by_id = await self._get_artifacts(
+            orbit_id, self._artifact_ids(refs), session
+        )
+
+        nodes_by_id = await self._get_nodes(orbit_id, self._node_ids(refs), session)
+        nodes_by_artifact_id = await self._get_or_create_nodes(
+            orbit_id, artifacts_by_id, session
+        )
+        return self._dedupe_pairs(
+            (
+                self._resolve_node_reference(
+                    pair.source, nodes_by_id, nodes_by_artifact_id
+                ),
+                self._resolve_node_reference(
+                    pair.target, nodes_by_id, nodes_by_artifact_id
+                ),
+            )
+            for pair in pairs
+        )
+
+    async def _resolve_positions(
+        self,
+        orbit_id: UUID,
+        positions: list[LineagePosition],
+        session: AsyncSession,
+    ) -> dict[UUID, LineageCoordinates]:
+        refs = [position.ref for position in positions]
+        artifact_nodes = await self.__repository.get_nodes_by_artifact_ids(
+            orbit_id, self._artifact_ids(refs), session
+        )
+
+        nodes = await self.__repository.get_nodes_by_ids(
+            orbit_id, self._node_ids(refs), session
+        )
+
+        nodes_by_id = {node.id: node for node in nodes}
+        nodes_by_artifact_id = {
+            node.artifact_id: node
+            for node in artifact_nodes
+            if node.artifact_id is not None
+        }
+
+        resolved: dict[UUID, LineageCoordinates] = {}
+
+        for position in positions:
+            node = self._find_node(position.ref, nodes_by_id, nodes_by_artifact_id)
+            if node is not None:
+                resolved[node.id] = (position.x, position.y)
+
+        return resolved
+
+    async def _get_artifacts(
+        self,
+        orbit_id: UUID,
+        artifact_ids: list[UUID],
+        session: AsyncSession | None = None,
+    ) -> dict[UUID, ArtifactListed]:
+        artifacts = await self.__artifact_repository.get_artifacts_by_ids_in_orbit(
+            orbit_id, artifact_ids, session
+        )
+
+        artifacts_by_id = {artifact.id: artifact for artifact in artifacts}
+
+        if set(artifacts_by_id) != set(artifact_ids):
+            raise ArtifactNotFoundError()
+
+        return artifacts_by_id
+
+    async def _get_live_artifacts(
+        self, orbit_id: UUID, nodes: Sequence[LineageNodeOrm]
+    ) -> dict[UUID, ArtifactListed]:
+        live_artifact_ids = [
+            node.artifact_id for node in nodes if node.artifact_id is not None
+        ]
+        artifacts = await self.__artifact_repository.get_artifacts_by_ids_in_orbit(
+            orbit_id, live_artifact_ids
+        )
+        return {artifact.id: artifact for artifact in artifacts}
+
+    async def _get_nodes(
+        self,
+        orbit_id: UUID,
+        node_ids: list[UUID],
+        session: AsyncSession,
+    ) -> dict[UUID, LineageNodeOrm]:
+        nodes = await self.__repository.get_nodes_by_ids(orbit_id, node_ids, session)
+        nodes_by_id = {node.id: node for node in nodes}
+
+        if set(nodes_by_id) != set(node_ids):
+            raise NotFoundError("Lineage node not found")
+
+        return nodes_by_id
+
+    async def _get_or_create_nodes(
+        self,
+        orbit_id: UUID,
+        artifacts_by_id: dict[UUID, ArtifactListed],
+        session: AsyncSession,
+    ) -> dict[UUID, LineageNodeOrm]:
+        nodes: dict[UUID, LineageNodeOrm] = {}
+
+        for artifact_id in sorted(artifacts_by_id):
+            nodes[artifact_id] = await self.__repository.get_or_create_node(
+                orbit_id, artifacts_by_id[artifact_id], session
+            )
+
+        return nodes
+
+    async def _get_edges(
+        self,
+        orbit_id: UUID,
+        edge_ids: list[UUID],
+        session: AsyncSession,
+    ) -> list[LineageEdgeOrm]:
+        edges = await self.__repository.get_edges_by_ids(orbit_id, edge_ids, session)
+
+        if {edge.id for edge in edges} != set(edge_ids):
+            raise NotFoundError("Lineage connection not found")
+
+        return edges
 
     async def _check_access(
         self,
@@ -51,227 +392,21 @@ class LineageHandler:
             action,
             orbit_id,
         )
+
         orbit = await self.__orbit_repository.get_orbit_simple(
             orbit_id, organization_id
         )
+
         if not orbit:
             raise OrbitNotFoundError()
 
     async def _get_created_by_user(self, user_id: UUID) -> str:
         user = await self.__user_repository.get_public_user_by_id(user_id)
+
         if not user:
             raise NotFoundError("User not found")
+
         return str(user.full_name or user.email)
-
-    @staticmethod
-    def _resolve_node_reference(
-        ref: LineageNodeRef,
-        nodes_by_id: dict[UUID, LineageNodeOrm],
-        nodes_by_artifact_id: dict[UUID, LineageNodeOrm],
-    ) -> UUID:
-        if ref.node_id is not None:
-            return nodes_by_id[ref.node_id].id
-        if ref.artifact_id is None:
-            raise RuntimeError("Validated lineage reference has no identifier")
-        return nodes_by_artifact_id[ref.artifact_id].id
-
-    async def _resolve_creation_pairs(
-        self,
-        orbit_id: UUID,
-        pairs: list[LineagePair],
-        session: AsyncSession,
-    ) -> list[tuple[UUID, UUID]]:
-        artifact_ids = list(
-            dict.fromkeys(
-                ref.artifact_id
-                for pair in pairs
-                for ref in (pair.source, pair.target)
-                if ref.artifact_id is not None
-            )
-        )
-        artifacts = await self.__artifact_repository.get_artifacts_by_ids_in_orbit(
-            orbit_id, artifact_ids, session
-        )
-        artifacts_by_id = {artifact.id: artifact for artifact in artifacts}
-        if set(artifacts_by_id) != set(artifact_ids):
-            raise ArtifactNotFoundError()
-
-        node_ids = list(
-            dict.fromkeys(
-                ref.node_id
-                for pair in pairs
-                for ref in (pair.source, pair.target)
-                if ref.node_id is not None
-            )
-        )
-        nodes = await self.__repository.get_nodes_by_ids(orbit_id, node_ids, session)
-        nodes_by_id = {node.id: node for node in nodes}
-        if set(nodes_by_id) != set(node_ids):
-            raise NotFoundError("Lineage node not found")
-
-        # Nodes are created in a fixed order: two requests inserting the same
-        # nodes in opposite orders would otherwise deadlock on the unique index.
-        nodes_by_artifact_id: dict[UUID, LineageNodeOrm] = {}
-        for artifact_id in sorted(artifact_ids):
-            nodes_by_artifact_id[
-                artifact_id
-            ] = await self.__repository.get_or_create_node(
-                orbit_id, artifacts_by_id[artifact_id], session
-            )
-
-        resolved: list[tuple[UUID, UUID]] = []
-        seen: set[tuple[UUID, UUID]] = set()
-        for pair in pairs:
-            node_pair = (
-                self._resolve_node_reference(
-                    pair.source, nodes_by_id, nodes_by_artifact_id
-                ),
-                self._resolve_node_reference(
-                    pair.target, nodes_by_id, nodes_by_artifact_id
-                ),
-            )
-            if node_pair[0] == node_pair[1]:
-                raise ApplicationError(
-                    "Artifact cannot be linked to itself",
-                    status.HTTP_400_BAD_REQUEST,
-                )
-            if node_pair in seen:
-                continue
-            if (node_pair[1], node_pair[0]) in seen:
-                raise ApplicationError(
-                    "Reverse lineage connection already exists",
-                    status.HTTP_409_CONFLICT,
-                )
-            seen.add(node_pair)
-            resolved.append(node_pair)
-        return resolved
-
-    async def _resolve_positions(
-        self,
-        orbit_id: UUID,
-        changes: LineageBatchIn,
-        session: AsyncSession,
-    ) -> dict[UUID, tuple[float, float]]:
-        artifact_ids = list(
-            dict.fromkeys(
-                position.ref.artifact_id
-                for position in changes.positions
-                if position.ref.artifact_id is not None
-            )
-        )
-        node_ids = list(
-            dict.fromkeys(
-                position.ref.node_id
-                for position in changes.positions
-                if position.ref.node_id is not None
-            )
-        )
-        artifact_nodes = await self.__repository.get_nodes_by_artifact_ids(
-            orbit_id, artifact_ids, session
-        )
-        nodes = await self.__repository.get_nodes_by_ids(orbit_id, node_ids, session)
-        by_artifact_id = {
-            node.artifact_id: node
-            for node in artifact_nodes
-            if node.artifact_id is not None
-        }
-        by_node_id = {node.id: node for node in nodes}
-
-        resolved: dict[UUID, tuple[float, float]] = {}
-        for position in changes.positions:
-            ref = position.ref
-            if ref.node_id is not None:
-                node = by_node_id.get(ref.node_id)
-            elif ref.artifact_id is not None:
-                node = by_artifact_id.get(ref.artifact_id)
-            else:
-                continue
-            if node is not None:
-                resolved[node.id] = (position.x, position.y)
-        return resolved
-
-    async def _apply_changes(
-        self,
-        user_id: UUID,
-        orbit_id: UUID,
-        changes: LineageBatchIn,
-        via: LineageVia,
-    ) -> LineageBatchResult:
-        created_by_user = (
-            await self._get_created_by_user(user_id) if changes.create else ""
-        )
-
-        async with self.__repository.transaction() as session:
-            delete_ids = list(dict.fromkeys(changes.delete))
-            deleted: list[LineageEdge] = []
-            touched_node_ids: list[UUID] = []
-            if delete_ids:
-                deleted_models = await self.__repository.get_edges_by_ids(
-                    orbit_id, delete_ids, session
-                )
-                if {edge.id for edge in deleted_models} != set(delete_ids):
-                    raise NotFoundError("Lineage connection not found")
-                deleted = [edge.to_edge() for edge in deleted_models]
-                touched_node_ids = list(
-                    dict.fromkeys(
-                        node_id
-                        for edge in deleted_models
-                        for node_id in (edge.source_node_id, edge.target_node_id)
-                    )
-                )
-                await self.__repository.delete_edges(orbit_id, delete_ids, session)
-
-            created: list[LineageEdge] = []
-            if changes.create:
-                pairs = await self._resolve_creation_pairs(
-                    orbit_id, changes.create, session
-                )
-                existing_edges = await self.__repository.get_edges_by_pairs(
-                    orbit_id, pairs, session
-                )
-                existing_pairs = {
-                    (edge.source_node_id, edge.target_node_id)
-                    for edge in existing_edges
-                }
-                for source, target in pairs:
-                    if (source, target) in existing_pairs:
-                        raise ApplicationError(
-                            "Lineage connection already exists",
-                            status.HTTP_409_CONFLICT,
-                        )
-                    if (target, source) in existing_pairs:
-                        raise ApplicationError(
-                            "Reverse lineage connection already exists",
-                            status.HTTP_409_CONFLICT,
-                        )
-
-                try:
-                    created_models = await self.__repository.create_edges(
-                        orbit_id,
-                        pairs,
-                        created_by_user,
-                        via,
-                        session,
-                    )
-                except IntegrityError as error:
-                    # A concurrent request created the pair, or its reverse,
-                    # between the check above and this insert.
-                    raise ApplicationError(
-                        "Lineage connection already exists",
-                        status.HTTP_409_CONFLICT,
-                    ) from error
-                created = [edge.to_edge() for edge in created_models]
-
-            if changes.positions:
-                positions = await self._resolve_positions(orbit_id, changes, session)
-                await self.__repository.update_positions(orbit_id, positions, session)
-            # Only the ends of removed edges can have lost their last edge.
-            if touched_node_ids:
-                await self.__repository.delete_edgeless_nodes(
-                    orbit_id, session, touched_node_ids
-                )
-
-            return LineageBatchResult(created=created, deleted=deleted)
 
     async def apply_changes(
         self,
@@ -279,10 +414,11 @@ class LineageHandler:
         organization_id: UUID,
         orbit_id: UUID,
         changes: LineageBatchIn,
-        via: LineageVia,
+        auth_scopes: Sequence[str],
     ) -> LineageBatchResult:
-        await self._check_access(user_id, organization_id, orbit_id, Action.UPDATE)
-        return await self._apply_changes(user_id, orbit_id, changes, via)
+        return await self._apply_batch(
+            user_id, organization_id, orbit_id, changes, auth_scopes, check_access=True
+        )
 
     async def create_links(
         self,
@@ -291,7 +427,7 @@ class LineageHandler:
         orbit_id: UUID,
         source_artifact_id: UUID,
         target_artifact_ids: list[UUID],
-        via: LineageVia,
+        auth_scopes: Sequence[str],
         *,
         check_access: bool = True,
     ) -> list[LineageEdge]:
@@ -304,12 +440,14 @@ class LineageHandler:
                 for target_artifact_id in target_artifact_ids
             ]
         )
-        if check_access:
-            result = await self.apply_changes(
-                user_id, organization_id, orbit_id, changes, via
-            )
-        else:
-            result = await self._apply_changes(user_id, orbit_id, changes, via)
+        result = await self._apply_batch(
+            user_id,
+            organization_id,
+            orbit_id,
+            changes,
+            auth_scopes,
+            check_access=check_access,
+        )
         return result.created
 
     async def link_inputs(
@@ -319,11 +457,10 @@ class LineageHandler:
         orbit_id: UUID,
         artifact_id: UUID,
         input_artifact_ids: list[UUID],
-        via: LineageVia,
+        auth_scopes: Sequence[str],
         *,
         check_access: bool = True,
     ) -> list[LineageEdge]:
-        """Record ``input -> artifact`` for every input in one transaction."""
         changes = LineageBatchIn(
             create=[
                 LineagePair(
@@ -333,11 +470,19 @@ class LineageHandler:
                 for input_artifact_id in dict.fromkeys(input_artifact_ids)
             ]
         )
+
         if not changes.create:
             return []
-        if check_access:
-            await self._check_access(user_id, organization_id, orbit_id, Action.UPDATE)
-        result = await self._apply_changes(user_id, orbit_id, changes, via)
+
+        result = await self._apply_batch(
+            user_id,
+            organization_id,
+            orbit_id,
+            changes,
+            auth_scopes,
+            check_access=check_access,
+        )
+
         return result.created
 
     async def delete_link(
@@ -347,17 +492,14 @@ class LineageHandler:
         orbit_id: UUID,
         artifact_id: UUID,
         edge_id: UUID,
-        via: LineageVia = LineageVia.UI,
+        auth_scopes: Sequence[str],
     ) -> LineageEdge:
         await self._check_access(user_id, organization_id, orbit_id, Action.UPDATE)
-        artifacts = await self.__artifact_repository.get_artifacts_by_ids_in_orbit(
-            orbit_id, [artifact_id]
-        )
-        if not artifacts:
-            raise ArtifactNotFoundError()
+        await self._get_artifacts(orbit_id, [artifact_id])
 
         node = await self.__repository.get_node_by_artifact_id(orbit_id, artifact_id)
         edges = await self.__repository.get_edges_by_ids(orbit_id, [edge_id])
+
         if (
             node is None
             or not edges
@@ -369,8 +511,9 @@ class LineageHandler:
             user_id,
             orbit_id,
             LineageBatchIn(delete=[edge_id]),
-            via,
+            self._creation_via(auth_scopes),
         )
+
         return result.deleted[0]
 
     async def get_graph(
@@ -382,17 +525,12 @@ class LineageHandler:
         depth: int | None,
     ) -> LineageGraph:
         await self._check_access(user_id, organization_id, orbit_id, Action.READ)
-        focal_artifacts = (
-            await self.__artifact_repository.get_artifacts_by_ids_in_orbit(
-                orbit_id, [artifact_id]
-            )
-        )
-        if not focal_artifacts:
-            raise ArtifactNotFoundError()
+        await self._get_artifacts(orbit_id, [artifact_id])
 
         focal_node = await self.__repository.get_node_by_artifact_id(
             orbit_id, artifact_id
         )
+
         if focal_node is None:
             return LineageGraph(
                 nodes=[],
@@ -402,43 +540,24 @@ class LineageHandler:
                 truncated=False,
             )
 
-        nodes, edge_models, truncated = await self.__repository.traverse(
+        nodes, edges, truncated = await self.__repository.traverse(
             orbit_id, focal_node.id, depth
         )
-        live_artifact_ids = [
-            node.artifact_id for node in nodes if node.artifact_id is not None
-        ]
-        live_artifacts = await self.__artifact_repository.get_artifacts_by_ids_in_orbit(
-            orbit_id, live_artifact_ids
-        )
-        artifacts_by_id = {artifact.id: artifact for artifact in live_artifacts}
+        artifacts_by_id = await self._get_live_artifacts(orbit_id, nodes)
 
-        lineage_nodes: list[LineageNode] = []
-        for node in nodes:
-            data = (
+        lineage_nodes = [
+            self._build_lineage_node(
+                node,
                 artifacts_by_id.get(node.artifact_id)
                 if node.artifact_id is not None
-                else None
+                else None,
             )
-            lineage_nodes.append(
-                LineageNode(
-                    id=node.id,
-                    artifact_id=node.artifact_id,
-                    type=data.type.value if data else node.type,
-                    name=(data.name or node.name) if data else node.name,
-                    collection_name=(
-                        data.collection_name if data else node.collection_name
-                    ),
-                    x=node.x,
-                    y=node.y,
-                    is_deleted=node.artifact_id is None,
-                    data=data,
-                )
-            )
+            for node in nodes
+        ]
 
         return LineageGraph(
             nodes=lineage_nodes,
-            edges=[edge.to_edge() for edge in edge_models],
+            edges=[edge.to_edge() for edge in edges],
             focal_artifact_id=artifact_id,
             depth=depth,
             truncated=truncated,

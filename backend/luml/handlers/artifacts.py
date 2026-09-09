@@ -1,3 +1,4 @@
+from collections.abc import Sequence
 from uuid import UUID, uuid4
 
 from luml.clients.base_storage_client import BaseStorageClient
@@ -44,7 +45,6 @@ from luml.schemas.artifacts import (
 from luml.schemas.bucket_secrets import BucketSecret
 from luml.schemas.collections import Collection, is_artifact_type_allowed
 from luml.schemas.general import Cursor, PaginationParams, SortOrder
-from luml.schemas.lineage import LineageVia
 from luml.schemas.orbit import Orbit
 from luml.schemas.permissions import Action, Resource
 from luml.utils.pagination import build_scope_id, decode_cursor, encode_cursor
@@ -210,7 +210,7 @@ class ArtifactHandler:
         orbit_id: UUID,
         collection_id: UUID,
         artifact: ArtifactCreateIn,
-        via: LineageVia,
+        auth_scopes: Sequence[str],
     ) -> CreateArtifactResponse:
         await self.__permissions_handler.check_permissions(
             organization_id,
@@ -253,11 +253,8 @@ class ArtifactHandler:
 
         unique_id = uuid4().hex
         object_name = f"{unique_id}-{artifact.file_name}"
-
         bucket_location = f"orbit-{orbit_id}/collection-{collection_id}/{object_name}"
 
-        # The upload is prepared first: a storage failure must not leave an
-        # artifact row, or lineage edges, for an upload that never started.
         storage_service = await self._get_storage_client(orbit.bucket_secret_id)
         upload_data = await storage_service.create_upload(
             bucket_location, artifact.size
@@ -285,15 +282,13 @@ class ArtifactHandler:
 
         if lineage_inputs:
             try:
-                # One transaction for every input: either all edges exist or
-                # the artifact row goes away again.
                 await self.__lineage_handler.link_inputs(
                     user_id,
                     organization_id,
                     orbit_id,
                     created_artifact.id,
                     lineage_inputs,
-                    via,
+                    auth_scopes,
                     check_access=False,
                 )
             except Exception:
@@ -464,16 +459,10 @@ class ArtifactHandler:
         await self._delete_artifact(orbit_id, artifact_id)
 
     async def _delete_artifact(self, orbit_id: UUID, artifact_id: UUID) -> None:
-        # One transaction: a failure in any step leaves the artifact in place,
-        # so an error response never hides a deletion that already happened.
         async with self.__lineage_repository.transaction() as session:
-            # Two deletions of the last live artifacts of one component would
-            # otherwise each see the other as live and both skip the cleanup.
             await self.__lineage_repository.lock_orbit(orbit_id, session)
             await self.__lineage_repository.refresh_node_copy(artifact_id, session)
             await self.__repository.delete_artifact(artifact_id, session)
-            # The node keeps its edges as a "deleted" node; a component left
-            # with no live artifact at all can never be opened again, drop it.
             await self.__lineage_repository.delete_unreachable_deleted_nodes(
                 orbit_id, session
             )
@@ -598,6 +587,7 @@ class ArtifactHandler:
         artifact_id: UUID,
     ) -> SatelliteArtifactResponse:
         artifact = await self.__repository.get_artifact(artifact_id)
+
         if not artifact:
             raise ArtifactNotFoundError()
 

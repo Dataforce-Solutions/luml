@@ -12,7 +12,6 @@ from luml.schemas.lineage import (
     LineageCreateIn,
     LineageEdge,
     LineageGraph,
-    LineageVia,
 )
 
 lineage_router = APIRouter(
@@ -22,12 +21,6 @@ lineage_router = APIRouter(
 )
 
 lineage_handler = LineageHandler()
-
-
-def _creation_via(request: Request) -> LineageVia:
-    if "api_key" in request.auth.scopes:
-        return LineageVia.API
-    return LineageVia.UI
 
 
 @lineage_router.get(
@@ -69,7 +62,7 @@ async def create_lineage(
         orbit_id,
         artifact_id,
         lineage.target_artifact_ids,
-        _creation_via(request),
+        request.auth.scopes,
     )
 
 
@@ -91,7 +84,7 @@ async def delete_lineage(
         orbit_id,
         artifact_id,
         edge_id,
-        _creation_via(request),
+        request.auth.scopes,
     )
 
 
@@ -111,5 +104,5 @@ async def apply_lineage_changes(
         organization_id,
         orbit_id,
         changes,
-        _creation_via(request),
+        request.auth.scopes,
     )
