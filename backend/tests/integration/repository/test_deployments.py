@@ -655,3 +655,74 @@ async def test_delete_satellite_deployment_from_another_satellite(
     await repo.delete_satellite_deployment(deployment.id, data.satellite.id)
 
     assert await repo.get_deployment(deployment.id, data.orbit.id) is None
+
+
+@pytest.mark.asyncio
+async def test_get_satellite_deployment(
+    create_satellite: SatelliteFixtureData,
+) -> None:
+    data = create_satellite
+    repo = DeploymentRepository(data.engine)
+    deployment = await _create_deployment(data)
+    foreign_satellite = await _create_satellite_in(
+        data, await _create_sibling_orbit(data)
+    )
+
+    found = await repo.get_satellite_deployment(deployment.id, data.satellite.id)
+
+    assert found is not None
+    assert found.id == deployment.id
+    assert found.satellite_id == data.satellite.id
+    assert (
+        await repo.get_satellite_deployment(deployment.id, foreign_satellite.id) is None
+    )
+    assert await repo.get_satellite_deployment(uuid.uuid7(), data.satellite.id) is None
+
+
+@pytest.mark.asyncio
+async def test_operations_on_an_unknown_deployment_return_none(
+    create_satellite: SatelliteFixtureData,
+) -> None:
+    data = create_satellite
+    repo = DeploymentRepository(data.engine)
+    missing_id = uuid.uuid7()
+
+    assert (
+        await repo.update_deployment(
+            missing_id,
+            data.satellite.id,
+            DeploymentUpdate(id=missing_id, status=DeploymentStatus.ACTIVE),
+        )
+        is None
+    )
+    assert await repo.request_deployment_deletion(data.orbit.id, missing_id) is None
+    assert (
+        await repo.update_deployment_details(
+            data.orbit.id, missing_id, DeploymentDetailsUpdate(name="renamed")
+        )
+        is None
+    )
+    assert await repo.enqueue_undeploy_task(missing_id) is None
+
+
+@pytest.mark.asyncio
+async def test_delete_deployments_by_artifact_id(
+    create_satellite: SatelliteFixtureData,
+) -> None:
+    data = create_satellite
+    repo = DeploymentRepository(data.engine)
+    for name in ["first", "second"]:
+        await repo.create_deployment(
+            DeploymentCreate(
+                name=name,
+                orbit_id=data.orbit.id,
+                satellite_id=data.satellite.id,
+                artifact_id=data.model.id,
+                status=DeploymentStatus.PENDING,
+            )
+        )
+    assert len(await repo.list_deployments(data.orbit.id)) == 2
+
+    await repo.delete_deployments_by_artifact_id(data.model.id)
+
+    assert await repo.list_deployments(data.orbit.id) == []

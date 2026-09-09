@@ -10,6 +10,7 @@ from luml.infra.exceptions import (
     ApplicationError,
     DatabaseConstraintError,
     NotFoundError,
+    OrganizationLimitReachedError,
 )
 from luml.schemas.permissions import Action, Resource
 from luml.schemas.satellite import (
@@ -1721,3 +1722,99 @@ async def test_authenticate_api_key(
 
     assert result == expected
     mock_get_satellite_by_hash.assert_awaited_once()
+
+
+@patch(
+    "luml.handlers.satellites.SatelliteRepository.create_satellite",
+    new_callable=AsyncMock,
+)
+@patch(
+    "luml.handlers.satellites.UserRepository.get_public_user_by_id",
+    new_callable=AsyncMock,
+)
+@patch(
+    "luml.handlers.satellites.UserRepository.get_organization_details",
+    new_callable=AsyncMock,
+)
+@patch(
+    "luml.handlers.satellites.OrbitRepository.get_orbit_simple",
+    new_callable=AsyncMock,
+)
+@patch(
+    "luml.handlers.satellites.PermissionsHandler.check_permissions",
+    new_callable=AsyncMock,
+)
+@pytest.mark.asyncio
+async def test_create_satellite_organization_not_found(
+    mock_check_permissions: AsyncMock,
+    mock_get_orbit_simple: AsyncMock,
+    mock_get_organization_details: AsyncMock,
+    mock_get_public_user: AsyncMock,
+    mock_create_satellite: AsyncMock,
+) -> None:
+    user_id = UUID("0199c337-09f1-7d8f-b0c4-b68349bbe24b")
+    organization_id = UUID("0199c337-09f2-7af1-af5e-83fd7a5b51a0")
+    orbit_id = UUID("0199c337-09f3-753e-9def-b27745e69be6")
+
+    mock_get_orbit_simple.return_value = Mock()
+    mock_get_organization_details.return_value = None
+    mock_get_public_user.return_value = Mock(full_name="John Doe")
+
+    with pytest.raises(NotFoundError, match="Organization not found") as error:
+        await handler.create_satellite(
+            user_id, organization_id, orbit_id, SatelliteCreateIn(name="test-satellite")
+        )
+
+    assert error.value.status_code == 404
+    mock_get_organization_details.assert_awaited_once_with(organization_id)
+    mock_create_satellite.assert_not_awaited()
+
+
+@patch(
+    "luml.handlers.satellites.SatelliteRepository.create_satellite",
+    new_callable=AsyncMock,
+)
+@patch(
+    "luml.handlers.satellites.UserRepository.get_public_user_by_id",
+    new_callable=AsyncMock,
+)
+@patch(
+    "luml.handlers.satellites.UserRepository.get_organization_details",
+    new_callable=AsyncMock,
+)
+@patch(
+    "luml.handlers.satellites.OrbitRepository.get_orbit_simple",
+    new_callable=AsyncMock,
+)
+@patch(
+    "luml.handlers.satellites.PermissionsHandler.check_permissions",
+    new_callable=AsyncMock,
+)
+@pytest.mark.asyncio
+async def test_create_satellite_rejects_an_organization_at_its_satellites_limit(
+    mock_check_permissions: AsyncMock,
+    mock_get_orbit_simple: AsyncMock,
+    mock_get_organization_details: AsyncMock,
+    mock_get_public_user: AsyncMock,
+    mock_create_satellite: AsyncMock,
+) -> None:
+    user_id = UUID("0199c337-09f1-7d8f-b0c4-b68349bbe24b")
+    organization_id = UUID("0199c337-09f2-7af1-af5e-83fd7a5b51a0")
+    orbit_id = UUID("0199c337-09f3-753e-9def-b27745e69be6")
+
+    mock_get_orbit_simple.return_value = Mock()
+    mock_get_organization_details.return_value = Mock(
+        total_satellites=3, satellites_limit=3
+    )
+    mock_get_public_user.return_value = Mock(full_name="John Doe")
+
+    with pytest.raises(
+        OrganizationLimitReachedError, match="maximum number of satellites"
+    ) as error:
+        await handler.create_satellite(
+            user_id, organization_id, orbit_id, SatelliteCreateIn(name="test-satellite")
+        )
+
+    assert error.value.status_code == 409
+    mock_get_organization_details.assert_awaited_once_with(organization_id)
+    mock_create_satellite.assert_not_awaited()

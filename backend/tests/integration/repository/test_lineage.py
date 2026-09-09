@@ -681,3 +681,86 @@ async def test_concurrent_deletion_of_the_last_live_artifacts_removes_the_compon
         await lineage_repo.get_nodes_by_ids(data.orbit.id, [node.id for node in nodes])
         == []
     )
+
+
+@pytest.mark.asyncio
+async def test_get_node_by_artifact_id_is_orbit_scoped(
+    create_collection: CollectionFixtureData,
+    test_artifact: ArtifactCreate,
+) -> None:
+    data = create_collection
+    lineage_repo = LineageRepository(data.engine)
+    artifact = await _create_artifact(
+        data.engine, test_artifact, data.collection.id, "lookup"
+    )
+    listed = await _get_listed_artifacts(data.engine, data.orbit.id, [artifact.id])
+    node = await lineage_repo.get_or_create_node(data.orbit.id, listed[artifact.id])
+    other_orbit_id, _ = await _create_other_orbit_collection(data)
+
+    found = await lineage_repo.get_node_by_artifact_id(data.orbit.id, artifact.id)
+
+    assert found is not None
+    assert found.id == node.id
+    assert (
+        await lineage_repo.get_node_by_artifact_id(other_orbit_id, artifact.id) is None
+    )
+    assert (
+        await lineage_repo.get_node_by_artifact_id(data.orbit.id, uuid.uuid7()) is None
+    )
+
+
+@pytest.mark.asyncio
+async def test_empty_lookups_and_writes_are_no_ops(
+    create_collection: CollectionFixtureData,
+) -> None:
+    data = create_collection
+    lineage_repo = LineageRepository(data.engine)
+    orbit_id = data.orbit.id
+
+    assert await lineage_repo.get_nodes_by_ids(orbit_id, []) == []
+    assert await lineage_repo.get_nodes_by_artifact_ids(orbit_id, []) == []
+    assert (
+        await lineage_repo.create_edges(orbit_id, [], "Test User", LineageVia.API) == []
+    )
+    assert await lineage_repo.get_edges_by_ids(orbit_id, []) == []
+    assert await lineage_repo.get_edges_by_pairs(orbit_id, []) == []
+    await lineage_repo.delete_edges(orbit_id, [])
+    await lineage_repo.update_positions(orbit_id, {})
+
+
+@pytest.mark.asyncio
+async def test_refresh_node_copy_ignores_an_unknown_artifact(
+    create_collection: CollectionFixtureData,
+) -> None:
+    data = create_collection
+
+    await LineageRepository(data.engine).refresh_node_copy(uuid.uuid7())
+
+
+@pytest.mark.asyncio
+async def test_traverse_rejects_a_non_positive_depth_and_an_unknown_focal_node(
+    create_collection: CollectionFixtureData,
+    test_artifact: ArtifactCreate,
+) -> None:
+    data = create_collection
+    lineage_repo = LineageRepository(data.engine)
+    artifact = await _create_artifact(
+        data.engine, test_artifact, data.collection.id, "focal"
+    )
+    listed = await _get_listed_artifacts(data.engine, data.orbit.id, [artifact.id])
+    node = await lineage_repo.get_or_create_node(data.orbit.id, listed[artifact.id])
+    other_orbit_id, _ = await _create_other_orbit_collection(data)
+
+    with pytest.raises(ValueError, match="depth must be positive"):
+        await lineage_repo.traverse(data.orbit.id, node.id, 0)
+
+    assert await lineage_repo.traverse(data.orbit.id, uuid.uuid7(), None) == (
+        [],
+        [],
+        False,
+    )
+    assert await lineage_repo.traverse(other_orbit_id, node.id, None) == (
+        [],
+        [],
+        False,
+    )

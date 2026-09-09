@@ -1292,3 +1292,87 @@ async def test_link_inputs_without_inputs_touches_nothing(
     assert result == []
     mocks.check_permissions.assert_not_awaited()
     mocks.create_edges.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_apply_changes_requires_a_known_user_for_creations(
+    lineage_mocks: HandlerMocks,
+) -> None:
+    mocks = lineage_mocks
+    _configure_artifact_pair(mocks)
+    mocks.get_user.return_value = None
+
+    with pytest.raises(NotFoundError, match="User not found"):
+        await handler.apply_changes(
+            USER_ID, ORGANIZATION_ID, ORBIT_ID, _creation_changes(), LineageVia.API
+        )
+
+    mocks.get_user.assert_awaited_once_with(USER_ID)
+    mocks.create_edges.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_link_inputs_checks_access_by_default(
+    lineage_mocks: HandlerMocks,
+) -> None:
+    mocks = lineage_mocks
+    _configure_artifact_pair(mocks)
+    created = [_edge(NEW_EDGE_A_ID, NODE_A_ID, NODE_B_ID)]
+    mocks.create_edges.return_value = created
+
+    result = await handler.link_inputs(
+        USER_ID,
+        ORGANIZATION_ID,
+        ORBIT_ID,
+        ARTIFACT_B_ID,
+        [ARTIFACT_A_ID],
+        LineageVia.API,
+    )
+
+    assert result == [edge.to_edge() for edge in created]
+    mocks.check_permissions.assert_awaited_once_with(
+        ORGANIZATION_ID, USER_ID, Resource.ARTIFACT, Action.UPDATE, ORBIT_ID
+    )
+    mocks.get_orbit.assert_awaited_once_with(ORBIT_ID, ORGANIZATION_ID)
+    mocks.create_edges.assert_awaited_once_with(
+        ORBIT_ID,
+        [(NODE_A_ID, NODE_B_ID)],
+        "Lineage User",
+        LineageVia.API,
+        mocks.session,
+    )
+
+
+def test_resolve_node_reference_rejects_a_reference_without_identifier() -> None:
+    unvalidated_ref = LineageNodeRef.model_construct()
+
+    with pytest.raises(RuntimeError, match="has no identifier"):
+        LineageHandler._resolve_node_reference(unvalidated_ref, {}, {})
+
+
+@pytest.mark.asyncio
+async def test_resolve_positions_skips_a_reference_without_identifier(
+    lineage_mocks: HandlerMocks,
+) -> None:
+    mocks = lineage_mocks
+    mocks.get_nodes_by_ids.return_value = [_node(NODE_A_ID, ARTIFACT_A_ID, "A")]
+    changes = LineageBatchIn.model_construct(
+        create=[],
+        delete=[],
+        positions=[
+            LineagePosition.model_construct(
+                ref=LineageNodeRef.model_construct(), x=1.0, y=2.0
+            ),
+            LineagePosition(ref=LineageNodeRef(node_id=NODE_A_ID), x=3.0, y=4.0),
+        ],
+    )
+
+    resolved = await handler._resolve_positions(ORBIT_ID, changes, mocks.session)
+
+    assert resolved == {NODE_A_ID: (3.0, 4.0)}
+    mocks.get_nodes_by_artifact_ids.assert_awaited_once_with(
+        ORBIT_ID, [], mocks.session
+    )
+    mocks.get_nodes_by_ids.assert_awaited_once_with(
+        ORBIT_ID, [NODE_A_ID], mocks.session
+    )
