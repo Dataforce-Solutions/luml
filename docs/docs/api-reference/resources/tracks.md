@@ -100,7 +100,8 @@ def list(
         sort_by: TrackSortBy = TrackSortBy.CREATED_AT,
         order: SortOrder = SortOrder.DESC,
         search: str | None = None,
-        types: list[ArtifactType] | None = None
+        types: list[ArtifactType] | None = None,
+        tags: list[str] | None = None
 ) -> TracksList
 ```
 
@@ -140,6 +141,17 @@ page = luml.tracks.list(limit=20, search="churn")
 for track in page.items:
     print(track.name, track.total_entries)
 ```
+
+<a id="luml_api.resources.tracks.TrackResource.list_tags"></a>
+
+#### list_tags
+
+```python
+@validate_orbit
+def list_tags() -> builtins.list[str]
+```
+
+List unique tags across all tracks in the default orbit (sorted).
 
 <a id="luml_api.resources.tracks.TrackResource.get"></a>
 
@@ -806,7 +818,8 @@ async def list(
         sort_by: TrackSortBy = TrackSortBy.CREATED_AT,
         order: SortOrder = SortOrder.DESC,
         search: str | None = None,
-        types: list[ArtifactType] | None = None
+        types: list[ArtifactType] | None = None,
+        tags: list[str] | None = None
 ) -> TracksList
 ```
 
@@ -850,6 +863,17 @@ async def main():
     for track in page.items:
         print(track.name, track.total_entries)
 ```
+
+<a id="luml_api.resources.tracks.AsyncTrackResource.list_tags"></a>
+
+#### list_tags
+
+```python
+@validate_orbit
+async def list_tags() -> builtins.list[str]
+```
+
+List unique tags across all tracks in the default orbit (sorted).
 
 <a id="luml_api.resources.tracks.AsyncTrackResource.get"></a>
 
