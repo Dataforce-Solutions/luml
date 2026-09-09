@@ -1388,6 +1388,49 @@ def set_experiment_upload_status(experiment_id: str, status: str) -> None
 
 Set the experiment's ``upload_status`` column.
 
+<a id="luml.experiments.tracker.ExperimentTracker.set_remote_artifact"></a>
+
+#### set_remote_artifact
+
+```python
+def set_remote_artifact(
+        local_type: str,
+        local_id: str,
+        orbit_id: str,
+        artifact_id: str
+) -> None
+```
+
+Remember the platform artifact for a local object in an orbit.
+
+<a id="luml.experiments.tracker.ExperimentTracker.get_remote_artifact"></a>
+
+#### get_remote_artifact
+
+```python
+def get_remote_artifact(
+        local_type: str,
+        local_id: str,
+        orbit_id: str
+) -> str | None
+```
+
+Return the remembered platform artifact for a local object and orbit.
+
+<a id="luml.experiments.tracker.ExperimentTracker.delete_remote_artifact"></a>
+
+#### delete_remote_artifact
+
+```python
+def delete_remote_artifact(
+        local_type: str,
+        local_id: str,
+        orbit_id: str
+) -> None
+```
+
+Forget the platform artifact for a local object in an orbit.
+
 <a id="luml.experiments.tracker.ExperimentTracker.get_eval_annotations"></a>
 
 #### get_eval_annotations

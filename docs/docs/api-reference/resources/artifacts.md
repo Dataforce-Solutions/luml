@@ -332,6 +332,99 @@ ArtifactsList(
 )
 ```
 
+<a id="luml_api.resources.artifacts.ArtifactResource.get_lineage"></a>
+
+#### get_lineage
+
+```python
+@validate_orbit
+def get_lineage(artifact_id: str, depth: int | None = None) -> LineageGraph
+```
+
+Get the lineage graph around an artifact.
+
+**Arguments**:
+
+- `artifact_id` - ID of the focal artifact.
+- `depth` - Number of graph levels to load. ``None`` loads the whole connected graph; the platform caps it at 200 artifacts and sets ``truncated`` when the cap was hit.
+  
+
+**Returns**:
+
+  The lineage graph around the artifact.
+
+<a id="luml_api.resources.artifacts.ArtifactResource.log_lineage"></a>
+
+#### log_lineage
+
+```python
+@validate_orbit
+def log_lineage(
+        source_artifact_id: str,
+        target_artifact_ids: builtins.list[str]
+) -> builtins.list[LineageEdge]
+```
+
+Create lineage connections from one artifact to other artifacts.
+
+**Arguments**:
+
+- `source_artifact_id` - ID of the source artifact.
+- `target_artifact_ids` - IDs of the artifacts produced from the source.
+  
+
+**Returns**:
+
+  The created lineage connections.
+
+<a id="luml_api.resources.artifacts.ArtifactResource.remove_lineage"></a>
+
+#### remove_lineage
+
+```python
+@validate_orbit
+def remove_lineage(artifact_id: str, edge_id: str) -> LineageEdge
+```
+
+Remove a lineage connection touching an artifact.
+
+**Arguments**:
+
+- `artifact_id` - ID of either artifact in the connection.
+- `edge_id` - ID of the lineage connection to remove.
+  
+
+**Returns**:
+
+  The removed lineage connection.
+
+<a id="luml_api.resources.artifacts.ArtifactResource.log_lineage_inputs"></a>
+
+#### log_lineage_inputs
+
+```python
+@validate_orbit
+def log_lineage_inputs(
+        artifact_id: str,
+        input_artifact_ids: builtins.list[str]
+) -> builtins.list[LineageEdge]
+```
+
+Record that an artifact was produced from other artifacts.
+
+Every ``input -> artifact`` connection is created in one transaction:
+either all inputs get linked or none of them.
+
+**Arguments**:
+
+- `artifact_id` - ID of the produced artifact.
+- `input_artifact_ids` - IDs of the artifacts it was produced from.
+  
+
+**Returns**:
+
+  The created lineage connections.
+
 <a id="luml_api.resources.artifacts.ArtifactResource.download_url"></a>
 
 #### download_url
@@ -434,6 +527,7 @@ def upload(
         name: str | None = None,
         description: str | None = None,
         tags: builtins.list[str] | None = None,
+        lineage_inputs: builtins.list[str] | None = None,
         *,
         collection_id: str | None = None,
         on_progress: BaseProgressHandler | None = None
@@ -453,6 +547,7 @@ If collection_id is None, uses the default collection from client.
 - `name` - Name for the artifact. If not provided, uses the file name.
 - `description` - Optional description of the model.
 - `tags` - Optional list of tags for organizing models.
+- `lineage_inputs` - Optional IDs of artifacts used to produce this artifact.
 - `collection_id` - ID of the collection to upload to. If not provided, uses the default collection set in the client.
   
 
@@ -621,7 +716,8 @@ def create(
         size: int,
         name: str,
         description: str | None = None,
-        tags: builtins.list[str] | None = None
+        tags: builtins.list[str] | None = None,
+        lineage_inputs: builtins.list[str] | None = None
 ) -> CreatedArtifact
 ```
 
@@ -642,6 +738,7 @@ If collection_id is None, uses the default collection from client.
 - `name` - Optional name for the model.
 - `description` - Optional description.
 - `tags` - Optional list of tags.
+- `lineage_inputs` - Optional IDs of artifacts used to produce this artifact.
   
 
 **Returns**:
@@ -1274,6 +1371,104 @@ ArtifactsList(
 )
 ```
 
+<a id="luml_api.resources.artifacts.AsyncArtifactResource.get_lineage"></a>
+
+#### get\_lineage
+
+```python
+@validate_orbit
+async def get_lineage(
+        artifact_id: str,
+        depth: int | None = None
+) -> LineageGraph
+```
+
+Get the lineage graph around an artifact.
+
+**Arguments**:
+
+- `artifact_id` - ID of the focal artifact.
+- `depth` - Number of graph levels to load. ``None`` loads the whole
+  connected graph; the platform caps it at 200 artifacts and
+  sets ``truncated`` when the cap was hit.
+  
+
+**Returns**:
+
+  The lineage graph around the artifact.
+
+<a id="luml_api.resources.artifacts.AsyncArtifactResource.log_lineage"></a>
+
+#### log\_lineage
+
+```python
+@validate_orbit
+async def log_lineage(
+        source_artifact_id: str,
+        target_artifact_ids: builtins.list[str]
+) -> builtins.list[LineageEdge]
+```
+
+Create lineage connections from one artifact to other artifacts.
+
+**Arguments**:
+
+- `source_artifact_id` - ID of the source artifact.
+- `target_artifact_ids` - IDs of the artifacts produced from the source.
+  
+
+**Returns**:
+
+  The created lineage connections.
+
+<a id="luml_api.resources.artifacts.AsyncArtifactResource.remove_lineage"></a>
+
+#### remove\_lineage
+
+```python
+@validate_orbit
+async def remove_lineage(artifact_id: str, edge_id: str) -> LineageEdge
+```
+
+Remove a lineage connection touching an artifact.
+
+**Arguments**:
+
+- `artifact_id` - ID of either artifact in the connection.
+- `edge_id` - ID of the lineage connection to remove.
+  
+
+**Returns**:
+
+  The removed lineage connection.
+
+<a id="luml_api.resources.artifacts.AsyncArtifactResource.log_lineage_inputs"></a>
+
+#### log\_lineage\_inputs
+
+```python
+@validate_orbit
+async def log_lineage_inputs(
+        artifact_id: str,
+        input_artifact_ids: builtins.list[str]
+) -> builtins.list[LineageEdge]
+```
+
+Record that an artifact was produced from other artifacts.
+
+Every ``input -> artifact`` connection is created in one transaction:
+either all inputs get linked or none of them.
+
+**Arguments**:
+
+- `artifact_id` - ID of the produced artifact.
+- `input_artifact_ids` - IDs of the artifacts it was produced from.
+  
+
+**Returns**:
+
+  The created lineage connections.
+
 <a id="luml_api.resources.artifacts.AsyncArtifactResource.download_url"></a>
 
 #### download\_url
@@ -1400,7 +1595,8 @@ async def create(
         size: int,
         name: str,
         description: str | None = None,
-        tags: builtins.list[str] | None = None
+        tags: builtins.list[str] | None = None,
+        lineage_inputs: builtins.list[str] | None = None
 ) -> CreatedArtifact
 ```
 
@@ -1421,6 +1617,7 @@ If collection_id is None, uses the default collection from client
 - `name` - Optional name for the model.
 - `description` - Optional description.
 - `tags` - Optional list of tags.
+- `lineage_inputs` - Optional IDs of artifacts used to produce this artifact.
   
 
 **Returns**:
@@ -1540,6 +1737,7 @@ async def upload(
         name: str | None = None,
         description: str | None = None,
         tags: builtins.list[str] | None = None,
+        lineage_inputs: builtins.list[str] | None = None,
         *,
         collection_id: str | None = None,
         on_progress: BaseProgressHandler | None = None
@@ -1560,6 +1758,7 @@ uses the default collection from client.
 - `name` - Name for the artifact. If not provided, uses the file name.
 - `description` - Optional description of the model.
 - `tags` - Optional list of tags for organizing models.
+- `lineage_inputs` - Optional IDs of artifacts used to produce this artifact.
 - `collection_id` - ID of the collection to upload to. If not provided,
   uses the default collection set in the client.
   
