@@ -1984,3 +1984,95 @@ async def test_update_worker_deployment_status_not_found(
     mock_update_deployment.assert_awaited_once_with(
         deployment_id, satellite_id, DeploymentUpdate(id=deployment_id, status=status)
     )
+
+
+@patch(
+    "luml.handlers.deployments.DeploymentRepository.update_deployment_details",
+    new_callable=AsyncMock,
+)
+@patch(
+    "luml.handlers.deployments.SatelliteRepository.get_satellite",
+    new_callable=AsyncMock,
+)
+@patch(
+    "luml.handlers.deployments.DeploymentRepository.get_deployment",
+    new_callable=AsyncMock,
+)
+@patch(
+    "luml.handlers.deployments.PermissionsHandler.check_permissions",
+    new_callable=AsyncMock,
+)
+@pytest.mark.asyncio
+async def test_update_deployment_details_enabling_monitoring_needs_the_deployment(
+    mock_check_permissions: AsyncMock,
+    mock_get_deployment: AsyncMock,
+    mock_get_satellite: AsyncMock,
+    mock_update_deployment_details: AsyncMock,
+) -> None:
+    user_id = UUID("0199c337-09f1-7d8f-b0c4-b68349bbe24b")
+    organization_id = UUID("0199c337-09f2-7af1-af5e-83fd7a5b51a0")
+    orbit_id = UUID("0199c337-09f3-753e-9def-b27745e69be6")
+    deployment_id = UUID("0199c337-09f7-751e-add2-d952f0d6cf4e")
+    mock_get_deployment.return_value = None
+
+    with pytest.raises(NotFoundError, match="Deployment not found") as error:
+        await handler.update_deployment_details(
+            user_id,
+            organization_id,
+            orbit_id,
+            deployment_id,
+            DeploymentDetailsUpdateIn(monitoring_mode=MonitoringMode.FULL),
+        )
+
+    assert error.value.status_code == status.HTTP_404_NOT_FOUND
+    mock_get_deployment.assert_awaited_once_with(deployment_id, orbit_id)
+    mock_get_satellite.assert_not_awaited()
+    mock_update_deployment_details.assert_not_awaited()
+
+
+@patch(
+    "luml.handlers.deployments.DeploymentRepository.update_deployment_details",
+    new_callable=AsyncMock,
+)
+@patch(
+    "luml.handlers.deployments.SatelliteRepository.get_satellite",
+    new_callable=AsyncMock,
+)
+@patch(
+    "luml.handlers.deployments.DeploymentRepository.get_deployment",
+    new_callable=AsyncMock,
+)
+@patch(
+    "luml.handlers.deployments.PermissionsHandler.check_permissions",
+    new_callable=AsyncMock,
+)
+@pytest.mark.asyncio
+async def test_update_deployment_details_enabling_monitoring_needs_the_satellite(
+    mock_check_permissions: AsyncMock,
+    mock_get_deployment: AsyncMock,
+    mock_get_satellite: AsyncMock,
+    mock_update_deployment_details: AsyncMock,
+) -> None:
+    user_id = UUID("0199c337-09f1-7d8f-b0c4-b68349bbe24b")
+    organization_id = UUID("0199c337-09f2-7af1-af5e-83fd7a5b51a0")
+    orbit_id = UUID("0199c337-09f3-753e-9def-b27745e69be6")
+    deployment_id = UUID("0199c337-09f7-751e-add2-d952f0d6cf4e")
+    satellite_id = UUID("0199c337-09f9-706e-9b80-58939d5fba79")
+    mock_get_deployment.return_value = Mock(
+        monitoring_mode=MonitoringMode.OFF,
+        satellite_id=satellite_id,
+    )
+    mock_get_satellite.return_value = None
+
+    with pytest.raises(NotFoundError, match="Satellite not found") as error:
+        await handler.update_deployment_details(
+            user_id,
+            organization_id,
+            orbit_id,
+            deployment_id,
+            DeploymentDetailsUpdateIn(monitoring_mode=MonitoringMode.FULL),
+        )
+
+    assert error.value.status_code == status.HTTP_404_NOT_FOUND
+    mock_get_satellite.assert_awaited_once_with(satellite_id)
+    mock_update_deployment_details.assert_not_awaited()

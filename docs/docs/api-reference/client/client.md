@@ -99,6 +99,17 @@ def artifacts() -> "AsyncArtifactResource"
 
 Artifacts interface.
 
+<a id="luml_api._client.AsyncLumlClient.tracks"></a>
+
+#### tracks
+
+```python
+@cached_property
+def tracks() -> "AsyncTrackResource"
+```
+
+Tracks interface.
+
 <a id="luml_api._client.AsyncLumlClient.deployments"></a>
 
 #### deployments
@@ -183,6 +194,17 @@ def artifacts() -> "ArtifactResource"
 ```
 
 Artifacts interface.
+
+<a id="luml_api._client.LumlClient.tracks"></a>
+
+#### tracks
+
+```python
+@cached_property
+def tracks() -> "TrackResource"
+```
+
+Tracks interface.
 
 <a id="luml_api._client.LumlClient.deployments"></a>
 

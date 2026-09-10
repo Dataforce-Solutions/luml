@@ -6,7 +6,11 @@ from uuid import UUID, uuid7
 import jwt
 import pytest
 from luml.handlers.monitoring import MonitoringHandler
-from luml.infra.exceptions import ApplicationError, InsufficientPermissionsError
+from luml.infra.exceptions import (
+    ApplicationError,
+    InsufficientPermissionsError,
+    NotFoundError,
+)
 from luml.schemas.deployment import MonitoringMode
 from luml.schemas.monitoring import (
     MONITORING_READ_SCOPE,
@@ -441,4 +445,121 @@ async def test_introspect_wrong_satellite_does_not_consume(
     result = await handler.introspect_token(other_satellite, token)
 
     assert result.active is False
+    mock_consume.assert_not_awaited()
+
+
+# --- Missing deployment or satellite -----------------------------------------
+
+
+@patch(
+    "luml.handlers.monitoring.SatelliteRepository.get_satellite",
+    new_callable=AsyncMock,
+)
+@patch(
+    "luml.handlers.monitoring.DeploymentRepository.get_deployment",
+    new_callable=AsyncMock,
+)
+@patch(
+    "luml.handlers.monitoring.PermissionsHandler.check_permissions",
+    new_callable=AsyncMock,
+)
+@pytest.mark.asyncio
+async def test_eligibility_deployment_not_found(
+    mock_check_permissions: AsyncMock,
+    mock_get_deployment: AsyncMock,
+    mock_get_satellite: AsyncMock,
+) -> None:
+    mock_get_deployment.return_value = None
+
+    with pytest.raises(NotFoundError, match="Deployment not found"):
+        await handler.get_eligibility(USER_ID, ORGANIZATION_ID, ORBIT_ID, DEPLOYMENT_ID)
+
+    mock_get_deployment.assert_awaited_once_with(DEPLOYMENT_ID, ORBIT_ID)
+    mock_get_satellite.assert_not_awaited()
+
+
+@patch(
+    "luml.handlers.monitoring.SatelliteRepository.get_satellite",
+    new_callable=AsyncMock,
+)
+@patch(
+    "luml.handlers.monitoring.DeploymentRepository.get_deployment",
+    new_callable=AsyncMock,
+)
+@patch(
+    "luml.handlers.monitoring.PermissionsHandler.check_permissions",
+    new_callable=AsyncMock,
+)
+@pytest.mark.asyncio
+async def test_eligibility_satellite_not_found(
+    mock_check_permissions: AsyncMock,
+    mock_get_deployment: AsyncMock,
+    mock_get_satellite: AsyncMock,
+) -> None:
+    mock_get_deployment.return_value = _deployment(MonitoringMode.FULL)
+    mock_get_satellite.return_value = None
+
+    with pytest.raises(NotFoundError, match="Satellite not found"):
+        await handler.get_eligibility(USER_ID, ORGANIZATION_ID, ORBIT_ID, DEPLOYMENT_ID)
+
+    mock_get_satellite.assert_awaited_once_with(SATELLITE_ID)
+
+
+# --- Launch token without a satellite base URL --------------------------------
+
+
+@patch(
+    "luml.handlers.monitoring.SatelliteRepository.get_satellite",
+    new_callable=AsyncMock,
+)
+@patch(
+    "luml.handlers.monitoring.DeploymentRepository.get_deployment",
+    new_callable=AsyncMock,
+)
+@patch(
+    "luml.handlers.monitoring.PermissionsHandler.check_permissions",
+    new_callable=AsyncMock,
+)
+@pytest.mark.asyncio
+async def test_mint_launch_token_requires_satellite_base_url(
+    mock_check_permissions: AsyncMock,
+    mock_get_deployment: AsyncMock,
+    mock_get_satellite: AsyncMock,
+) -> None:
+    mock_get_deployment.return_value = _deployment(MonitoringMode.FULL)
+    mock_get_satellite.return_value = _satellite(base_url=None)
+
+    with pytest.raises(ApplicationError, match="base URL is not configured") as error:
+        await handler.mint_launch_token(
+            USER_ID, ORGANIZATION_ID, ORBIT_ID, DEPLOYMENT_ID
+        )
+
+    assert error.value.status_code == 409
+
+
+# --- Introspection of a token with malformed claims ---------------------------
+
+
+@patch(
+    "luml.handlers.monitoring.MonitoringLaunchTokenRepository.consume",
+    new_callable=AsyncMock,
+)
+@pytest.mark.asyncio
+async def test_introspect_malformed_claims_are_inactive(
+    mock_consume: AsyncMock,
+) -> None:
+    claims = {
+        "deployment_id": "not-a-uuid",
+        "satellite_id": str(SATELLITE_ID),
+        "user_id": str(USER_ID),
+        "scope": MONITORING_READ_SCOPE,
+        "jti": str(uuid7()),
+        "exp": int(time.time()) + 300,
+    }
+    token = jwt.encode(claims, SECRET, algorithm=ALGORITHM)
+
+    result = await handler.introspect_token(SATELLITE_ID, token)
+
+    assert result.active is False
+    assert result.claims is None
     mock_consume.assert_not_awaited()

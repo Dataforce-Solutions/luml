@@ -8,8 +8,8 @@ from luml.infra.dependencies import UserAuthentication
 from luml.infra.endpoint_responses import endpoint_responses
 from luml.schemas.artifacts import (
     Artifact,
+    ArtifactCreateIn,
     ArtifactDetails,
-    ArtifactIn,
     ArtifactsList,
     ArtifactType,
     ArtifactUpdateIn,
@@ -36,7 +36,7 @@ async def create_artifact(
     organization_id: UUID,
     orbit_id: UUID,
     collection_id: UUID,
-    artifact: ArtifactIn,
+    artifact: ArtifactCreateIn,
 ) -> CreateArtifactResponse:
     return await artifacts_handler.create_artifact(
         request.user.id,
@@ -44,6 +44,7 @@ async def create_artifact(
         orbit_id,
         collection_id,
         artifact,
+        request.auth.scopes,
     )
 
 

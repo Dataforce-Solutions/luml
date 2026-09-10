@@ -1,7 +1,9 @@
+from collections.abc import Sequence
 from uuid import UUID, uuid4
 
 from luml.clients.base_storage_client import BaseStorageClient
 from luml.clients.storage_factory import create_storage_client
+from luml.handlers.lineage import LineageHandler
 from luml.handlers.permissions import PermissionsHandler
 from luml.infra.db import engine
 from luml.infra.exceptions import (
@@ -20,12 +22,14 @@ from luml.repositories.artifacts import ArtifactRepository
 from luml.repositories.bucket_secrets import BucketSecretRepository
 from luml.repositories.collections import CollectionRepository
 from luml.repositories.deployments import DeploymentRepository
+from luml.repositories.lineage import LineageRepository
 from luml.repositories.orbits import OrbitRepository
 from luml.repositories.tracks import TrackEntryRepository, TrackRepository
 from luml.repositories.users import UserRepository
 from luml.schemas.artifacts import (
     Artifact,
     ArtifactCreate,
+    ArtifactCreateIn,
     ArtifactDetails,
     ArtifactIn,
     ArtifactsList,
@@ -52,10 +56,12 @@ class ArtifactHandler:
     __secret_repository = BucketSecretRepository(engine)
     __collection_repository = CollectionRepository(engine)
     __deployment_repository = DeploymentRepository(engine)
+    __lineage_repository = LineageRepository(engine)
     __track_entry_repository = TrackEntryRepository(engine)
     __track_repository = TrackRepository(engine)
     __user_repository = UserRepository(engine)
     __permissions_handler = PermissionsHandler()
+    __lineage_handler = LineageHandler()
 
     __artifact_transitions = {
         ArtifactStatus.PENDING_UPLOAD: {
@@ -203,7 +209,8 @@ class ArtifactHandler:
         organization_id: UUID,
         orbit_id: UUID,
         collection_id: UUID,
-        artifact: ArtifactIn,
+        artifact: ArtifactCreateIn,
+        auth_scopes: Sequence[str],
     ) -> CreateArtifactResponse:
         await self.__permissions_handler.check_permissions(
             organization_id,
@@ -234,10 +241,24 @@ class ArtifactHandler:
         if not user:
             raise NotFoundError("User not found")
 
+        lineage_inputs = list(dict.fromkeys(artifact.lineage_inputs or []))
+        if lineage_inputs:
+            input_artifacts = await self.__repository.get_artifacts_by_ids_in_orbit(
+                orbit_id, lineage_inputs
+            )
+            if {input_artifact.id for input_artifact in input_artifacts} != set(
+                lineage_inputs
+            ):
+                raise ArtifactNotFoundError()
+
         unique_id = uuid4().hex
         object_name = f"{unique_id}-{artifact.file_name}"
-
         bucket_location = f"orbit-{orbit_id}/collection-{collection_id}/{object_name}"
+
+        storage_service = await self._get_storage_client(orbit.bucket_secret_id)
+        upload_data = await storage_service.create_upload(
+            bucket_location, artifact.size
+        )
 
         created_artifact = await self.__repository.create_artifact(
             ArtifactCreate(
@@ -259,11 +280,20 @@ class ArtifactHandler:
             )
         )
 
-        storage_service = await self._get_storage_client(orbit.bucket_secret_id)
-
-        upload_data = await storage_service.create_upload(
-            bucket_location, artifact.size
-        )
+        if lineage_inputs:
+            try:
+                await self.__lineage_handler.link_inputs(
+                    user_id,
+                    organization_id,
+                    orbit_id,
+                    created_artifact.id,
+                    lineage_inputs,
+                    auth_scopes,
+                    check_access=False,
+                )
+            except Exception:
+                await self.__repository.delete_artifact(created_artifact.id)
+                raise
 
         return CreateArtifactResponse(
             artifact=created_artifact, upload_details=upload_data
@@ -426,7 +456,16 @@ class ArtifactHandler:
             raise InvalidStatusTransitionError(
                 f"Unable to confirm deletion with status '{artifact.status}'"
             )
-        await self.__repository.delete_artifact(artifact_id)
+        await self._delete_artifact(orbit_id, artifact_id)
+
+    async def _delete_artifact(self, orbit_id: UUID, artifact_id: UUID) -> None:
+        async with self.__lineage_repository.transaction() as session:
+            await self.__lineage_repository.lock_orbit(orbit_id, session)
+            await self.__lineage_repository.refresh_node_copy(artifact_id, session)
+            await self.__repository.delete_artifact(artifact_id, session)
+            await self.__lineage_repository.delete_unreachable_deleted_nodes(
+                orbit_id, session
+            )
 
     async def force_delete_artifact(
         self,
@@ -445,7 +484,7 @@ class ArtifactHandler:
                 artifact_id
             )
 
-        await self.__repository.delete_artifact(artifact_id)
+        await self._delete_artifact(orbit_id, artifact_id)
 
     @staticmethod
     def _validate_cursor(
@@ -548,6 +587,7 @@ class ArtifactHandler:
         artifact_id: UUID,
     ) -> SatelliteArtifactResponse:
         artifact = await self.__repository.get_artifact(artifact_id)
+
         if not artifact:
             raise ArtifactNotFoundError()
 

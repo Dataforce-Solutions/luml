@@ -216,20 +216,6 @@ export const deleteTrackConfirmOptions = (accept: () => void): ConfirmationOptio
   accept,
 })
 
-export const unlinkArtifactConfirmOptions = (accept: () => void): ConfirmationOptions => ({
-  message: 'This will remove the artifact from the track.',
-  header: 'Unlink artifact?',
-  rejectProps: {
-    label: 'Cancel',
-  },
-  acceptProps: {
-    label: 'Unlink',
-    severity: 'warn',
-    outlined: true,
-  },
-  accept,
-})
-
 export const forceStageReassignConfirmOptions = (
   accept: () => void,
   message: string,
@@ -272,6 +258,41 @@ export const patchTrackEntryConfirmOptions = (accept: () => void): ConfirmationO
   },
   acceptProps: {
     label: 'Save changes',
+  },
+  accept,
+})
+
+export const discardLineageChangesConfirmOptions = (
+  accept: () => void,
+  reject: () => void,
+  onHide: () => void,
+): ConfirmationOptions => ({
+  message: 'If you exit without saving, your changes will be lost.',
+  header: 'Discard lineage changes?',
+  rejectProps: {
+    label: 'Keep editing',
+    severity: 'secondary',
+  },
+  acceptProps: {
+    label: 'Discard changes',
+    severity: 'warn',
+  },
+  accept,
+  reject,
+  onHide,
+})
+
+export const unlinkArtifactConfirmOptions = (accept: () => void): ConfirmationOptions => ({
+  message:
+    'This artifact will be unlinked from other artifacts in its lineage. It will not be deleted and will remain accessible in its collection.',
+  header: 'Unlink artifact?',
+  rejectProps: {
+    label: 'cancel',
+  },
+  acceptProps: {
+    label: 'unlink artifact',
+    severity: 'warn',
+    outlined: true,
   },
   accept,
 })

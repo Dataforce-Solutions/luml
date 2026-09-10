@@ -3,15 +3,20 @@ from datetime import UTC, datetime
 from typing import Any
 
 import pytest
+from luml.infra.exceptions import DatabaseConstraintError
+from luml.repositories.deployments import DeploymentRepository
 from luml.repositories.satellites import SatelliteRepository
+from luml.schemas.deployment import DeploymentCreate, DeploymentStatus
 from luml.schemas.satellite import (
     SatelliteCreate,
     SatellitePair,
     SatelliteRegenerateApiKey,
+    SatelliteTaskStatus,
+    SatelliteTaskType,
 )
 from sqlalchemy.ext.asyncio import create_async_engine
 
-from tests.conftest import OrbitFixtureData
+from tests.conftest import OrbitFixtureData, SatelliteFixtureData
 
 
 @pytest.mark.asyncio
@@ -210,3 +215,121 @@ async def test_touch_last_seen(create_orbit: OrbitFixtureData) -> None:
     assert seen_satellite
     assert seen_satellite.last_seen_at is not None
     assert seen_satellite.last_seen_at != original_last_seen
+
+
+@pytest.mark.asyncio
+async def test_list_satellites_filters_by_pairing(
+    create_orbit: OrbitFixtureData,
+) -> None:
+    data = create_orbit
+    repo = SatelliteRepository(data.engine)
+    unpaired = await repo.create_satellite(
+        SatelliteCreate(
+            orbit_id=data.orbit.id, api_key_hash=str(uuid.uuid4()), name="unpaired"
+        )
+    )
+    paired = await repo.create_satellite(
+        SatelliteCreate(
+            orbit_id=data.orbit.id, api_key_hash=str(uuid.uuid4()), name="paired"
+        )
+    )
+    await repo.pair_satellite(
+        SatellitePair(
+            id=paired.id,
+            base_url="https://paired.example",
+            capabilities={"deploy": {"version": 1}},
+            openapi=None,
+            paired=True,
+            last_seen_at=datetime.now(UTC),
+        )
+    )
+
+    paired_only = await repo.list_satellites(data.orbit.id, paired=True)
+    unpaired_only = await repo.list_satellites(data.orbit.id, paired=False)
+    everything = await repo.list_satellites(data.orbit.id)
+
+    assert [satellite.id for satellite in paired_only] == [paired.id]
+    assert [satellite.id for satellite in unpaired_only] == [unpaired.id]
+    assert {satellite.id for satellite in everything} == {unpaired.id, paired.id}
+
+
+@pytest.mark.asyncio
+async def test_list_tasks_by_status_and_update_task_status(
+    create_satellite: SatelliteFixtureData,
+) -> None:
+    data = create_satellite
+    repo = SatelliteRepository(data.engine)
+    _, task = await DeploymentRepository(data.engine).create_deployment(
+        DeploymentCreate(
+            name="my-deployment",
+            orbit_id=data.orbit.id,
+            satellite_id=data.satellite.id,
+            artifact_id=data.model.id,
+            status=DeploymentStatus.PENDING,
+        )
+    )
+    assert task.type == SatelliteTaskType.DEPLOY
+
+    pending = await repo.list_tasks(
+        data.satellite.id, status=SatelliteTaskStatus.PENDING
+    )
+    assert [item.id for item in pending] == [task.id]
+    assert (
+        await repo.list_tasks(data.satellite.id, status=SatelliteTaskStatus.DONE) == []
+    )
+
+    running = await repo.update_task_status(
+        data.satellite.id, task.id, SatelliteTaskStatus.RUNNING
+    )
+    assert running is not None
+    assert running.status == SatelliteTaskStatus.RUNNING
+    assert running.started_at is not None
+    assert running.finished_at is None
+    assert not running.result
+
+    done = await repo.update_task_status(
+        data.satellite.id,
+        task.id,
+        SatelliteTaskStatus.DONE,
+        result_payload={"ok": True},
+    )
+    assert done is not None
+    assert done.status == SatelliteTaskStatus.DONE
+    assert done.started_at == running.started_at
+    assert done.finished_at is not None
+    assert done.result == {"ok": True}
+    finished = await repo.list_tasks(data.satellite.id, status=SatelliteTaskStatus.DONE)
+    assert [item.id for item in finished] == [task.id]
+
+    assert (
+        await repo.update_task_status(
+            data.satellite.id, uuid.uuid7(), SatelliteTaskStatus.FAILED
+        )
+        is None
+    )
+    assert (
+        await repo.update_task_status(uuid.uuid7(), task.id, SatelliteTaskStatus.FAILED)
+        is None
+    )
+
+
+@pytest.mark.asyncio
+async def test_delete_satellite_used_by_deployments_is_refused(
+    create_satellite: SatelliteFixtureData,
+) -> None:
+    data = create_satellite
+    repo = SatelliteRepository(data.engine)
+    await DeploymentRepository(data.engine).create_deployment(
+        DeploymentCreate(
+            name="my-deployment",
+            orbit_id=data.orbit.id,
+            satellite_id=data.satellite.id,
+            artifact_id=data.model.id,
+            status=DeploymentStatus.ACTIVE,
+        )
+    )
+
+    with pytest.raises(DatabaseConstraintError, match="Cannot delete satellite"):
+        await repo.delete_satellite(data.satellite.id)
+
+    assert await repo.get_satellite(data.satellite.id) is not None
